@@ -159,7 +159,7 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
       {selectedPet && (
         <div className="absolute inset-0 flex items-center justify-center" onClick={closePet}>
           <div
-            className="relative flex flex-row items-center gap-10 px-8 select-none -mt-6"
+            className="relative flex flex-col lg:flex-row items-center gap-8 lg:gap-10 px-6 lg:px-8 select-none -mt-4 lg:-mt-6"
             onClick={e => e.stopPropagation()}
             style={{
               opacity: focusVisible ? 1 : 0,
@@ -177,7 +177,7 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
             <div className="self-stretch w-px shrink-0" style={{ background: c.divider, transition: 'background 0.3s' }} />
 
             {/* Right — Info */}
-            <div className="flex flex-col gap-3 max-w-[200px]">
+            <div className="flex flex-col gap-4 max-w-[240px] lg:max-w-[260px]">
               {/* Close */}
               <button
                 onClick={closePet}
@@ -194,13 +194,13 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
 
               <div>
                 <h3
-                  className="text-[20px] font-semibold tracking-[-0.025em] leading-tight transition-colors duration-300"
+                  className="text-[22px] lg:text-[26px] font-semibold tracking-[-0.03em] leading-[1.1] transition-colors duration-300"
                   style={{ color: c.title }}
                 >
                   {selectedPet.name}
                 </h3>
                 <p
-                  className="text-[12px] font-medium mt-1 leading-snug transition-colors duration-300"
+                  className="text-[13px] font-medium mt-1.5 leading-snug tracking-[-0.01em] transition-colors duration-300"
                   style={{ color: c.tagline }}
                 >
                   {selectedPet.tagline}
@@ -208,7 +208,7 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
               </div>
 
               <p
-                className="text-[11.5px] font-light leading-[1.7] transition-colors duration-300"
+                className="text-[13px] font-normal leading-[1.75] transition-colors duration-300"
                 style={{ color: c.body }}
               >
                 {selectedPet.description}
