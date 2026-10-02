@@ -138,7 +138,7 @@ export default function LandingPage() {
 
         {/* ── Right: Animated Pets ──────────────────────────── */}
         <div className="flex-1 overflow-hidden flex items-center justify-center px-8 py-4">
-          <PetShowcase />
+          <PetShowcase isDark={isDark} />
         </div>
 
       </main>
