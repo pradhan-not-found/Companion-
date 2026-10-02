@@ -11,14 +11,20 @@ export default function LandingPage() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    fetch('https://api.github.com/repos/pradhan-not-found/Companion-')
-      .then(res => res.json())
-      .then(data => {
-        if (typeof data.stargazers_count === 'number') {
-          setStars(data.stargazers_count);
-        }
-      })
-      .catch(() => {});
+    const fetchStars = () => {
+      fetch('https://api.github.com/repos/pradhan-not-found/Companion-')
+        .then(res => res.json())
+        .then(data => {
+          if (typeof data.stargazers_count === 'number') {
+            setStars(data.stargazers_count);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchStars(); // Fetch immediately on mount
+    const interval = setInterval(fetchStars, 60_000); // Re-sync every 60s
+    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
