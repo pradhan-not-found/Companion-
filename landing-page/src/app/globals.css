@@ -23,3 +23,20 @@ body {
 ::selection {
   background: rgba(0, 0, 0, 0.1);
 }
+
+@keyframes petEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.pet-entrance {
+  animation: petEntrance 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
