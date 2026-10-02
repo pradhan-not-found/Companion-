@@ -78,7 +78,7 @@ export default function JoinPage() {
                   className="w-16 h-16 rounded-[16px] flex shrink-0 mb-6 overflow-hidden transition-all duration-500 shadow-xl"
                   style={{ background: isDark ? '#1C1C1C' : 'white', border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.06)' }}
                 >
-                  <Image src="/applogo.png" alt="Companion Logo" width={64} height={64} className="object-cover w-full h-full rounded-[14px] p-[2px]" />
+                  <Image src="/applogo.png" alt="Companion Logo" width={64} height={64} className="object-cover w-full h-full rounded-[14px] p-[2px]" priority />
                 </div>
 
                 <div className="flex items-center gap-2 mb-2">

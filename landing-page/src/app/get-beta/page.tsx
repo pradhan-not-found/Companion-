@@ -70,7 +70,7 @@ export default function GetBetaPage() {
                   className="w-20 h-20 rounded-[20px] flex shrink-0 overflow-hidden transition-all duration-500 shadow-xl"
                   style={{ background: isDark ? '#1C1C1C' : 'white', border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.06)' }}
                 >
-                  <Image src="/applogo.png" alt="Companion Logo" width={80} height={80} className="object-cover w-full h-full rounded-[18px] p-[2px]" />
+                  <Image src="/applogo.png" alt="Companion Logo" width={80} height={80} className="object-cover w-full h-full rounded-[18px] p-[2px]" priority />
                 </div>
                 
                 {/* Text & Beta Tag */}

@@ -41,7 +41,7 @@ export default function NavBar({ isDark, onToggleDark, stars }: NavBarProps) {
             className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0 transition-colors duration-500"
             style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.08)', background: isDark ? '#1C1C1C' : 'white', border: `1px solid ${pillBorder}` }}
           >
-            <Image src="/applogo.png" alt="Companion" width={32} height={32} className="object-cover w-full h-full rounded-[6px]" />
+            <Image src="/applogo.png" alt="Companion" width={32} height={32} className="object-cover w-full h-full rounded-[6px]" priority />
           </div>
           <span className="font-semibold text-[17px] tracking-tight transition-colors duration-500" style={{ color: text }}>Companion</span>
           <span

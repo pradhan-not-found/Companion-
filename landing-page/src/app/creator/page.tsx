@@ -77,7 +77,7 @@ export default function CreatorPage() {
         {/* Left — Photo */}
         <div className="shrink-0 flex flex-col items-center lg:items-start gap-5">
           <div className="w-52 h-52 lg:w-64 lg:h-64 rounded-[24px] overflow-hidden">
-            <Image src="/creator.png" alt="Souradeep Pradhan" width={256} height={256} className="object-cover w-full h-full" />
+            <Image src="/creator.png" alt="Souradeep Pradhan" width={256} height={256} className="object-cover w-full h-full" priority />
           </div>
         </div>
 

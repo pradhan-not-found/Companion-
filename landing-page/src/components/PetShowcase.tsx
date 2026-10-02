@@ -116,6 +116,10 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+      {/* Preload sprite sheets */}
+      {PETS.map(pet => (
+        <link key={pet.id} rel="preload" href={pet.src} as="image" />
+      ))}
 
       {/* ── Grid View ───────────────────────────────────────────── */}
       <div
