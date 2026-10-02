@@ -1,0 +1,429 @@
+/* ============================================================
+   MEOWDRATION — Design System
+   Atlas-inspired palette · Two modes: transparent pet + panel
+   ============================================================ */
+@font-face {
+  font-family: 'Switzer';
+  src: url('/fonts/Switzer-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font:         'Switzer', system-ui, sans-serif;
+  --bg:           #FAF9F6;
+  --surface:      rgba(250,249,246,0.88);
+  --border:       rgba(0,0,0,0.08);
+  --border-mid:   rgba(0,0,0,0.11);
+  --text:         #2E2E2D;
+  --muted:        #6E6D6A;
+  --subtle:       #9E9D9A;
+  --accent:       #18181b;
+  --accent-fg:    #FAF9F6;
+  --water:        #3b82f6;
+  --water-light:  rgba(59,130,246,0.10);
+}
+
+html, body, #root {
+  width: 100%; height: 100%;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Professional Custom Scrollbar (Notion/macOS style inset) */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+  background: transparent;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border: 5px solid var(--bg);
+  border-radius: 20px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+  border: 5px solid var(--bg);
+}
+
+/* ============================================================
+   PET MODE — fully transparent, only the sprite shows
+   ============================================================ */
+.pet-mode-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  pointer-events: none;
+  -webkit-app-region: drag;
+}
+
+.cat-sprite-widget {
+  width: 150px;
+  height: 100px;
+  background-size: 400% 400%;
+  background-repeat: no-repeat;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+  pointer-events: all;
+  -webkit-app-region: no-drag;
+}
+
+.cat-sprite-widget:hover {
+  filter: brightness(1.05);
+}
+
+/* ============================================================
+   DASHBOARD PANEL
+   ============================================================ */
+.dash-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 130px;          /* sits above the sprite */
+  -webkit-app-region: no-drag;
+  animation: fade-in 0.15s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.dash-panel {
+  width: 288px;
+  background: #FAF9F6;            /* solid Atlas off-white — fully opaque */
+  border: 1px solid rgba(0,0,0,0.09);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 4px 8px rgba(0,0,0,0.06),
+    0 12px 32px rgba(0,0,0,0.14),
+    0 32px 64px rgba(0,0,0,0.07);
+  animation: panel-up 0.26s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes panel-up {
+  from { transform: translateY(12px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* ── Titlebar ─────────────────────────────────────────────── */
+.dash-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 8px;
+  background: #F2F1EE;            /* slightly tinted — Atlas sidebar tone */
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  -webkit-app-region: drag;
+}
+
+.dash-wc {
+  display: flex;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.wc {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  border: none; cursor: pointer;
+  transition: filter 0.15s;
+}
+.wc:hover        { filter: brightness(0.82); }
+.wc-red          { background: #ff5f57; }
+.wc-yellow       { background: #febc2e; }
+
+.dash-bar-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--subtle);
+  pointer-events: none;
+}
+
+/* ── Hero ─────────────────────────────────────────────────── */
+.dash-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px 4px;
+}
+
+.dash-ring-wrap { flex-shrink: 0; }
+
+.dash-ring-svg {
+  width: 68px; height: 68px;
+  overflow: visible;
+}
+
+.dash-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dash-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.dash-status {
+  font-size: 0.76rem;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+/* ── Cat bubble ───────────────────────────────────────────── */
+.dash-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 18px 0;
+  background: var(--water-light);
+  border: 1px solid rgba(59,130,246,0.12);
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+
+.dash-bubble-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--water);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.dash-bubble p {
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+}
+
+/* ── Divider ──────────────────────────────────────────────── */
+.dash-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 18px;
+}
+
+/* ── Actions ──────────────────────────────────────────────── */
+.dash-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0 18px;
+}
+
+.dash-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.16s ease;
+  -webkit-app-region: no-drag;
+}
+
+.dash-primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.14);
+}
+.dash-primary:hover  { background: #27272a; }
+.dash-primary:active { transform: scale(0.97); }
+
+.dash-ghost {
+  background: rgba(0,0,0,0.04);
+  color: var(--muted);
+  border-color: var(--border);
+}
+.dash-ghost:hover  { background: rgba(0,0,0,0.07); color: var(--text); }
+.dash-ghost:active { transform: scale(0.97); }
+
+/* ── Footer pips ──────────────────────────────────────────── */
+.dash-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px 14px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.dash-footer-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.dash-pips {
+  display: flex;
+  gap: 4px;
+}
+
+.pip {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.10);
+  transition: background 0.25s ease;
+}
+.pip-on { background: var(--water); }
+
+/* ============================================================
+   ONBOARDING — Atlas-style
+   ============================================================ */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  overflow-y: auto;
+  background: var(--bg);
+  -webkit-app-region: drag;
+}
+
+.title-bar {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 32px;
+  display: flex;
+  justify-content: flex-end;
+  -webkit-app-region: drag;
+  z-index: 9999;
+}
+.title-btn {
+  width: 46px; height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+.title-btn:hover { background: rgba(0,0,0,0.1); }
+.title-btn.close:hover { background: #e81123; color: white; }
+
+.onboarding-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 32px;
+  gap: 6px;
+  max-width: 320px;
+  -webkit-app-region: no-drag;
+  animation: ob-in 0.7s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes ob-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.onboarding-title {
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.onboarding-subtitle {
+  font-size: 0.87rem;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+  line-height: 1.45;
+  margin-bottom: 20px;
+}
+
+.onboarding-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.onboarding-input {
+  flex: 1;
+  height: 42px;
+  border-radius: 4px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.15);
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.onboarding-input::placeholder { color: var(--subtle); }
+.onboarding-input:focus        { border-color: rgba(46,46,45,0.38); }
+
+.onboarding-continue-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: 2px solid #2E2E2D;
+  background: #2E2E2D;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFFFFF;
+  box-shadow: inset 0px 0px 2px 2px rgba(255,255,255,0.08);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.onboarding-continue-btn:not(:disabled):hover {
+  color: #FFFFFF;
+  background: #000000;
+  border-color: #000000;
+  transform: translateY(-1px);
+}
+.onboarding-continue-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.onboarding-continue-btn svg {
+  transition: transform 0.2s ease;
+}
+.onboarding-continue-btn:not(:disabled):hover svg {
+  transform: translateX(4px);
+}
