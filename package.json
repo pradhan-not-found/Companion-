@@ -17,9 +17,17 @@
     "directories": {
       "output": "release"
     },
+    "files": [
+      "dist/**/*",
+      "main.cjs",
+      "preload.cjs",
+      "package.json",
+      "public/**/*",
+      "!landing-page${/*}"
+    ],
     "win": {
       "target": "portable",
-      "icon": "applodo.png"
+      "icon": "applogo.png"
     }
   },
   "devDependencies": {
