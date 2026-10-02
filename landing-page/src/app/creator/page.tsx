@@ -17,8 +17,8 @@ const SOCIALS = [
   },
   {
     label: 'X (Twitter)',
-    handle: '@souradeep_dev',
-    href: 'https://x.com/souradeep_dev',
+    handle: '@bysoura',
+    href: 'https://x.com/bysoura',
     icon: (
       <svg viewBox="0 0 1200 1227" fill="currentColor" className="w-[16px] h-[16px]">
         <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/>
@@ -28,7 +28,7 @@ const SOCIALS = [
   {
     label: 'LinkedIn',
     handle: 'Souradeep Pradhan',
-    href: 'https://linkedin.com/in/souradeep-pradhan',
+    href: 'https://www.linkedin.com/in/souradeep-pradhan/',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-[18px] h-[18px]">
         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -37,8 +37,8 @@ const SOCIALS = [
   },
   {
     label: 'YouTube',
-    handle: '@souradeeppradhan',
-    href: 'https://youtube.com/@souradeeppradhan',
+    handle: '@Pradhan_Da',
+    href: 'https://www.youtube.com/@Pradhan_Da',
     icon: (
       <svg viewBox="0 0 576 512" fill="currentColor" className="w-[18px] h-[18px]">
         <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/>
