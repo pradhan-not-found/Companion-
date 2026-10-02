@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import NavBar from '@/components/NavBar';
 
 // Map of valid beta codes to download URLs
@@ -53,34 +54,41 @@ export default function GetBetaPage() {
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden">
         
-        {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none opacity-20 transition-opacity duration-700"
+        {/* Subtle background glow - keep centered or move to left? Let's move it to the left slightly */}
+        <div className="absolute top-1/2 left-[30%] -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none opacity-20 transition-opacity duration-700"
              style={{ 
-               background: isDark ? 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%)'
+               background: isDark ? 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%)' : 'radial-gradient(circle, rgba(0,0,0,0.04) 0%, transparent 60%)'
              }} 
         />
 
-        <div className="w-full max-w-[440px] relative z-10 transition-all duration-500">
+        <div className="w-full max-w-4xl relative z-10 transition-all duration-500">
           {state !== 'success' ? (
-            <div className="flex flex-col items-center text-center">
-              {/* Icon */}
-              <div
-                className="w-14 h-14 rounded-[14px] flex items-center justify-center mb-8 transition-colors duration-500"
-                style={{ background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6 transition-colors duration-500" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: title }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
+            <div className="flex flex-col items-start text-left max-w-[480px]">
+              <div className="flex items-center gap-6 mb-10">
+                {/* App Logo */}
+                <div
+                  className="w-20 h-20 rounded-[20px] flex shrink-0 overflow-hidden transition-all duration-500 shadow-xl"
+                  style={{ background: isDark ? '#1C1C1C' : 'white', border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.06)' }}
+                >
+                  <Image src="/applogo.png" alt="Companion Logo" width={80} height={80} className="object-cover w-full h-full rounded-[18px] p-[2px]" />
+                </div>
+                
+                {/* Text & Beta Tag */}
+                <div className="flex flex-col">
+                  <h1 className="text-[26px] font-semibold tracking-[-0.02em] mb-1.5 transition-colors duration-500 flex items-center gap-3" style={{ color: title }}>
+                    Companion
+                    <span
+                      className="px-2.5 py-[3px] rounded-full text-[11px] font-semibold uppercase tracking-wider transition-colors duration-500"
+                      style={{ border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)', background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', color: sub }}
+                    >
+                      Beta
+                    </span>
+                  </h1>
+                  <p className="text-[14px] leading-[1.65] max-w-[280px] transition-colors duration-500" style={{ color: sub }}>
+                    Enter your invitation code below to unlock the download.
+                  </p>
+                </div>
               </div>
-
-              <h1 className="text-[26px] font-semibold tracking-[-0.02em] mb-3 transition-colors duration-500" style={{ color: title }}>
-                Get Early Access
-              </h1>
-              <p className="text-[14px] leading-[1.65] mb-10 max-w-[320px] transition-colors duration-500" style={{ color: sub }}>
-                Enter your invitation code to download Companion. Don't have a code? Join the waitlist on the homepage.
-              </p>
 
               <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
                 <div className="relative group">
@@ -88,16 +96,24 @@ export default function GetBetaPage() {
                     type="text"
                     value={code}
                     onChange={e => { setCode(e.target.value); setState('idle'); }}
-                    placeholder="ENTER-CODE"
-                    className="w-full h-[52px] px-5 rounded-[12px] text-[15px] font-mono tracking-widest uppercase focus:outline-none transition-all duration-300 text-center"
+                    placeholder="Enter your beta code..."
+                    className="w-full h-[52px] px-5 rounded-[12px] text-[15px] focus:outline-none transition-all duration-300"
                     style={{
-                      background: inputBg,
-                      border: `1.5px solid ${state === 'error' ? '#EF4444' : inputBorder}`,
+                      background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
+                      border: `1px solid ${state === 'error' ? '#EF4444' : inputBorder}`,
                       color: title,
-                      boxShadow: state === 'error' ? '0 0 0 4px rgba(239,68,68,0.1)' : 'none'
+                      boxShadow: state === 'error' 
+                        ? '0 0 0 4px rgba(239,68,68,0.1)' 
+                        : isDark ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : 'inset 0 2px 4px rgba(0,0,0,0.02)'
                     }}
-                    onFocus={e => (e.currentTarget.style.borderColor = state === 'error' ? '#EF4444' : inputFocus)}
-                    onBlur={e => (e.currentTarget.style.borderColor = state === 'error' ? '#EF4444' : inputBorder)}
+                    onFocus={e => {
+                      e.currentTarget.style.borderColor = state === 'error' ? '#EF4444' : inputFocus;
+                      if (state !== 'error') e.currentTarget.style.boxShadow = isDark ? '0 0 0 3px rgba(255,255,255,0.05), inset 0 2px 4px rgba(0,0,0,0.2)' : '0 0 0 3px rgba(0,0,0,0.03), inset 0 2px 4px rgba(0,0,0,0.02)';
+                    }}
+                    onBlur={e => {
+                      e.currentTarget.style.borderColor = state === 'error' ? '#EF4444' : inputBorder;
+                      if (state !== 'error') e.currentTarget.style.boxShadow = isDark ? 'inset 0 2px 4px rgba(0,0,0,0.2)' : 'inset 0 2px 4px rgba(0,0,0,0.02)';
+                    }}
                   />
                   {state === 'error' && (
                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
@@ -119,13 +135,13 @@ export default function GetBetaPage() {
                 </button>
               </form>
 
-              <p className="text-[12px] text-center mt-6 transition-colors duration-500" style={{ color: isDark ? '#555' : '#C0BDB8' }}>
+              <p className="text-[12px] mt-5 transition-colors duration-500" style={{ color: isDark ? '#555' : '#C0BDB8' }}>
                 Press Enter to submit
               </p>
             </div>
           ) : (
             /* Success state */
-            <div className="flex flex-col items-center text-center animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col items-start text-left animate-in fade-in zoom-in duration-500 max-w-[480px]">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
                 style={{ background: 'rgba(34,197,94,0.1)' }}
@@ -146,7 +162,7 @@ export default function GetBetaPage() {
                 href={downloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2.5 h-[52px] px-8 rounded-[12px] text-[14px] font-semibold transition-all duration-300 hover:-translate-y-[1px] w-full max-w-[300px] mx-auto no-underline"
+                className="flex items-center justify-center gap-2.5 h-[52px] px-8 rounded-[12px] text-[14px] font-semibold transition-all duration-300 hover:-translate-y-[1px] w-auto inline-flex no-underline"
                 style={{ 
                   background: btnBg, 
                   color: btnText,
