@@ -32,7 +32,6 @@ export default function LandingPage() {
   return (
     <div
       className={`h-screen overflow-hidden relative selection:bg-black/10 flex flex-col transition-colors duration-300 ${isDark ? 'bg-[#111111] text-[#E0E0E0]' : 'bg-[#FAF9F6] text-[#2E2E2D]'}`}
-      style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
     >
       <nav className={`shrink-0 w-full py-4 px-8 flex items-center justify-between border-b transition-colors duration-300 ${isDark ? 'border-white/[0.08]' : 'border-black/[0.05]'}`}>
         <div className="flex items-center gap-2.5">

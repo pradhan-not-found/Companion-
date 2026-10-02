@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
+
+const switzer = localFont({
+  src: "../../public/fonts/Switzer-Variable.ttf",
+  display: "swap",
+});
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://companion.app";
 
@@ -128,7 +134,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-full">{children}</body>
+      <body className={`h-full ${switzer.className}`}>{children}</body>
     </html>
   );
 }
