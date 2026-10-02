@@ -120,7 +120,7 @@ export default function ChangelogPage() {
       <NavBar isDark={isDark} onToggleDark={toggleDark} />
 
       <main className="flex-1 flex flex-col items-center px-6 py-16">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-4xl">
 
           {/* Header */}
           <div className="mb-10">
@@ -157,60 +157,62 @@ export default function ChangelogPage() {
           )}
 
           {/* Releases */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-16 md:gap-24 relative mt-12">
+            {/* Timeline line (optional but looks nice) */}
+            <div className="hidden md:block absolute left-[140px] top-4 bottom-0 w-px" style={{ background: divider }} />
+
             {releases.map((release, idx) => (
               <div
                 key={release.id}
-                className="rounded-[14px] overflow-hidden"
-                style={{
-                  background: cardBg,
-                  border: `1px solid ${idx === 0 ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)') : cardBorder}`,
-                  boxShadow: idx === 0 ? (isDark ? '0 8px 32px rgba(0,0,0,0.25)' : '0 8px 32px rgba(0,0,0,0.05)') : 'none',
-                }}
+                className="flex flex-col md:flex-row gap-6 md:gap-16 relative"
               >
-                {/* Release header */}
-                <div className="px-6 pt-5 pb-5">
-
-                  {/* Meta row */}
-                  <div className="flex items-center gap-2.5 flex-wrap mb-4">
-                    <span
-                      className="text-[12px] font-semibold px-2.5 py-1 rounded-[6px] font-mono tracking-wide"
-                      style={{ background: tagBg, color: title }}
-                    >
-                      {release.tag_name}
-                    </span>
-
-                    {idx === 0 && !release.prerelease && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full tracking-wide" style={{ background: 'rgba(34,197,94,0.1)', color: '#16A34A' }}>
-                        Latest
+                {/* Left: Sticky Meta */}
+                <div className="md:w-[180px] shrink-0">
+                  <div className="sticky top-24 flex flex-col items-start gap-2.5">
+                    {/* Timeline dot */}
+                    <div className="hidden md:block absolute -right-[68px] top-2.5 w-2 h-2 rounded-full" style={{ background: isDark ? '#444' : '#D4D4D4', border: `2px solid ${bg}`, boxSizing: 'content-box' }} />
+                    
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className="text-[13px] font-semibold px-2.5 py-1 rounded-[6px] font-mono tracking-wide"
+                        style={{ background: tagBg, color: title }}
+                      >
+                        {release.tag_name}
                       </span>
-                    )}
-                    {release.prerelease && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>
-                        Pre-release
-                      </span>
-                    )}
-
-                    <span className="text-[12px] ml-auto" style={{ color: body }}>
+                      {idx === 0 && !release.prerelease && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full tracking-wide" style={{ background: 'rgba(34,197,94,0.1)', color: '#16A34A' }}>
+                          Latest
+                        </span>
+                      )}
+                      {release.prerelease && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>
+                          Pre-release
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[13px] font-medium" style={{ color: sub }}>
                       {formatDate(release.published_at)}
                     </span>
                   </div>
+                </div>
 
+                {/* Right: Content */}
+                <div className="flex-1 min-w-0 pb-4">
                   {/* Release name */}
-                  <h2 className="text-[16px] font-semibold tracking-[-0.015em] mb-4" style={{ color: title }}>
+                  <h2 className="text-[20px] font-semibold tracking-[-0.015em] mb-5" style={{ color: title }}>
                     {release.name && release.name !== release.tag_name ? release.name : `Release ${release.tag_name}`}
                   </h2>
 
                   {/* Release body */}
                   {release.body && (
-                    <div style={{ borderTop: `1px solid ${divider}`, paddingTop: '16px' }}>
+                    <div className="mb-8">
                       <ReleaseBody body={release.body} colors={bodyColors} />
                     </div>
                   )}
 
                   {/* Assets / Download */}
                   {release.assets && release.assets.length > 0 && (
-                    <div className="mt-5 flex flex-col gap-2" style={{ borderTop: `1px solid ${divider}`, paddingTop: '16px' }}>
+                    <div className="mt-8 flex flex-col gap-2">
                       <p className="text-[11px] font-semibold tracking-[0.08em] uppercase mb-1" style={{ color: body }}>
                         Downloads
                       </p>
@@ -239,25 +241,22 @@ export default function ChangelogPage() {
                       ))}
                     </div>
                   )}
-                </div>
 
-                {/* Footer */}
-                <div
-                  className="px-6 py-3 flex items-center justify-end"
-                  style={{ borderTop: `1px solid ${divider}` }}
-                >
-                  <a
-                    href={release.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-[12px] font-medium no-underline transition-opacity hover:opacity-70"
-                    style={{ color: body }}
-                  >
-                    View on GitHub
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M7 17L17 7M17 7H7M17 7v10"/>
-                    </svg>
-                  </a>
+                  {/* Footer links */}
+                  <div className="mt-6 flex items-center">
+                    <a
+                      href={release.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-[12px] font-medium no-underline transition-opacity hover:opacity-70"
+                      style={{ color: body }}
+                    >
+                      View on GitHub
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                      </svg>
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
