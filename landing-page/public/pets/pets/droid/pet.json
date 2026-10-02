@@ -1,0 +1,6 @@
+{
+  "id": "droid",
+  "displayName": "Droid",
+  "description": "A green Android-inspired Codex companion with coffee, code, and gentle status poses.",
+  "spritesheetPath": "spritesheet.webp"
+}

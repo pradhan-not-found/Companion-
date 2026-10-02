@@ -1,0 +1,25 @@
+@font-face {
+  font-family: 'Switzer';
+  src: url('/fonts/Switzer-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@import "tailwindcss";
+
+:root {
+  --background: #FAF9F6;
+  --foreground: #2E2E2D;
+  --font-switzer: 'Switzer', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-switzer);
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(0, 0, 0, 0.1);
+}
