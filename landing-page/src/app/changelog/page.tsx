@@ -116,18 +116,16 @@ export default function ChangelogPage() {
   const bodyColors = { title, sub, body, dot: body };
 
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-300" style={{ backgroundColor: bg }}>
+    <div className="min-h-screen flex flex-col transition-colors duration-300 relative" style={{ backgroundColor: bg }}>
+      <div className="relative z-10 flex flex-col min-h-screen">
       <NavBar isDark={isDark} onToggleDark={toggleDark} />
 
       <main className="flex-1 flex flex-col items-center px-6 py-16">
         <div className="w-full max-w-4xl">
 
           {/* Header */}
-          <div className="mb-10">
-            <h1 className="text-[28px] font-semibold tracking-[-0.03em]" style={{ color: title }}>Changelog</h1>
-            <p className="text-[14px] mt-1.5" style={{ color: sub }}>
-              Every release, every fix, synced live from GitHub.
-            </p>
+          <div className="mb-20 text-center">
+            <h1 className="text-[48px] md:text-[64px] font-medium tracking-tight mb-2" style={{ color: title }}>what's new</h1>
           </div>
 
           {/* Loading skeletons */}
@@ -167,8 +165,12 @@ export default function ChangelogPage() {
                 <div className="md:w-[200px] shrink-0 sticky top-24 flex flex-col items-start gap-2.5">
                   <div className="flex items-center gap-2 flex-wrap">
                       <span
-                        className="text-[13px] font-semibold px-2.5 py-1 rounded-[6px] font-mono tracking-wide"
-                        style={{ background: tagBg, color: title }}
+                        className="text-[12px] font-medium px-3.5 py-1 rounded-full tracking-wide"
+                        style={{ 
+                          background: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(59, 130, 246, 0.1)', 
+                          color: isDark ? '#93C5FD' : '#2563EB',
+                          border: isDark ? '1px solid rgba(96, 165, 250, 0.2)' : '1px solid rgba(59, 130, 246, 0.2)' 
+                        }}
                       >
                         {release.tag_name}
                       </span>
@@ -191,7 +193,7 @@ export default function ChangelogPage() {
                 {/* Right: Content */}
                 <div className="flex-1 min-w-0 pb-4">
                   {/* Release name */}
-                  <h2 className="text-[20px] font-semibold tracking-[-0.015em] mb-5" style={{ color: title }}>
+                  <h2 className="text-[24px] md:text-[28px] font-medium tracking-[-0.02em] mb-4" style={{ color: title }}>
                     {release.name && release.name !== release.tag_name ? release.name : `Release ${release.tag_name}`}
                   </h2>
 
@@ -255,6 +257,7 @@ export default function ChangelogPage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

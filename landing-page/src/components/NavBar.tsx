@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/pricing', label: 'pricing' },
   { href: '/changelog', label: 'changelog' },
   { href: '/get-beta', label: 'get beta' },
+  { href: '/join', label: 'careers' },
 ];
 
 export default function NavBar({ isDark, onToggleDark, stars }: NavBarProps) {
