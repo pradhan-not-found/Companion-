@@ -1,73 +1,113 @@
 <div align="center">
-  <img src="public/applogo.png" alt="Companion Logo" width="120" />
-  <h1>Companion</h1>
-  <p><b>A beautifully crafted desktop pet that lives on your screen.</b></p>
-  <p>Stay hydrated, stay focused, never work alone.</p>
+
+<img src="landing-page/public/applogo.png" alt="Companion Logo" width="120" />
+
+# Companion
+
+**A beautifully crafted desktop pet that lives on your screen.**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-black.svg?style=for-the-badge&logo=github)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-black.svg?style=for-the-badge&logo=github)](#-contributing)
+[![Powered by Electron](https://img.shields.io/badge/Electron-191970.svg?style=for-the-badge&logo=electron&logoColor=white)](https://electronjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-000000.svg?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+
 </div>
 
----
+<br />
 
-## 🐾 Overview
+> **Companion** brings a subtle, interactive companion directly to your workspace. It sits quietly on your screen while you work—adding a touch of delight, keeping you hydrated, and ensuring you never work alone.
 
-Companion brings an interactive, aesthetic pet companion directly to your desktop. Built with a modern tech stack, Companion sits quietly on your screen while you work, adding a touch of delight to your daily workflow without getting in your way. 
+<br />
 
 ## ✨ Features
 
-- **Multiple Companions**: Choose from a growing roster of beautifully animated companions (Angry Cat, Boba, JokeBear, and more).
-- **Unintrusive Design**: True transparent windows that float natively over your workspace.
-- **Micro-interactions**: Interactive hover states and subtle animations. 
-- **Light & Dark Mode**: fully responsive to your aesthetic preferences.
+- 🐾 **Multiple Companions** — Choose from a growing roster of beautifully animated companions, from a sleepy capybara to a mischievous cat.
+- 🪟 **True Transparency** — The app runs as a native, fully transparent overlay that floats seamlessly over your other windows.
+- 🖱️ **Micro-interactions** — Deeply integrated hover states, subtle idle animations, and fluid transitions that feel native to macOS and Windows.
+- 🌗 **Adaptive Design** — Full support for stunning Light and Dark modes, adapting flawlessly to your desktop aesthetic.
 
-## 🚀 Quick Start
+---
 
-Companion consists of two main parts: the Electron Desktop App and the Next.js Landing Page.
+## 🚀 Getting Started
+
+Companion is a monorepo consisting of two primary environments: the **Electron Desktop Application** and the **Next.js Landing Page**.
 
 ### Prerequisites
-- Node.js (v18+)
-- npm or yarn
 
-### Desktop Application
+Ensure you have the following installed on your machine:
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- `npm` or `yarn`
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the development server (runs Vite and Electron concurrently):
-   ```bash
-   npm start
-   ```
-3. Build for production:
-   ```bash
-   npm run build
-   ```
+<br />
 
-### Landing Page
+### 1. Desktop Application
 
-1. Navigate to the landing page directory:
-   ```bash
-   cd landing-page
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:3000` to view the page.
+The core Electron app that powers your desktop companion.
 
-## 🛠 Tech Stack
+```bash
+# Clone the repository
+git clone https://github.com/pradhan-not-found/Companion-.git
+cd Companion-
 
-- **Desktop Engine**: [Electron](https://www.electronjs.org/)
-- **UI Framework**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
-- **Landing Page**: [Next.js 15](https://nextjs.org/) + [Tailwind CSS](https://tailwindcss.com/)
-- **Styling**: Custom modern aesthetics + Framer-like animations.
+# Install dependencies
+npm install
+
+# Start the dev server (spins up Vite + Electron)
+npm start
+
+# Package the app for production
+npm run build
+```
+
+<br />
+
+### 2. Landing Page
+
+The official website and waitlist, built with Next.js 15.
+
+```bash
+# Navigate to the landing page directory
+cd landing-page
+
+# Install dependencies
+npm install
+
+# Boot up the development server
+npm run dev
+```
+Navigate to `http://localhost:3000` to view the page.
+
+---
+
+## 🛠 Technology Stack
+
+Companion is built on a modern, robust, and highly performant foundation:
+
+| Domain | Technologies |
+| :--- | :--- |
+| **Desktop Engine** | Electron, Node.js |
+| **App Client** | React 18, Vite, TypeScript |
+| **Web / Landing** | Next.js 15 (App Router), Tailwind CSS |
+| **Animation** | Framer Motion (Web), CSS Keyframes (App) |
+
+---
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are always welcome! Feel free to check the issues page if you want to contribute.
+We welcome contributions of all sizes—whether it's adding new pets, optimizing rendering logic, or refining the UI. 
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
 
 ## 📜 License
 
-This project is licensed under the MIT License.
+Distributed under the MIT License. See `LICENSE` for more information.
+
+<div align="center">
+  <p>Built with 🤍 by <a href="https://github.com/pradhan-not-found">pradhan-not-found</a></p>
+</div>
