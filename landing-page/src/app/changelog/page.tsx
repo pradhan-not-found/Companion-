@@ -157,22 +157,15 @@ export default function ChangelogPage() {
           )}
 
           {/* Releases */}
-          <div className="flex flex-col gap-16 md:gap-24 relative mt-12">
-            {/* Timeline line (optional but looks nice) */}
-            <div className="hidden md:block absolute left-[140px] top-4 bottom-0 w-px" style={{ background: divider }} />
-
+          <div className="flex flex-col gap-16 md:gap-24 mt-12">
             {releases.map((release, idx) => (
               <div
                 key={release.id}
-                className="flex flex-col md:flex-row gap-6 md:gap-16 relative"
+                className="flex flex-col md:flex-row gap-8 md:gap-20 items-start"
               >
                 {/* Left: Sticky Meta */}
-                <div className="md:w-[180px] shrink-0">
-                  <div className="sticky top-24 flex flex-col items-start gap-2.5">
-                    {/* Timeline dot */}
-                    <div className="hidden md:block absolute -right-[68px] top-2.5 w-2 h-2 rounded-full" style={{ background: isDark ? '#444' : '#D4D4D4', border: `2px solid ${bg}`, boxSizing: 'content-box' }} />
-                    
-                    <div className="flex items-center gap-2 flex-wrap">
+                <div className="md:w-[200px] shrink-0 sticky top-24 flex flex-col items-start gap-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className="text-[13px] font-semibold px-2.5 py-1 rounded-[6px] font-mono tracking-wide"
                         style={{ background: tagBg, color: title }}
@@ -191,9 +184,8 @@ export default function ChangelogPage() {
                       )}
                     </div>
                     <span className="text-[13px] font-medium" style={{ color: sub }}>
-                      {formatDate(release.published_at)}
-                    </span>
-                  </div>
+                    {formatDate(release.published_at)}
+                  </span>
                 </div>
 
                 {/* Right: Content */}
