@@ -63,13 +63,16 @@ export default function PricingPage() {
     setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
   };
 
+  const bg = isDark ? '#111111' : '#FAF9F6';
+  const title = isDark ? '#FFFFFF' : '#2E2E2D';
+
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-300 bg-[#FAFAFA]">
+    <div className="min-h-screen flex flex-col transition-colors duration-300" style={{ backgroundColor: bg, color: title }}>
       <NavBar isDark={isDark} onToggleDark={toggleDark} />
 
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-16">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
           {PLANS.map((plan, idx) => (
             <div
               key={plan.name}

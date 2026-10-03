@@ -35,6 +35,15 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1_000).toFixed(0)} KB`;
 }
 
+function parseInline(text: string, titleColor: string) {
+  return text.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} style={{ color: titleColor, fontWeight: 500 }}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 function ReleaseBody({ body, colors }: { body: string; colors: { title: string; sub: string; body: string; dot: string } }) {
   if (!body) return null;
   const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
@@ -53,17 +62,17 @@ function ReleaseBody({ body, colors }: { body: string; colors: { title: string; 
         if (line.startsWith('### ')) {
           const text = line.replace(/^###\s*/, '');
           return (
-            <h3 key={i} className="text-[16px] font-bold mt-6 mb-2" style={{ color: colors.title }}>
+            <p key={i} className="text-[11px] font-bold tracking-[0.08em] uppercase mt-5 mb-1" style={{ color: colors.body }}>
               {text}
-            </h3>
+            </p>
           );
         }
         if (line.startsWith('- ') || line.startsWith('* ')) {
           return (
-            <div key={i} className="flex items-start gap-2.5">
-              <span className="mt-[7px] w-1 h-1 rounded-full shrink-0" style={{ background: colors.dot }} />
-              <p className="text-[13px] leading-[1.65]" style={{ color: colors.sub }}>
-                {line.replace(/^[-*]\s*/, '')}
+            <div key={i} className="flex items-start gap-2.5 mt-2">
+              <span className="mt-[10px] w-1 h-1 rounded-full shrink-0" style={{ background: colors.dot }} />
+              <p className="text-[15px] leading-[1.7]" style={{ color: colors.sub }}>
+                {parseInline(line.replace(/^[-*]\s*/, ''), colors.title)}
               </p>
             </div>
           );
@@ -73,8 +82,8 @@ function ReleaseBody({ body, colors }: { body: string; colors: { title: string; 
           return null;
         }
         return (
-          <p key={i} className="text-[15px] leading-[1.7]" style={{ color: colors.sub }}>
-            {line}
+          <p key={i} className="text-[15px] leading-[1.7] mt-3" style={{ color: colors.sub }}>
+            {parseInline(line, colors.title)}
           </p>
         );
       })}
@@ -117,8 +126,14 @@ export default function ChangelogPage() {
   const bodyColors = { title, sub, body, dot: body };
 
   const fallbackInitialReleaseBody = `
-## Introducing Companion
+## Companion Beta is here!
 Where it all started. A virtual pet that lives as a buddy on your desktop. It can roam your screen, remind you to stay hydrated, and even take breaks with you, kinda like having a real companion next to you.
+
+### What's New
+* **Animated Desktop Pets**: Choose between a variety of cute pets (cats, dogs, and foxes) that roam freely on your screen while you work.
+* **Pricing Plans**: Introduced simple, honest pricing with Free, Pro, and Max tiers.
+* **Smart Hydration Tracker**: Set your daily water intake goals and receive gentle, non-intrusive reminders.
+* **Transparent Overlay**: Built natively for Windows to seamlessly blend into your workspace without getting in the way.
   `.trim();
 
   return (
@@ -161,7 +176,10 @@ Where it all started. A virtual pet that lives as a buddy on your desktop. It ca
           {/* Releases */}
           <div className="flex flex-col mt-12">
             {releases.map((release, idx) => {
-              const bodyContent = release.body || fallbackInitialReleaseBody;
+              const bodyContent = (release.tag_name === 'v1.0.1' || release.tag_name === '1.0.1' || (!release.body || release.body.includes('**Full Changelog**') && release.body.length < 150)) 
+                ? fallbackInitialReleaseBody 
+                : release.body;
+
               return (
                 <div key={release.id}>
                   <div className="flex flex-col md:flex-row gap-6 md:gap-14 items-start">
