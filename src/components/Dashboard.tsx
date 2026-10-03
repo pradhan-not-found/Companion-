@@ -97,7 +97,14 @@ export default function Dashboard({
             </svg>
             Remind me
           </button>
-          <button className="dash-btn dash-ghost" onClick={() => { localStorage.removeItem('meowdration_name'); window.location.reload(); }} title="Change Pet">
+          <button className="dash-btn dash-ghost" onClick={() => {
+            const api = (window as any).electronAPI;
+            if (api?.resetStore) {
+              api.resetStore().then(() => window.location.reload());
+            } else {
+              window.location.reload();
+            }
+          }} title="Change Pet">
             ⚙️ Setup
           </button>
         </div>

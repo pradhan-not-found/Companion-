@@ -28,6 +28,7 @@ const eAPI = () => (window as any).electronAPI as {
   removeDirectionListener: () => void;
   getStore:                () => Promise<any>;
   setStore:                (key: string, value: any) => void;
+  resetStore:              () => Promise<void>;
 } | undefined;
 
 export default function App() {
@@ -158,12 +159,18 @@ export default function App() {
     return () => eAPI()?.removeDirectionListener();
   }, []);
 
+  // Break mode: trigger once when sips reach goal (useEffect not render body)
+  useEffect(() => {
+    if (sips >= 8 && !isBreakMode) {
+      setIsBreakMode(true);
+    }
+  }, [sips, isBreakMode]);
+
   useEffect(() => {
     if (!hasOnboarded) {
       eAPI()?.setWindowSize(800, 700);
       return;
     }
-    // When dashboard is closed, window shrinks exactly to the cat 
     if (showDashboard || isBreakMode) {
       eAPI()?.setWindowSize(340, 560);
     } else {
@@ -306,12 +313,6 @@ export default function App() {
   }
   
   const flipX   = facingRight ? -1 : 1;
-
-  // Trigger Break Mode after 8 sips for testing, or via timer
-  if (sips >= 8 && !isBreakMode) {
-    setIsBreakMode(true);
-    eAPI()?.setWindowSize(1000, 800); // go big
-  }
 
   return (
     <>

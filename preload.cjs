@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   petDragStop:       ()   => ipcRenderer.send('pet-drag-stop'),
   getStore:          ()   => ipcRenderer.invoke('get-store'),
   setStore:          (k,v)=> ipcRenderer.send('set-store', k, v),
+  resetStore:        ()   => ipcRenderer.invoke('reset-store'),
   onDirectionChange: (cb) => {
     ipcRenderer.on('walk-direction', (_event, dx) => cb(dx))
   },
