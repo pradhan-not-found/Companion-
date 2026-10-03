@@ -43,8 +43,7 @@ export default function LandingPage() {
 
     setLoading(true);
     try {
-      // NOTE: Replace this URL with your Google Apps Script Web App URL
-      const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
+      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec';
       
       await fetch(SCRIPT_URL, {
         method: 'POST',
