@@ -91,9 +91,10 @@ export const metadata: Metadata = {
   // ── Icons ─────────────────────────────────────────────────
   icons: {
     icon: [
-      { url: "/favicon.svg", sizes: "any", type: "image/svg+xml" },
+      { url: "/favicon.svg",  type: "image/svg+xml", sizes: "any"     },
+      { url: "/applogo.png",  type: "image/png",     sizes: "512x512" },
     ],
-    apple: "/applogo.png",
+    apple:    [{ url: "/applogo.png", sizes: "180x180" }],
     shortcut: "/applogo.png",
   },
 };

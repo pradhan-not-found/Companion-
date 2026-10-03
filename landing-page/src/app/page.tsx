@@ -7,6 +7,7 @@ import NavBar from '@/components/NavBar';
 export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [joined, setJoined] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [stars, setStars] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(false);
 
@@ -36,9 +37,33 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) { setJoined(true); setEmail(''); }
+    if (!email.trim() || loading) return;
+
+    setLoading(true);
+    try {
+      // NOTE: Replace this URL with your Google Apps Script Web App URL
+      const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
+      
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        // 'no-cors' is required for Google Apps Script Web Apps when called directly from frontend
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      
+      setJoined(true);
+      setEmail('');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to join waitlist. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,12 +98,15 @@ export default function LandingPage() {
               />
               <button
                 type="submit"
-                className={`w-full flex items-center justify-center gap-1.5 px-4 h-[40px] rounded-[6px] text-[14px] font-medium border-2 hover:-translate-y-[1px] shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 cursor-pointer group ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
+                disabled={loading}
+                className={`w-full flex items-center justify-center gap-1.5 px-4 h-[40px] rounded-[6px] text-[14px] font-medium border-2 shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 group ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-[1px] cursor-pointer'} ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
               >
-                Join Waitlist
-                <svg viewBox="0 0 24 24" fill="none" className="w-[14px] h-[14px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
-                </svg>
+                {loading ? 'Joining...' : 'Join Waitlist'}
+                {!loading && (
+                  <svg viewBox="0 0 24 24" fill="none" className="w-[14px] h-[14px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
+                  </svg>
+                )}
               </button>
             </form>
           ) : (
