@@ -5,9 +5,6 @@ import PetShowcase from '@/components/PetShowcase';
 import NavBar from '@/components/NavBar';
 
 export default function LandingPage() {
-  const [email, setEmail] = useState('');
-  const [joined, setJoined] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [stars, setStars] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(false);
 
@@ -37,34 +34,6 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || loading) return;
-
-    setLoading(true);
-    try {
-      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec';
-      
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        // 'no-cors' is required for Google Apps Script Web Apps when called directly from frontend
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      
-      setJoined(true);
-      setEmail('');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to join waitlist. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div
       className={`h-screen overflow-hidden relative selection:bg-black/10 flex flex-col transition-colors duration-300 ${isDark ? 'bg-[#111111] text-[#E0E0E0]' : 'bg-[#FAF9F6] text-[#2E2E2D]'}`}
@@ -85,43 +54,39 @@ export default function LandingPage() {
             Stay hydrated, stay focused, never work alone.
           </p>
 
-          {!joined ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 max-w-[380px] w-full">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
-                className={`w-full h-[46px] px-4 rounded-[8px] border text-[14.5px] focus:outline-none transition-colors ${isDark ? 'bg-[#1C1C1C] border-white/10 text-white placeholder-[#777] focus:border-white/30' : 'bg-white border-[rgba(0,0,0,0.14)] text-[#2E2E2D] placeholder-[#AEADA8] focus:border-[rgba(46,46,45,0.4)]'}`}
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full flex items-center justify-center gap-2 px-4 h-[46px] rounded-[8px] text-[15px] font-medium border-2 shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 group ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-[1px] cursor-pointer'} ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
-              >
-                {loading ? 'Joining...' : 'Join Waitlist'}
-                {!loading && (
-                  <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
-                  </svg>
-                )}
-              </button>
-            </form>
-          ) : (
-            <div className={`flex items-center gap-2.5 max-w-[380px] h-[46px] px-4 rounded-[8px] border transition-colors ${isDark ? 'border-white/10 bg-white/5' : 'border-[rgba(0,0,0,0.14)] bg-[rgba(0,0,0,0.02)]'}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-[15px] h-[15px] ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <span className={`text-[14.5px] font-medium ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`}>
-                Added <span className="opacity-60">{email}</span> to the waitlist
+          <div className="flex flex-col gap-4 max-w-[380px] w-full mt-2">
+            <div className="flex items-center gap-3 mb-1">
+              <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase transition-colors duration-300 ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-500/10 text-blue-600'}`}>
+                Latest Release
+              </span>
+              <span className={`text-[13px] font-medium transition-colors duration-300 ${isDark ? 'text-[#888]' : 'text-[#666]'}`}>
+                v1.0.1 • Windows
               </span>
             </div>
-          )}
-
-          <p className={`text-[12px] mt-3 font-normal tracking-[-0.01em] transition-colors duration-300 ${isDark ? 'text-[#666]' : 'text-[#9E9D9A]'}`}>
-            No spam, ever. Unsubscribe at any time. You will be notified about the launch.
-          </p>
+            
+            <a
+              href="https://github.com/pradhan-not-found/Companion-/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`w-full flex items-center justify-between p-4 rounded-[12px] border transition-all duration-300 group cursor-pointer hover:-translate-y-[2px] ${isDark ? 'bg-[#1C1C1C] border-white/10 hover:border-white/30 shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.06)]' : 'bg-white border-[rgba(0,0,0,0.08)] hover:border-[rgba(0,0,0,0.2)] shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]'}`}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-colors duration-300 ${isDark ? 'bg-white/10 group-hover:bg-white/20' : 'bg-black/5 group-hover:bg-black/10'}`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-5 h-5 transition-transform duration-300 group-hover:translate-y-[1.5px] ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-[15px] font-semibold tracking-tight transition-colors duration-300 ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`}>
+                    Download for Windows
+                  </span>
+                  <span className={`text-[13px] font-medium transition-colors duration-300 ${isDark ? 'text-[#888]' : 'text-[#888]'}`}>
+                    meowdration.0.0.0.exe • 133.2 MB
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
         </div>
 
         {/* ── Right: Animated Pets ── */}
