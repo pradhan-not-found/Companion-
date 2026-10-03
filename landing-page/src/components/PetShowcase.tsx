@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 interface PetConfig {
   id: string;
@@ -18,23 +18,21 @@ interface PetConfig {
 }
 
 const PETS: PetConfig[] = [
-  { id: 'angry-cat',           name: 'Angry Cat',    src: '/pets/angry-cat/spritesheet.webp',           frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Always grumpy, never leaving.', description: 'Reminds you to take breaks by glaring at you until you do. Surprisingly effective.' },
-  { id: 'capy-puff',           name: 'Capy Puff',    src: '/pets/capy-puff/spritesheet.webp',           frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Laid-back and unbothered.', description: 'The chillest companion. Floats through your day with zero stress and maximum vibes.' },
-  { id: 'wangcai',             name: 'Wangcai',      src: '/pets/wangcai/spritesheet.webp',             frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Lucky charm, always present.', description: 'A traditional good-luck companion who promises to bring fortune to every coding session.' },
-  { id: 'whaledou',            name: 'Whaledou',     src: '/pets/whaledou/spritesheet.webp',            frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Deep thoughts, shallow sea.', description: 'Drifts peacefully across your desktop, occasionally surfacing with wisdom you didn\'t ask for.' },
-  { id: 'boba',                name: 'Boba',         src: '/pets/boba/spritesheet.webp',                frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Sweet, bubbly, always refreshing.', description: 'Nudges you to drink water, take breaks, and slow down. Your designated hydration buddy.' },
-  { id: 'jokebear-codexpet',   name: 'JokeBear',     src: '/pets/jokebear-codexpet/spritesheet.webp',   frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Funny, warm, and always watching.', description: 'Delivers questionable puns at exactly the wrong moment. 10/10 morale booster regardless.' },
-  { id: 'daodun',              name: 'Daodun',       src: '/pets/daodun/spritesheet.webp',              frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Stubborn and determined.', description: 'Sits on your screen and refuses to move until you finish your task. Accountability unlocked.' },
-  { id: 'droid',               name: 'Droid',        src: '/pets/droid/spritesheet.webp',               frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Efficient, precise, binary at heart.', description: 'Built for productivity. Zero fluff, maximum function. Beeps softly when you\'re unfocused.' },
-  { id: 'oiiai',               name: 'Oiiai',        src: '/pets/oiiai/spritesheet.webp',               frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Rhythmic, joyful, perpetually spinning.', description: 'Spins to the beat of your keyboard. The more you type, the more it grooves.' },
-  { id: 'pupu',                name: 'Pupu',         src: '/pets/pupu/spritesheet.webp',                frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Soft, round, impossibly cute.', description: 'Does absolutely nothing stressful. Exists purely to make your workspace feel warmer.' },
-  { id: 'savage-codex-hacker', name: 'Savage Codex Hacker', src: '/pets/savage-codex-hacker/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'In the zone, always shipping.', description: 'Types faster than you. Judges your commit messages. Silently proud when you ship.' },
-  { id: 'round-maodie',        name: 'Round Maodie', src: '/pets/round-maodie/spritesheet.webp',        frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Round. Bouncy. Irreversibly adorable.', description: 'Rolls across your taskbar. Cannot be stopped. Has never had a bad day.' },
+  { id: 'angry-cat',           name: 'Angry Cat',     src: '/pets/angry-cat/spritesheet.webp',           frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Always grumpy, never leaving.',          description: 'Reminds you to take breaks by glaring at you until you do. Surprisingly effective.' },
+  { id: 'capy-puff',           name: 'Capy Puff',     src: '/pets/capy-puff/spritesheet.webp',           frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Laid-back and unbothered.',              description: 'The chillest companion. Floats through your day with zero stress and maximum vibes.' },
+  { id: 'wangcai',             name: 'Wangcai',       src: '/pets/wangcai/spritesheet.webp',             frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Lucky charm, always present.',            description: 'A traditional good-luck companion who promises to bring fortune to every coding session.' },
+  { id: 'whaledou',            name: 'Whaledou',      src: '/pets/whaledou/spritesheet.webp',            frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Deep thoughts, shallow sea.',            description: "Drifts peacefully across your desktop, occasionally surfacing with wisdom you didn't ask for." },
+  { id: 'boba',                name: 'Boba',          src: '/pets/boba/spritesheet.webp',                frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Sweet, bubbly, always refreshing.',       description: 'Nudges you to drink water, take breaks, and slow down. Your designated hydration buddy.' },
+  { id: 'jokebear-codexpet',   name: 'JokeBear',      src: '/pets/jokebear-codexpet/spritesheet.webp',   frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Funny, warm, and always watching.',      description: 'Delivers questionable puns at exactly the wrong moment. 10/10 morale booster regardless.' },
+  { id: 'daodun',              name: 'Daodun',        src: '/pets/daodun/spritesheet.webp',              frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Stubborn and determined.',               description: 'Sits on your screen and refuses to move until you finish your task. Accountability unlocked.' },
+  { id: 'droid',               name: 'Droid',         src: '/pets/droid/spritesheet.webp',               frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Efficient, precise, binary at heart.',   description: "Built for productivity. Zero fluff, maximum function. Beeps softly when you're unfocused." },
+  { id: 'oiiai',               name: 'Oiiai',         src: '/pets/oiiai/spritesheet.webp',               frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Rhythmic, joyful, perpetually spinning.',description: 'Spins to the beat of your keyboard. The more you type, the more it grooves.' },
+  { id: 'pupu',                name: 'Pupu',          src: '/pets/pupu/spritesheet.webp',                frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Soft, round, impossibly cute.',          description: 'Does absolutely nothing stressful. Exists purely to make your workspace feel warmer.' },
+  { id: 'savage-codex-hacker', name: 'Savage Hacker', src: '/pets/savage-codex-hacker/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'In the zone, always shipping.',          description: 'Types faster than you. Judges your commit messages. Silently proud when you ship.' },
+  { id: 'round-maodie',        name: 'Round Maodie',  src: '/pets/round-maodie/spritesheet.webp',        frameW: 192, frameH: 208, gridCols: 8, gridRows: 9,  framesPerRow: 6, idleRow: 0, cropBottom: 0, tagline: 'Round. Bouncy. Irreversibly adorable.',  description: 'Rolls across your taskbar. Cannot be stopped. Has never had a bad day.' },
 ];
 
-const SCALE_GRID = 0.48;
-const SCALE_FOCUS = 1.5;
-
+/** Renders one animated frame from a spritesheet at a given pixel scale */
 function PetSprite({ pet, frame, scale }: { pet: PetConfig; frame: number; scale: number }) {
   const displayW = Math.round(pet.frameW * scale);
   const displayH = Math.round(pet.frameH * scale);
@@ -57,16 +55,50 @@ function PetSprite({ pet, frame, scale }: { pet: PetConfig; frame: number; scale
   );
 }
 
-export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
-  const [frame, setFrame] = useState(0);
-  const [selectedPet, setSelectedPet] = useState<PetConfig | null>(null);
-  const [focusVisible, setFocusVisible] = useState(false);
+/** Returns the number of grid columns for a given container width */
+function colsForWidth(w: number) {
+  if (w < 340) return 2;
+  if (w < 560) return 3;
+  return 4;
+}
 
+export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
+  const [frame,        setFrame]        = useState(0);
+  const [selectedPet,  setSelectedPet]  = useState<PetConfig | null>(null);
+  const [focusVisible, setFocusVisible] = useState(false);
+  const [gridScale,    setGridScale]    = useState(0.44);
+  const [gridCols,     setGridCols]     = useState(3);
+  const [isMobile,     setIsMobile]     = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // ── Container-aware sprite scaling via ResizeObserver ─────────────────────
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = (w: number) => {
+      const cols  = colsForWidth(w);
+      const gap   = cols <= 2 ? 10 : cols === 3 ? 12 : 14;
+      const cellW = (w - gap * (cols - 1)) / cols;
+      // sprite is 192px wide; leave 6px padding each side
+      const scale = Math.min((cellW - 12) / 192, 0.7);
+      setGridScale(Math.max(scale, 0.22));
+      setGridCols(cols);
+      setIsMobile(w < 560);
+    };
+    const ro = new ResizeObserver(entries => update(entries[0]?.contentRect.width ?? el.offsetWidth));
+    ro.observe(el);
+    update(el.offsetWidth);
+    return () => ro.disconnect();
+  }, []);
+
+  // ── Animation ticker ─────────────────────────────────────────────────────
   useEffect(() => {
     const id = setInterval(() => setFrame(f => f + 1), 180);
     return () => clearInterval(id);
   }, []);
 
+  // ── Pet selection ─────────────────────────────────────────────────────────
   const openPet = useCallback((pet: PetConfig) => {
     setSelectedPet(pet);
     requestAnimationFrame(() => requestAnimationFrame(() => setFocusVisible(true)));
@@ -89,161 +121,184 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closePet();
+      if (e.key === 'Escape')     closePet();
       if (e.key === 'ArrowRight') navigatePet(1);
-      if (e.key === 'ArrowLeft') navigatePet(-1);
+      if (e.key === 'ArrowLeft')  navigatePet(-1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [closePet, navigatePet]);
 
-  // Dark mode color tokens
+  // ── Color tokens ──────────────────────────────────────────────────────────
   const c = {
-    title:     isDark ? '#FFFFFF' : '#2E2E2D',
-    tagline:   isDark ? '#A0A0A0' : '#6E6D6A',
-    body:      isDark ? '#777777' : '#9E9D9A',
-    tooltip:   isDark ? '#EDEDEC' : '#2E2E2D',
-    tooltipTx: isDark ? '#1C1C1B' : '#FFFFFF',
-    divider:   isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-    counter:   isDark ? '#666' : '#AEADA8',
-    btn:       isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-    btnBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-    btnIcon:   isDark ? '#A0A0A0' : '#6E6D6A',
-    btnHover:  isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
-    close:     isDark ? '#666' : '#AEADA8',
-    closeHover:isDark ? '#ccc' : '#2E2E2D',
+    title:      isDark ? '#FFFFFF'                : '#2E2E2D',
+    tagline:    isDark ? '#A0A0A0'                : '#6E6D6A',
+    body:       isDark ? '#777777'                : '#9E9D9A',
+    tooltip:    isDark ? '#EDEDEC'                : '#2E2E2D',
+    tooltipTx:  isDark ? '#1C1C1B'                : '#FFFFFF',
+    divider:    isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    counter:    isDark ? '#666'                   : '#AEADA8',
+    btnBorder:  isDark ? 'rgba(255,255,255,0.1)'  : 'rgba(0,0,0,0.1)',
+    btnIcon:    isDark ? '#A0A0A0'                : '#6E6D6A',
+    btnHover:   isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
+    close:      isDark ? '#666'                   : '#AEADA8',
+    closeHover: isDark ? '#ccc'                   : '#2E2E2D',
+    nameLabel:  isDark ? 'rgba(255,255,255,0.4)'  : 'rgba(0,0,0,0.35)',
   };
 
+  const gap       = gridCols <= 2 ? 10 : gridCols === 3 ? 12 : 14;
+  const focusScale = isMobile ? 0.82 : 1.5;
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+    <div className="relative w-full h-full flex flex-col overflow-y-auto overflow-x-hidden">
+
       {/* Preload sprite sheets */}
       {PETS.map(pet => (
         <link key={pet.id} rel="preload" href={pet.src} as="image" />
       ))}
 
-      {/* ── Grid View ───────────────────────────────────────────── */}
+      {/* ── Pet Grid ──────────────────────────────────────────────────── */}
       <div
-        className="grid grid-cols-2 min-[400px]:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-6 sm:gap-y-8 transition-all duration-300 ease-out"
+        ref={containerRef}
         style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+          gap: `${gap}px`,
           alignItems: 'end',
-          opacity: focusVisible ? 0 : 1,
-          filter: focusVisible ? 'blur(8px)' : 'blur(0px)',
-          transform: focusVisible ? 'scale(0.96)' : 'scale(1)',
+          width: '100%',
+          opacity:       focusVisible ? 0 : 1,
+          filter:        focusVisible ? 'blur(6px)' : 'none',
+          transform:     focusVisible ? 'scale(0.95)' : 'scale(1)',
           pointerEvents: selectedPet ? 'none' : 'auto',
+          transition:    'opacity 0.28s ease, filter 0.28s ease, transform 0.28s ease',
         }}
       >
-        {PETS.map((pet) => (
+        {PETS.map(pet => (
           <div
             key={pet.id}
             onClick={() => openPet(pet)}
-            className="group relative flex items-end justify-center cursor-pointer"
+            className="group relative flex flex-col items-center justify-end cursor-pointer"
             style={{
-              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.13))',
-              transition: 'transform 0.2s ease',
+              filter:     'drop-shadow(0 3px 8px rgba(0,0,0,0.11))',
+              transition: 'transform 0.18s ease',
+              paddingTop: '8px',
             }}
-            onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0px)')}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-4px)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
           >
-            {/* Tooltip */}
-            <div className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out z-10 translate-y-2 group-hover:translate-y-0">
+            {/* Desktop tooltip */}
+            <div className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 translate-y-1.5 group-hover:translate-y-0 transition-all duration-150 z-10 hidden sm:block">
               <div
-                className="text-[11px] font-medium tracking-wide px-3 py-1.5 rounded-[6px] shadow-[0_4px_12px_rgba(0,0,0,0.15)] whitespace-nowrap relative"
-                style={{ background: c.tooltip, color: c.tooltipTx, transition: 'background 0.3s, color 0.3s' }}
+                className="whitespace-nowrap px-2.5 py-[5px] rounded-[5px] text-[10px] font-medium tracking-wide shadow-[0_4px_12px_rgba(0,0,0,0.14)] relative"
+                style={{ background: c.tooltip, color: c.tooltipTx }}
               >
                 {pet.name}
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 rounded-[1px]" style={{ background: c.tooltip, transition: 'background 0.3s' }} />
+                <div className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-[6px] h-[6px] rotate-45 rounded-[1px]" style={{ background: c.tooltip }} />
               </div>
             </div>
-            <PetSprite pet={pet} frame={frame} scale={SCALE_GRID} />
+
+            {/* Sprite */}
+            <PetSprite pet={pet} frame={frame} scale={gridScale} />
+
+            {/* Name label — shown always on mobile, hidden on sm+ (tooltip handles it) */}
+            <span
+              className="sm:hidden mt-[5px] text-center w-full truncate leading-none"
+              style={{ fontSize: '9px', fontWeight: 600, color: c.nameLabel, letterSpacing: '-0.01em' }}
+            >
+              {pet.name}
+            </span>
           </div>
         ))}
       </div>
 
-      {/* ── Focus Overlay ───────────────────────────────────────── */}
+      {/* ── Focus / Detail Overlay ─────────────────────────────────────── */}
       {selectedPet && (
-        <div className="absolute inset-0 flex items-center justify-center" onClick={closePet}>
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center"
+          onClick={closePet}
+        >
           <div
-            className="relative flex flex-col lg:flex-row items-center gap-6 lg:gap-10 px-6 lg:px-8 select-none -mt-4 lg:-mt-6 w-full max-w-sm lg:max-w-none"
-            onClick={e => e.stopPropagation()}
+            className="relative flex flex-col lg:flex-row items-center select-none w-full"
             style={{
-              opacity: focusVisible ? 1 : 0,
-              filter: focusVisible ? 'blur(0px)' : 'blur(12px)',
-              transform: focusVisible ? 'translateY(0px) scale(1)' : 'translateY(16px) scale(0.96)',
-              transition: 'opacity 0.32s cubic-bezier(0.22,1,0.36,1), filter 0.32s ease, transform 0.32s cubic-bezier(0.22,1,0.36,1)',
+              gap:        isMobile ? '14px' : '40px',
+              padding:    isMobile ? '0 20px' : '0 32px',
+              maxWidth:   isMobile ? '300px' : 'none',
+              opacity:    focusVisible ? 1 : 0,
+              filter:     focusVisible ? 'none' : 'blur(10px)',
+              transform:  focusVisible ? 'translateY(0) scale(1)' : 'translateY(14px) scale(0.96)',
+              transition: 'opacity 0.3s cubic-bezier(0.22,1,0.36,1), filter 0.3s ease, transform 0.3s cubic-bezier(0.22,1,0.36,1)',
             }}
+            onClick={e => e.stopPropagation()}
           >
-            {/* Left — Pet sprite */}
-            <div style={{ filter: 'drop-shadow(0 12px 32px rgba(0,0,0,0.18))', flexShrink: 0 }}>
-              <PetSprite pet={selectedPet} frame={frame} scale={SCALE_FOCUS} />
+            {/* Sprite */}
+            <div style={{ filter: 'drop-shadow(0 10px 28px rgba(0,0,0,0.16))', flexShrink: 0 }}>
+              <PetSprite pet={selectedPet} frame={frame} scale={focusScale} />
             </div>
 
-            {/* Divider */}
-            <div className="hidden lg:block self-stretch w-px shrink-0" style={{ background: c.divider, transition: 'background 0.3s' }} />
-            <div className="lg:hidden w-full h-px shrink-0 max-w-[200px]" style={{ background: c.divider, transition: 'background 0.3s' }} />
+            {/* Dividers */}
+            <div className="hidden lg:block self-stretch w-px shrink-0" style={{ background: c.divider }} />
+            <div className="lg:hidden shrink-0" style={{ width: '60px', height: '1px', background: c.divider }} />
 
-            {/* Right — Info */}
-            <div className="flex flex-col gap-4 lg:gap-4 max-w-[260px] lg:max-w-[260px] items-center lg:items-start text-center lg:text-left relative w-full">
-              {/* Close */}
+            {/* Info */}
+            <div
+              className="flex flex-col relative"
+              style={{
+                gap:       isMobile ? '8px' : '16px',
+                maxWidth:  isMobile ? '220px' : '260px',
+                width:     '100%',
+                alignItems:  isMobile ? 'center' : 'flex-start',
+                textAlign:   isMobile ? 'center' : 'left',
+              }}
+            >
+              {/* Close button */}
               <button
                 onClick={closePet}
-                className="absolute -top-3 right-0 lg:static lg:-top-auto lg:right-auto lg:self-end w-8 h-8 lg:w-6 lg:h-6 flex items-center justify-center rounded-full transition-colors z-10"
-                style={{ color: c.close }}
+                className="absolute -top-1 right-0 lg:static lg:self-end flex items-center justify-center rounded-full transition-colors"
+                style={{ width: '26px', height: '26px', color: c.close }}
                 onMouseEnter={e => (e.currentTarget.style.color = c.closeHover)}
                 onMouseLeave={e => (e.currentTarget.style.color = c.close)}
                 aria-label="Close"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3.5 h-3.5" strokeWidth="2.5" strokeLinecap="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '11px', height: '11px' }} strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6 6 18M6 6l12 12"/>
                 </svg>
               </button>
 
+              {/* Name + tagline */}
               <div>
-                <h3
-                  className="text-[22px] lg:text-[26px] font-semibold tracking-[-0.03em] leading-[1.1] transition-colors duration-300"
-                  style={{ color: c.title }}
-                >
+                <h3 style={{ fontSize: isMobile ? '17px' : '26px', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1, color: c.title }}>
                   {selectedPet.name}
                 </h3>
-                <p
-                  className="text-[13px] font-medium mt-1.5 leading-snug tracking-[-0.01em] transition-colors duration-300"
-                  style={{ color: c.tagline }}
-                >
+                <p style={{ fontSize: isMobile ? '11px' : '13px', fontWeight: 500, marginTop: '4px', lineHeight: 1.4, letterSpacing: '-0.01em', color: c.tagline }}>
                   {selectedPet.tagline}
                 </p>
               </div>
 
-              <p
-                className="text-[13px] font-normal leading-[1.75] transition-colors duration-300"
-                style={{ color: c.body }}
-              >
+              {/* Description */}
+              <p style={{ fontSize: isMobile ? '11px' : '13px', fontWeight: 400, lineHeight: 1.65, color: c.body }}>
                 {selectedPet.description}
               </p>
 
               {/* Prev / Next */}
-              <div className="flex items-center gap-2 mt-1">
-                <button
-                  onClick={() => navigatePet(-1)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full transition-all"
-                  style={{ border: `1px solid ${c.btnBorder}`, color: c.btnIcon, background: 'transparent' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = c.btnHover; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                  aria-label="Previous"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <span className="text-[10px] font-medium tabular-nums" style={{ color: c.counter, transition: 'color 0.3s' }}>
+              <div className="flex items-center gap-2">
+                {([-1, 1] as const).map((dir) => (
+                  <button
+                    key={dir}
+                    onClick={() => navigatePet(dir)}
+                    className="flex items-center justify-center rounded-full transition-all"
+                    style={{ width: '28px', height: '28px', border: `1px solid ${c.btnBorder}`, color: c.btnIcon, background: 'transparent' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = c.btnHover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    aria-label={dir === -1 ? 'Previous' : 'Next'}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '11px', height: '11px' }} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      {dir === -1 ? <path d="M15 18l-6-6 6-6"/> : <path d="M9 18l6-6-6-6"/>}
+                    </svg>
+                  </button>
+                ))}
+                <span style={{ fontSize: '10px', fontWeight: 500, color: c.counter, fontVariantNumeric: 'tabular-nums' }}>
                   {PETS.findIndex(p => p.id === selectedPet.id) + 1} / {PETS.length}
                 </span>
-                <button
-                  onClick={() => navigatePet(1)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full transition-all"
-                  style={{ border: `1px solid ${c.btnBorder}`, color: c.btnIcon, background: 'transparent' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = c.btnHover; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                  aria-label="Next"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
               </div>
             </div>
           </div>
