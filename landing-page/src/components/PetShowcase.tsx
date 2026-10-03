@@ -123,7 +123,7 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
 
       {/* ── Grid View ───────────────────────────────────────────── */}
       <div
-        className="grid grid-cols-4 gap-x-4 gap-y-7 transition-all duration-300 ease-out"
+        className="grid grid-cols-2 min-[400px]:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-6 sm:gap-y-8 transition-all duration-300 ease-out"
         style={{
           alignItems: 'end',
           opacity: focusVisible ? 0 : 1,
@@ -163,7 +163,7 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
       {selectedPet && (
         <div className="absolute inset-0 flex items-center justify-center" onClick={closePet}>
           <div
-            className="relative flex flex-col lg:flex-row items-center gap-8 lg:gap-10 px-6 lg:px-8 select-none -mt-4 lg:-mt-6"
+            className="relative flex flex-col lg:flex-row items-center gap-6 lg:gap-10 px-6 lg:px-8 select-none -mt-4 lg:-mt-6 w-full max-w-sm lg:max-w-none"
             onClick={e => e.stopPropagation()}
             style={{
               opacity: focusVisible ? 1 : 0,
@@ -178,14 +178,15 @@ export default function PetShowcase({ isDark = false }: { isDark?: boolean }) {
             </div>
 
             {/* Divider */}
-            <div className="self-stretch w-px shrink-0" style={{ background: c.divider, transition: 'background 0.3s' }} />
+            <div className="hidden lg:block self-stretch w-px shrink-0" style={{ background: c.divider, transition: 'background 0.3s' }} />
+            <div className="lg:hidden w-full h-px shrink-0 max-w-[200px]" style={{ background: c.divider, transition: 'background 0.3s' }} />
 
             {/* Right — Info */}
-            <div className="flex flex-col gap-4 max-w-[240px] lg:max-w-[260px]">
+            <div className="flex flex-col gap-4 lg:gap-4 max-w-[260px] lg:max-w-[260px] items-center lg:items-start text-center lg:text-left relative w-full">
               {/* Close */}
               <button
                 onClick={closePet}
-                className="self-end w-6 h-6 flex items-center justify-center rounded-full transition-colors"
+                className="absolute -top-3 right-0 lg:static lg:-top-auto lg:right-auto lg:self-end w-8 h-8 lg:w-6 lg:h-6 flex items-center justify-center rounded-full transition-colors z-10"
                 style={{ color: c.close }}
                 onMouseEnter={e => (e.currentTarget.style.color = c.closeHover)}
                 onMouseLeave={e => (e.currentTarget.style.color = c.close)}

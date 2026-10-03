@@ -62,21 +62,21 @@ export default function LandingPage() {
           </p>
 
           {!joined ? (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-sm">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-[280px] w-full">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email address"
-                className={`flex-1 h-[40px] px-3.5 rounded-[5px] border text-[13px] focus:outline-none transition-colors ${isDark ? 'bg-[#1C1C1C] border-white/10 text-white placeholder-[#777] focus:border-white/30' : 'bg-white border-[rgba(0,0,0,0.14)] text-[#2E2E2D] placeholder-[#AEADA8] focus:border-[rgba(46,46,45,0.4)]'}`}
+                className={`w-full h-[40px] px-3.5 rounded-[6px] border text-[13px] focus:outline-none transition-colors ${isDark ? 'bg-[#1C1C1C] border-white/10 text-white placeholder-[#777] focus:border-white/30' : 'bg-white border-[rgba(0,0,0,0.14)] text-[#2E2E2D] placeholder-[#AEADA8] focus:border-[rgba(46,46,45,0.4)]'}`}
               />
               <button
                 type="submit"
-                className={`inline-flex items-center justify-center gap-1.5 px-4 h-[40px] rounded-[5px] text-[13px] font-medium border-2 hover:-translate-y-[1px] shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 cursor-pointer group shrink-0 ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
+                className={`w-full flex items-center justify-center gap-1.5 px-4 h-[40px] rounded-[6px] text-[14px] font-medium border-2 hover:-translate-y-[1px] shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 cursor-pointer group ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
               >
                 Join Waitlist
-                <svg viewBox="0 0 24 24" fill="none" className="w-[13px] h-[13px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" className="w-[14px] h-[14px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
                 </svg>
               </button>

@@ -45,7 +45,7 @@ export default function NavBar({ isDark, onToggleDark, stars }: NavBarProps) {
           </div>
           <span className="font-semibold text-[17px] tracking-tight transition-colors duration-500" style={{ color: text }}>Companion</span>
           <span
-            className="px-2 py-[2px] rounded-full text-[10px] font-medium transition-colors duration-500 hidden sm:inline-block"
+            className="px-2 py-[2px] rounded-full text-[10px] font-medium transition-colors duration-500 inline-block"
             style={{ border: `1px solid ${pillBorder}`, background: pillBg, color: subtext }}
           >Beta</span>
         </Link>
