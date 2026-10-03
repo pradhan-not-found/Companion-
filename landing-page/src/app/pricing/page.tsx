@@ -5,59 +5,50 @@ import NavBar from '@/components/NavBar';
 
 const PLANS = [
   {
-    name: 'Free',
+    name: 'free',
+    isBold: false,
+    subtitle: 'everything you need to start.',
+    highlight: 'best for trying it out',
     price: '$0',
-    period: 'forever',
-    badge: 'Current',
-    badgeColor: '#2E2E2D',
-    description: 'Everything you need to get started.',
+    subPrice: 'free forever, no card needed',
+    buttonText: 'start free',
+    buttonType: 'silver',
     features: [
-      'All companion pets',
-      'Idle & animated sprites',
-      'Transparent overlay',
-      'Hydration reminders',
-      'Light & dark mode',
-    ],
-    cta: 'Join Beta Waitlist',
-    href: '/get-beta',
-    highlight: true,
+      '1 default companion pet',
+      'basic hydration reminders',
+      'transparent window overlay'
+    ]
   },
   {
-    name: 'Pro',
+    name: 'pro',
+    isBold: false,
+    subtitle: 'more companions, more customization.',
+    highlight: 'best for everyday use',
     price: '$5',
-    period: 'per month',
-    badge: 'Coming Soon',
-    badgeColor: '#6E6D6A',
-    description: 'More companions, more customization.',
+    subPrice: 'per month, billed monthly',
+    buttonText: 'get pro',
+    buttonType: 'blue',
     features: [
-      'Everything in Free',
-      'Exclusive premium pets',
-      'Custom pet skins',
-      'Advanced reminders',
-      'Priority support',
-    ],
-    cta: 'Notify Me',
-    href: '/#waitlist',
-    highlight: false,
+      'all pets (cats, dogs, foxes)',
+      'custom pet skins & outfits',
+      'priority email support'
+    ]
   },
   {
-    name: 'Team',
+    name: 'max',
+    isBold: true,
+    subtitle: 'keep your whole team motivated.',
+    highlight: 'best for power users',
     price: '$12',
-    period: 'per seat / mo',
-    badge: 'Coming Soon',
-    badgeColor: '#6E6D6A',
-    description: 'Keep your whole team motivated.',
+    subPrice: 'per seat / month, billed monthly',
+    buttonText: 'get max',
+    buttonType: 'silver',
     features: [
-      'Everything in Pro',
-      'Shared pet library',
-      'Team sync & stats',
-      'Admin dashboard',
-      'Dedicated support',
-    ],
-    cta: 'Get Notified',
-    href: '/#waitlist',
-    highlight: false,
-  },
+      'everything in pro',
+      'team sync & admin dashboard',
+      'dedicated account manager'
+    ]
+  }
 ];
 
 export default function PricingPage() {
@@ -72,82 +63,78 @@ export default function PricingPage() {
     setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
   };
 
-  const bg = isDark ? '#111111' : '#FAF9F6';
-  const title = isDark ? '#FFFFFF' : '#2E2E2D';
-  const sub = isDark ? '#A0A0A0' : '#6E6D6A';
-  const cardBg = isDark ? '#1A1A1A' : '#FFFFFF';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
-  const dimBg = isDark ? '#161616' : '#F7F6F3';
-  const checkColor = isDark ? '#A0A0A0' : '#2E2E2D';
-
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-300" style={{ backgroundColor: bg, color: title }}>
+    <div className="min-h-screen flex flex-col transition-colors duration-300 bg-[#FAFAFA]">
       <NavBar isDark={isDark} onToggleDark={toggleDark} />
 
-      <main className="flex-1 flex flex-col items-center px-6 py-16">
-        <div className="text-center mb-12 max-w-lg">
-          <h1 className="text-[32px] lg:text-[38px] font-semibold tracking-[-0.03em] leading-tight" style={{ color: title }}>
-            Simple, honest pricing.
-          </h1>
-          <p className="text-[15px] mt-3 leading-[1.7]" style={{ color: sub }}>
-            Companion is free during beta. No credit card required.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-4xl">
-          {PLANS.map(plan => (
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+          {PLANS.map((plan, idx) => (
             <div
               key={plan.name}
-              className="relative flex flex-col rounded-[16px] p-6 transition-all duration-200"
-              style={{
-                background: plan.highlight ? cardBg : dimBg,
-                border: `1px solid ${plan.highlight ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)') : cardBorder}`,
-                boxShadow: plan.highlight ? (isDark ? '0 12px 40px rgba(0,0,0,0.3)' : '0 12px 40px rgba(0,0,0,0.07)') : 'none',
-              }}
+              className="relative flex flex-col p-8 md:p-10 transition-all duration-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.08)] rounded-xl border border-black/5"
+              style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
             >
-              {/* Badge */}
-              <span
-                className="self-start text-[10px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full mb-4"
-                style={{
-                  background: plan.highlight ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)') : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
-                  color: plan.highlight ? title : sub,
-                }}
-              >
-                {plan.badge}
-              </span>
-
-              <h2 className="text-[15px] font-semibold mb-1" style={{ color: title }}>{plan.name}</h2>
-              <p className="text-[13px] mb-4" style={{ color: sub }}>{plan.description}</p>
-
-              <div className="flex items-baseline gap-1.5 mb-6">
-                <span className="text-[34px] font-bold tracking-[-0.03em]" style={{ color: title }}>{plan.price}</span>
-                <span className="text-[12px]" style={{ color: sub }}>{plan.period}</span>
+              {/* Header */}
+              <div className="text-center px-2">
+                <h2 className={`text-[26px] mb-3 text-black tracking-tight ${plan.isBold ? 'font-bold' : 'font-medium'}`}>{plan.name}</h2>
+                <p className="text-[15px] text-gray-800 mb-2 leading-snug">{plan.subtitle}</p>
+                <p className="text-[11px] text-gray-400">{plan.highlight}</p>
               </div>
 
-              {/* Features */}
-              <ul className="flex flex-col gap-2.5 mb-8 flex-1">
-                {plan.features.map(f => (
-                  <li key={f} className="flex items-center gap-2.5 text-[13px]" style={{ color: sub }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke={checkColor} className="w-3.5 h-3.5 shrink-0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
+              <div className="w-full border-t border-dotted border-gray-300 my-7" />
 
-              {/* CTA */}
-              <a
-                href={plan.href}
-                className="flex items-center justify-center gap-1.5 h-10 rounded-[8px] text-[13px] font-medium no-underline transition-all duration-150 hover:-translate-y-[1px]"
-                style={{
-                  background: plan.highlight ? (isDark ? '#EDEDEC' : '#2E2E2D') : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'),
-                  color: plan.highlight ? (isDark ? '#111' : '#FFF') : sub,
-                  border: plan.highlight ? 'none' : `1px solid ${cardBorder}`,
-                }}
-              >
-                {plan.cta}
-              </a>
+              {/* Price */}
+              <div className="text-center">
+                <div className="text-[64px] font-medium text-black leading-none mb-4 tracking-tighter">{plan.price}</div>
+                <p className="text-[12px] text-gray-800 mb-6">{plan.subPrice}</p>
+                
+                {/* Gel Button */}
+                <div className="flex justify-center">
+                  <button
+                    className="relative w-[130px] h-[34px] rounded-full flex items-center justify-center group overflow-hidden transition-transform active:scale-95 cursor-pointer"
+                    style={{
+                      background: plan.buttonType === 'blue' 
+                        ? 'linear-gradient(to bottom, #e3ecff 0%, #b8cfff 45%, #a3c2ff 50%, #d4e3ff 100%)'
+                        : 'linear-gradient(to bottom, #ffffff 0%, #f4f4f4 45%, #eaeaea 50%, #fdfdfd 100%)',
+                      border: plan.buttonType === 'blue' ? '1px solid #7592fb' : '1px solid #c2c2c2',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
+                    }}
+                  >
+                    <div 
+                      className="absolute top-[1px] left-[2px] right-[2px] h-[45%] rounded-t-full pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%)'
+                      }}
+                    />
+                    <span 
+                      className="relative z-10 text-black font-sans text-[14px] font-medium tracking-tight mt-[1px]"
+                    >
+                      {plan.buttonText}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="w-full border-t border-dotted border-gray-300 my-8" />
+
+              {/* Features */}
+              <div className="flex-1 flex flex-col text-left">
+                <p className="text-[14px] text-gray-500 mb-4">includes</p>
+                <ul className="flex flex-col gap-3.5">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-3 text-[14px] text-black font-medium">
+                      <div className="w-[18px] h-[18px] rounded-full bg-black flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" className="w-3 h-3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           ))}
         </div>

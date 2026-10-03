@@ -25,7 +25,7 @@ interface Release {
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
 }
@@ -42,12 +42,20 @@ function ReleaseBody({ body, colors }: { body: string; colors: { title: string; 
   return (
     <div className="flex flex-col gap-1.5">
       {lines.map((line, i) => {
-        if (line.startsWith('## ') || line.startsWith('### ')) {
-          const text = line.replace(/^#{2,3}\s*/, '');
+        if (line.startsWith('## ')) {
+          const text = line.replace(/^##\s*/, '');
           return (
-            <p key={i} className="text-[11px] font-semibold tracking-[0.08em] uppercase mt-3 first:mt-0" style={{ color: colors.body }}>
+            <h2 key={i} className="text-[22px] md:text-[26px] font-medium tracking-tight mb-4 mt-2 first:mt-0" style={{ color: colors.title }}>
               {text}
-            </p>
+            </h2>
+          );
+        }
+        if (line.startsWith('### ')) {
+          const text = line.replace(/^###\s*/, '');
+          return (
+            <h3 key={i} className="text-[16px] font-bold mt-6 mb-2" style={{ color: colors.title }}>
+              {text}
+            </h3>
           );
         }
         if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -60,19 +68,12 @@ function ReleaseBody({ body, colors }: { body: string; colors: { title: string; 
             </div>
           );
         }
-        // Full changelog link — render as link
+        // Full changelog link — ignore it entirely
         if (line.startsWith('**Full Changelog**')) {
-          const urlMatch = line.match(/https?:\/\/[^\s)]+/);
-          return (
-            <a key={i} href={urlMatch?.[0]} target="_blank" rel="noopener noreferrer"
-              className="text-[12px] mt-1 no-underline hover:underline"
-              style={{ color: colors.body }}>
-              View full diff on GitHub →
-            </a>
-          );
+          return null;
         }
         return (
-          <p key={i} className="text-[13px] leading-[1.65]" style={{ color: colors.sub }}>
+          <p key={i} className="text-[15px] leading-[1.7]" style={{ color: colors.sub }}>
             {line}
           </p>
         );
@@ -115,6 +116,11 @@ export default function ChangelogPage() {
 
   const bodyColors = { title, sub, body, dot: body };
 
+  const fallbackInitialReleaseBody = `
+## Introducing Companion
+Where it all started. A virtual pet that lives as a buddy on your desktop. It can roam your screen, remind you to stay hydrated, and even take breaks with you, kinda like having a real companion next to you.
+  `.trim();
+
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-300 relative" style={{ backgroundColor: bg }}>
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -124,9 +130,7 @@ export default function ChangelogPage() {
         <div className="w-full max-w-4xl">
 
           {/* Header */}
-          <div className="mb-20 text-center">
-            <h1 className="text-[48px] md:text-[64px] font-medium tracking-tight mb-2" style={{ color: title }}>what's new</h1>
-          </div>
+          {/* Removed big title header to match screenshot */}
 
           {/* Loading skeletons */}
           {loading && (
@@ -155,105 +159,57 @@ export default function ChangelogPage() {
           )}
 
           {/* Releases */}
-          <div className="flex flex-col gap-16 md:gap-24 mt-12">
-            {releases.map((release, idx) => (
-              <div
-                key={release.id}
-                className="flex flex-col md:flex-row gap-8 md:gap-20 items-start"
-              >
-                {/* Left: Sticky Meta */}
-                <div className="md:w-[200px] shrink-0 sticky top-24 flex flex-col items-start gap-2.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className="text-[12px] font-medium px-3.5 py-1 rounded-full tracking-wide"
-                        style={{ 
-                          background: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(59, 130, 246, 0.1)', 
-                          color: isDark ? '#93C5FD' : '#2563EB',
-                          border: isDark ? '1px solid rgba(96, 165, 250, 0.2)' : '1px solid rgba(59, 130, 246, 0.2)' 
-                        }}
-                      >
-                        {release.tag_name}
+          <div className="flex flex-col mt-12">
+            {releases.map((release, idx) => {
+              const bodyContent = release.body || fallbackInitialReleaseBody;
+              return (
+                <div key={release.id}>
+                  <div className="flex flex-col md:flex-row gap-6 md:gap-14 items-start">
+                    
+                    {/* Left: Sticky Meta */}
+                    <div className="md:w-[150px] shrink-0 md:sticky md:top-24 flex flex-col items-start gap-1.5">
+                      <div className="relative rounded-[20px] flex items-center justify-center overflow-hidden px-3 py-[2px]"
+                           style={{
+                             background: 'linear-gradient(to bottom, #dbe4ff 0%, #b8cfff 100%)',
+                             border: '1px solid #7592fb',
+                             boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8)'
+                           }}>
+                        <div className="absolute top-[1px] left-[2px] right-[2px] h-[45%] rounded-t-full pointer-events-none"
+                             style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%)' }} />
+                        <span className="relative z-10 text-[#1e2a5c] font-[Arial,Helvetica,sans-serif] text-[12px] font-semibold tracking-wide">
+                          {release.tag_name}
+                        </span>
+                      </div>
+                      <span className="text-[12px] font-medium" style={{ color: sub }}>
+                        {formatDate(release.published_at)}
                       </span>
-                      {idx === 0 && !release.prerelease && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full tracking-wide" style={{ background: 'rgba(34,197,94,0.1)', color: '#16A34A' }}>
-                          Latest
-                        </span>
+                    </div>
+
+                    {/* Right: Content */}
+                    <div className="flex-1 min-w-0 pb-2 md:pb-4">
+                      {/* Release name */}
+                      {release.name && release.name !== release.tag_name && (
+                        <h2 className="text-[22px] md:text-[26px] font-medium tracking-tight mb-4" style={{ color: title }}>
+                          {release.name}
+                        </h2>
                       )}
-                      {release.prerelease && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(234,179,8,0.1)', color: '#CA8A04' }}>
-                          Pre-release
-                        </span>
+
+                      {/* Release body */}
+                      {bodyContent && (
+                        <div className="mb-8">
+                          <ReleaseBody body={bodyContent} colors={bodyColors} />
+                        </div>
                       )}
                     </div>
-                    <span className="text-[13px] font-medium" style={{ color: sub }}>
-                    {formatDate(release.published_at)}
-                  </span>
-                </div>
-
-                {/* Right: Content */}
-                <div className="flex-1 min-w-0 pb-4">
-                  {/* Release name */}
-                  <h2 className="text-[24px] md:text-[28px] font-medium tracking-[-0.02em] mb-4" style={{ color: title }}>
-                    {release.name && release.name !== release.tag_name ? release.name : `Release ${release.tag_name}`}
-                  </h2>
-
-                  {/* Release body */}
-                  {release.body && (
-                    <div className="mb-8">
-                      <ReleaseBody body={release.body} colors={bodyColors} />
-                    </div>
-                  )}
-
-                  {/* Assets / Download */}
-                  {release.assets && release.assets.length > 0 && (
-                    <div className="mt-8 flex flex-col gap-2">
-                      <p className="text-[11px] font-semibold tracking-[0.08em] uppercase mb-1" style={{ color: body }}>
-                        Downloads
-                      </p>
-                      {release.assets.map(asset => (
-                        <a
-                          key={asset.id}
-                          href={asset.browser_download_url}
-                          className="flex items-center gap-3 px-4 py-3 rounded-[10px] no-underline transition-all duration-150 group"
-                          style={{ background: assetBg, border: `1px solid ${assetBorder}`, color: sub }}
-                          onMouseEnter={e => { e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = assetBg; }}
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4 shrink-0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: sub }}>
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                          </svg>
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <span className="text-[13px] font-medium truncate" style={{ color: title }}>{asset.name}</span>
-                            <span className="text-[11px]" style={{ color: body }}>{formatBytes(asset.size)}</span>
-                          </div>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3 opacity-30 group-hover:opacity-70 shrink-0 transition-opacity" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M7 17L17 7M17 7H7M17 7v10"/>
-                          </svg>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Footer links */}
-                  <div className="mt-6 flex items-center">
-                    <a
-                      href={release.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-[12px] font-medium no-underline transition-opacity hover:opacity-70"
-                      style={{ color: body }}
-                    >
-                      View on GitHub
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M7 17L17 7M17 7H7M17 7v10"/>
-                      </svg>
-                    </a>
                   </div>
-                </div>
+
+                {/* Divider Line between releases */}
+                {idx !== releases.length - 1 && (
+                  <div className="w-full h-px my-14 md:my-20" style={{ background: divider }} />
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
