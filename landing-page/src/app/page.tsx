@@ -86,34 +86,34 @@ export default function LandingPage() {
           </p>
 
           {!joined ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-[280px] w-full">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 max-w-[320px] w-full">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email address"
-                className={`w-full h-[40px] px-3.5 rounded-[6px] border text-[13px] focus:outline-none transition-colors ${isDark ? 'bg-[#1C1C1C] border-white/10 text-white placeholder-[#777] focus:border-white/30' : 'bg-white border-[rgba(0,0,0,0.14)] text-[#2E2E2D] placeholder-[#AEADA8] focus:border-[rgba(46,46,45,0.4)]'}`}
+                className={`w-full h-[46px] px-4 rounded-[8px] border text-[14.5px] focus:outline-none transition-colors ${isDark ? 'bg-[#1C1C1C] border-white/10 text-white placeholder-[#777] focus:border-white/30' : 'bg-white border-[rgba(0,0,0,0.14)] text-[#2E2E2D] placeholder-[#AEADA8] focus:border-[rgba(46,46,45,0.4)]'}`}
               />
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full flex items-center justify-center gap-1.5 px-4 h-[40px] rounded-[6px] text-[14px] font-medium border-2 shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 group ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-[1px] cursor-pointer'} ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
+                className={`w-full flex items-center justify-center gap-2 px-4 h-[46px] rounded-[8px] text-[15px] font-medium border-2 shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 group ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-[1px] cursor-pointer'} ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
               >
                 {loading ? 'Joining...' : 'Join Waitlist'}
                 {!loading && (
-                  <svg viewBox="0 0 24 24" fill="none" className="w-[14px] h-[14px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
                   </svg>
                 )}
               </button>
             </form>
           ) : (
-            <div className={`flex items-center gap-2 max-w-sm h-[40px] px-3.5 rounded-[5px] border transition-colors ${isDark ? 'border-white/10 bg-white/5' : 'border-[rgba(0,0,0,0.14)] bg-[rgba(0,0,0,0.02)]'}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-[14px] h-[14px] ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className={`flex items-center gap-2.5 max-w-sm h-[46px] px-4 rounded-[8px] border transition-colors ${isDark ? 'border-white/10 bg-white/5' : 'border-[rgba(0,0,0,0.14)] bg-[rgba(0,0,0,0.02)]'}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-[15px] h-[15px] ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              <span className={`text-[13px] font-medium ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`}>
+              <span className={`text-[14.5px] font-medium ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`}>
                 Added <span className="opacity-60">{email}</span> to the waitlist
               </span>
             </div>
