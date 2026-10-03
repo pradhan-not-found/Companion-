@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import NavBar from '@/components/NavBar';
+import CreatorPet from '@/components/CreatorPet';
 
 
 
@@ -25,6 +26,7 @@ export default function CreatorPage() {
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-300" style={{ backgroundColor: bg }}>
       <NavBar isDark={isDark} onToggleDark={toggleDark} />
+      <CreatorPet />
 
       <main className="flex-1 flex flex-col max-w-[800px] mx-auto px-6 lg:px-8 py-16 lg:py-24 w-full">
         
