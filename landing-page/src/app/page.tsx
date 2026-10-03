@@ -86,7 +86,7 @@ export default function LandingPage() {
           </p>
 
           {!joined ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 max-w-[320px] w-full">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 max-w-[380px] w-full">
               <input
                 type="email"
                 required
@@ -109,7 +109,7 @@ export default function LandingPage() {
               </button>
             </form>
           ) : (
-            <div className={`flex items-center gap-2.5 max-w-sm h-[46px] px-4 rounded-[8px] border transition-colors ${isDark ? 'border-white/10 bg-white/5' : 'border-[rgba(0,0,0,0.14)] bg-[rgba(0,0,0,0.02)]'}`}>
+            <div className={`flex items-center gap-2.5 max-w-[380px] h-[46px] px-4 rounded-[8px] border transition-colors ${isDark ? 'border-white/10 bg-white/5' : 'border-[rgba(0,0,0,0.14)] bg-[rgba(0,0,0,0.02)]'}`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-[15px] h-[15px] ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
