@@ -65,8 +65,8 @@ export default function PricingPage() {
 
   const bg = isDark ? '#111111' : '#FAF9F6';
   const title = isDark ? '#FFFFFF' : '#2E2E2D';
-  const cardBg = isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+  const cardBg = isDark ? '#000000' : '#FFFFFF';
+  const cardBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
   const cardText = isDark ? '#E0E0E0' : '#000000';
   const cardSubText = isDark ? '#A0A0A0' : '#4B5563';
   const dividerColor = isDark ? 'rgba(255,255,255,0.1)' : '#D1D5DB';
@@ -125,16 +125,16 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <div className="w-full border-t border-dotted border-gray-300 my-8" />
+              <div className="w-full border-t border-dotted my-8" style={{ borderColor: dividerColor }} />
 
               {/* Features */}
               <div className="flex-1 flex flex-col text-left">
-                <p className="text-[14px] text-gray-500 mb-4">includes</p>
+                <p className="text-[14px] mb-4" style={{ color: cardSubText }}>includes</p>
                 <ul className="flex flex-col gap-3.5">
                   {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-3 text-[14px] text-black font-medium">
-                      <div className="w-[18px] h-[18px] rounded-full bg-black flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="white" className="w-3 h-3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <li key={f} className="flex items-center gap-3 text-[14px] font-medium" style={{ color: cardText }}>
+                      <div className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: cardText }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke={cardBg === '#FFFFFF' ? 'white' : '#111111'} className="w-3 h-3" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>
                       </div>
