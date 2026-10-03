@@ -120,7 +120,7 @@ export default function LandingPage() {
           )}
 
           <p className={`text-[12px] mt-3 font-normal tracking-[-0.01em] transition-colors duration-300 ${isDark ? 'text-[#666]' : 'text-[#9E9D9A]'}`}>
-            No spam, ever. Unsubscribe at any time.
+            No spam, ever. Unsubscribe at any time. You will be notified about the launch.
           </p>
         </div>
 
