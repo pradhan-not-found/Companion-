@@ -1,48 +1,95 @@
 {
-  "name": "meowdration",
-  "version": "0.0.0",
+  "name": "companion",
+  "productName": "Companion",
+  "version": "1.0.0",
+  "description": "A desktop companion that keeps you company and reminds you to take breaks, drink water, and stay focused.",
+  "author": "pradhan-not-found",
+  "license": "MIT",
   "private": true,
   "type": "module",
-  "main": "main.cjs",
+  "main": "out/main/main.js",
+  "homepage": "https://github.com/pradhan-not-found/Companion-",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "electron": "electron .",
-    "start": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
-    "build-exe": "vite build && electron-builder --win portable"
+    "dev": "electron-vite dev",
+    "start": "electron-vite dev",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "npm run typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "dist:win": "npm run build && electron-builder --win --x64 --publish never",
+    "build-exe": "npm run dist:win"
   },
   "build": {
-    "appId": "com.meowdration.app",
+    "appId": "com.companion.desktop",
+    "productName": "Companion",
+    "copyright": "Copyright © 2026 pradhan-not-found",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
-      "dist/**/*",
-      "main.cjs",
-      "preload.cjs",
-      "package.json",
-      "public/**/*",
-      "!landing-page${/*}"
+      "out/**/*"
+    ],
+    "extraResources": [
+      { "from": "build/icon.png", "to": "icon.png" },
+      { "from": "build/tray-icon.png", "to": "tray-icon.png" },
+      { "from": "build/trayTemplate.png", "to": "trayTemplate.png" },
+      { "from": "pets", "to": "pets" }
     ],
     "win": {
-      "target": "portable",
-      "icon": "applogo.png"
-    }
-  },
-  "devDependencies": {
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
-    "concurrently": "^10.0.5",
-    "electron": "^44.5.1",
-    "electron-builder": "^26.15.3",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.0",
-    "wait-on": "^9.5.1"
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Companion",
+      "uninstallDisplayName": "Companion",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Companion-Setup-${version}-x64.${ext}"
+    },
+    "portable": {
+      "artifactName": "Companion-${version}-x64-portable.${ext}"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Companion uses Apple Events to read the active app and window title, so distraction detection can nudge you when blocked apps or keywords appear."
+      }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "pradhan-not-found",
+        "repo": "Companion-"
+      }
+    ]
   },
   "dependencies": {
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.9",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.5",
+    "vitest": "^4.1.10"
   }
 }

@@ -4,109 +4,109 @@
 
 # Companion
 
-**A beautifully crafted desktop pet that lives on your screen.**
+**A beautifully crafted desktop pet that lives on your screen and looks after you while you work.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-black.svg?style=for-the-badge&logo=github)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-black.svg?style=for-the-badge&logo=github)](#-contributing)
+[![License: MIT](https://img.shields.io/badge/License-MIT-black.svg?style=for-the-badge&logo=github)](LICENSE)
 [![Powered by Electron](https://img.shields.io/badge/Electron-191970.svg?style=for-the-badge&logo=electron&logoColor=white)](https://electronjs.org)
-[![Next.js](https://img.shields.io/badge/Next.js-000000.svg?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-000000.svg?style=for-the-badge&logo=react&logoColor=61dafb)](https://react.dev)
 
 </div>
 
 <br />
 
-> **Companion** brings a subtle, interactive companion directly to your workspace. It sits quietly on your screen while you work—adding a touch of delight, keeping you hydrated, and ensuring you never work alone.
-
-<br />
+> **Companion** keeps a small animated friend on your desktop. It wanders around, reacts when you click it, and nudges you to take breaks, drink water, and stay focused.
 
 ## ✨ Features
 
-- 🐾 **Multiple Companions** — Choose from a growing roster of beautifully animated companions, from a sleepy capybara to a mischievous cat.
-- 🪟 **True Transparency** — The app runs as a native, fully transparent overlay that floats seamlessly over your other windows.
-- 🖱️ **Micro-interactions** — Deeply integrated hover states, subtle idle animations, and fluid transitions that feel native to macOS and Windows.
-- 🌗 **Adaptive Design** — Full support for stunning Light and Dark modes, adapting flawlessly to your desktop aesthetic.
+- 🐾 **14 bundled companions**: capybara, otter, cats, a droid, a whale and more. All of them use smooth PetDex sprite animation for idle, walking, waving, jumping, waiting and reviewing.
+- 🚶 **Natural roaming**: the pet wanders along your screen with time-based, sub-pixel-smooth movement. You can drag it anywhere.
+- ☕ **Break reminders**: regular break nudges, plus an optional screen-block break when a reminder is easy to ignore.
+- 💧 **Hydration tracking**: water reminders with daily and historical stats.
+- ⏰ **Custom reminders**: daily reminders that count down on the pet shortly before they are due.
+- 🎯 **Focus mode**: timed focus sessions, plus distraction detection for blocked apps and sites (macOS).
+- 🤖 **Agent activity alerts**: Claude Code, Codex, OpenCode, DeepSeek TUI and Hermes runs make the pet react when work finishes, fails or needs review.
+- 📦 **Import your own pets**: add any `pet.json + spritesheet.webp/png` folder or zip. Pets installed with `npx petdex install <name>` are detected automatically.
+- 📊 **Stats dashboard**: breaks, water, focus minutes and a focus heatmap.
+- 🌍 **9 languages** with full light and dark mode.
+- 🔄 **Auto-updates**: installed copies update themselves from GitHub Releases.
 
----
+## ⬇️ Install (Windows)
 
-## 🚀 Getting Started
+Download from [Releases](https://github.com/pradhan-not-found/Companion-/releases/latest):
 
-Companion is a monorepo consisting of two primary environments: the **Electron Desktop Application** and the **Next.js Landing Page**.
+| File | What it is |
+| --- | --- |
+| `Companion-Setup-x.y.z-x64.exe` | **Recommended.** Installer with Start Menu and desktop shortcuts, an uninstaller and auto-updates. |
+| `Companion-x.y.z-x64-portable.exe` | Runs without installing. It doesn't auto-update. |
 
-### Prerequisites
+The installer isn't code-signed yet, so Windows SmartScreen may say "Windows protected your PC". Click **More info → Run anyway**.
 
-Ensure you have the following installed on your machine:
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- `npm` or `yarn`
+After launch, Companion lives in the **system tray**. Click the tray icon or right-click the pet for settings, focus mode, logging water and more.
 
-<br />
+## 🛠 Run from source
 
-### 1. Desktop Application
-
-The core Electron app that powers your desktop companion.
+Requires Node.js 22 or newer.
 
 ```bash
-# Clone the repository
 git clone https://github.com/pradhan-not-found/Companion-.git
 cd Companion-
-
-# Install dependencies
 npm install
-
-# Start the dev server (spins up Vite + Electron)
-npm start
-
-# Package the app for production
-npm run build
+npm run dev          # launches the app with hot reload
 ```
 
-<br />
+| Command | Purpose |
+| --- | --- |
+| `npm run typecheck` | TypeScript check |
+| `npm test` | Unit tests (Vitest) |
+| `npm run build` | Production build into `out/` |
+| `npm run dist:win` | Windows installer and portable exe in `release/` |
 
-### 2. Landing Page
+### Releasing
 
-The official website and waitlist, built with Next.js 15.
+1. Bump `"version"` in `package.json` (for example `1.0.1`).
+2. Commit, then tag and push: `git tag v1.0.1 && git push origin v1.0.1`.
+3. GitHub Actions builds both exes and publishes the release, including `latest.yml` for auto-updates.
 
-```bash
-# Navigate to the landing page directory
-cd landing-page
+## 🐶 Adding pets
 
-# Install dependencies
-npm install
+A pet is a folder holding `pet.json` and a 1536px-wide PetDex spritesheet. The sheet is 8 columns of 192×208 frames, with 9 rows (or 11 for V2 sheets):
 
-# Boot up the development server
-npm run dev
+```json
+{
+  "id": "my-pet",
+  "displayName": "My Pet",
+  "description": "A short description.",
+  "spritesheetPath": "spritesheet.webp"
+}
 ```
-Navigate to `http://localhost:3000` to view the page.
 
----
+- **Bundle it**: drop the folder into `pets/`, add it to `src/shared/bundledPets.ts`, and rebuild.
+- **Import it**: Settings → Pet → Import, with a folder or zip.
 
-## 🛠 Technology Stack
+## 🤖 Agent activity
 
-Companion is built on a modern, robust, and highly performant foundation:
+In the **Settings** tab, turn on **Agent Completion Alerts**.
 
-| Domain | Technologies |
-| :--- | :--- |
-| **Desktop Engine** | Electron, Node.js |
-| **App Client** | React 18, Vite, TypeScript |
-| **Web / Landing** | Next.js 15 (App Router), Tailwind CSS |
-| **Animation** | Framer Motion (Web), CSS Keyframes (App) |
+- **Claude Code / Codex / DeepSeek TUI**: work automatically. Companion watches their local session files.
+- **OpenCode**: copy `integrations/opencode/companion-agent-hook.js` into `~/.config/opencode/plugins/`.
+- **Hermes**: copy `integrations/hermes/companion-agent-hook` into `~/.hermes/plugins/` and enable `companion-agent-hook` in `~/.hermes/config.yaml`.
 
----
+## 📁 Project structure
 
-## 🤝 Contributing
-
-We welcome contributions of all sizes—whether it's adding new pets, optimizing rendering logic, or refining the UI. 
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
+```text
+src/main/       Electron main process: windows, tray, roaming, timers, reminders, imports
+src/preload/    Secure IPC bridge between Electron and React
+src/renderer/   React UI for the pet window and the settings window
+src/shared/     Types, defaults, i18n, sprite state mapping, bundled pet list
+pets/           Bundled companions (pet.json + spritesheet)
+build/          App and tray icons
+integrations/   Optional agent hooks for OpenCode and Hermes
+landing-page/   Next.js marketing site
+```
 
 ## 📜 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Released under the [MIT License](LICENSE). Companion's desktop engine is adapted from the MIT-licensed [PawPause](https://github.com/angziii/PawPause) and [PawPal](https://github.com/zebangeth/PawPal) projects. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Pet artwork stays subject to its original creators' terms.
 
 <div align="center">
   <p>Built with 🤍 by <a href="https://github.com/pradhan-not-found">pradhan-not-found</a></p>

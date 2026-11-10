@@ -3,37 +3,42 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags like v1.0.0
-  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+      - "v*" # e.g. v1.0.0 — must match "version" in package.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  release:
+  release-windows:
     runs-on: windows-latest
-
-    permissions:
-      contents: write # Required to create releases
-
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: npm
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build Executable
-        run: npm run build-exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Test
+        run: npm test
 
-      - name: Upload Release Asset
+      - name: Build Windows installer and portable exe
+        run: npm run dist:win
+
+      - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: release/*.exe
           generate_release_notes: true
+          # latest.yml + .blockmap let installed copies auto-update.
+          files: |
+            release/Companion-Setup-*.exe
+            release/Companion-Setup-*.exe.blockmap
+            release/Companion-*-portable.exe
+            release/latest.yml
