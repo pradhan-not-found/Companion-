@@ -152,6 +152,10 @@ export type Settings = {
   userName: string;
   /** Profile photo as a data URL; empty means "show my companion". */
   avatarImage: string;
+  /** Avatar when no photo is set: a still image of this pet (empty = current companion). */
+  avatarPet: string;
+  /** Background colour behind the pet avatar. */
+  avatarColor: string;
   /** The name the user gave their companion. */
   petNickname: string;
   /** Start Companion automatically when the user signs in to Windows. */

@@ -28,6 +28,7 @@ import {
   TodayOverview
 } from "./CompanionPanels";
 import { AuthView } from "./AuthView";
+import { isAvatarArt } from "./AvatarArt";
 import { ProfilePage } from "./ProfilePage";
 import type { NavItem } from "./CompanionPanels";
 
@@ -818,6 +819,13 @@ export function SettingsView(): JSX.Element {
   const updateReady = snapshot.update.state === "downloaded" || snapshot.update.state === "available";
   const [photoError, setPhotoError] = useState<string | null>(null);
   const selectedPet = selectablePets.find((pet) => pet.slug === draft.selectedPetId) ?? selectablePets[0];
+  const avatarArt = isAvatarArt(draft.avatarPet) ? draft.avatarPet.slice(4) : undefined;
+  const avatarLook = {
+    image: draft.avatarImage,
+    pet: (!avatarArt && selectablePets.find((pet) => pet.slug === draft.avatarPet)) || selectedPet,
+    color: draft.avatarColor,
+    art: avatarArt as import("./AvatarArt").AvatarArtId | undefined
+  };
   const openedForNewPets = useRef(false);
   useEffect(() => {
     if (openedForNewPets.current || !newPets.length || !draft.onboardingDismissed) return;
@@ -903,8 +911,7 @@ export function SettingsView(): JSX.Element {
         onSelect={selectPage}
         footer={
           <AccountMenu
-            image={draft.avatarImage}
-            pet={selectedPet}
+            avatar={avatarLook}
             userName={draft.userName}
             watersLogged={stats.watersLogged}
             focusActive={snapshot.focusActive}
@@ -929,10 +936,11 @@ export function SettingsView(): JSX.Element {
         <section className="prefs__stats-panel" aria-label={labels.statsHeading}>
           <TodayOverview
             userName={snapshot.account.name}
-            avatarImage={draft.avatarImage}
+            avatar={avatarLook}
             watersLogged={stats.watersLogged}
             focusActive={snapshot.focusActive}
             focusMinutesLeft={focusMinutesLeft}
+            focusDurationMinutes={draft.focusDurationMinutes}
             pet={selectedPet}
             petNickname={draft.petNickname}
             companionDays={companionDays}
@@ -1039,8 +1047,12 @@ export function SettingsView(): JSX.Element {
       {page === "profile" ? (
         <ProfilePage
           account={snapshot.account}
-          avatarImage={draft.avatarImage}
+          avatar={avatarLook}
+          avatarValue={draft.avatarPet}
+          pets={selectablePets}
           pet={selectedPet}
+          onPickAvatar={(avatarPet) => updateDraft({ avatarPet, avatarImage: "" })}
+          onAvatarColor={(avatarColor) => updateDraft({ avatarColor })}
           petNickname={draft.petNickname}
           companionDays={companionDays}
           totals={lifetime}

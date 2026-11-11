@@ -2,6 +2,18 @@ import { BUNDLED_PETS, DEFAULT_PET_ID } from "./bundledPets";
 import type { Settings, TodayStats } from "./types";
 
 export const DAILY_WATER_GOAL = 8;
+
+/** Curated avatar backgrounds: soft neutrals and muted tones that suit every pet. */
+export const AVATAR_COLORS = [
+  { name: "Sand", value: "#E9E3D8" },
+  { name: "Sage", value: "#DCE6D8" },
+  { name: "Mist", value: "#D9E4EF" },
+  { name: "Blush", value: "#F1DEDA" },
+  { name: "Lilac", value: "#E4DFF0" },
+  { name: "Butter", value: "#F3E9C9" },
+  { name: "Slate", value: "#3A3F4A" },
+  { name: "Ink", value: "#1F1F22" }
+] as const;
 export const DEFAULT_CUSTOM_REMINDER_COUNTDOWN_LEAD_MINUTES = 10;
 export const DEFAULT_CUSTOM_REMINDER_DUE_SCALE_MULTIPLIER = 1.6;
 
@@ -22,6 +34,8 @@ export const DEFAULT_SETTINGS: Settings = {
   userName: "",
   avatarImage: "",
   petNickname: "",
+  avatarPet: "",
+  avatarColor: "#E9E3D8",
   launchAtLogin: true,
   // Pets bundled with this build count as already introduced on a fresh install;
   // pets added by later updates are then announced as new.

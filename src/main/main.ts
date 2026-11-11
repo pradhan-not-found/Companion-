@@ -315,6 +315,7 @@ type SmoothMotion = { x: number; y: number; lastTickAt: number };
 const MOTION_FRAME_MS = 1000 / 60;
 let ambientMotion: SmoothMotion | null = null;
 let breakRunMotion: SmoothMotion | null = null;
+let breakRunWindowSize: { width: number; height: number } | null = null;
 
 function motionFrameScale(motion: SmoothMotion | null, bounds: Electron.Rectangle): { motion: SmoothMotion; scale: number } {
   const now = performance.now();
@@ -330,12 +331,21 @@ function motionFrameScale(motion: SmoothMotion | null, bounds: Electron.Rectangl
 
 function movePetWindowTo(x: number, y: number): void {
   if (!petWindow || petWindow.isDestroyed()) return;
-  const [currentX, currentY] = petWindow.getPosition();
-  const nextX = Math.round(x);
-  const nextY = Math.round(y);
-  if (nextX === currentX && nextY === currentY) return;
-  // setPosition (not setBounds) so the window size never drifts on scaled displays.
-  petWindow.setPosition(nextX, nextY, false);
+  const current = petWindow.getBounds();
+  // Always pin the intended size. On scaled displays (e.g. 125%) Windows rounds
+  // each setPosition and the window grows a pixel per move, which over a few
+  // walks left the pet trapped in a too-wide window, running in place.
+  const size = blockingMode === "breakRun" && breakRunWindowSize ? breakRunWindowSize : petWindowSize();
+  const next = { x: Math.round(x), y: Math.round(y), width: size.width, height: size.height };
+  if (
+    next.x === current.x &&
+    next.y === current.y &&
+    next.width === current.width &&
+    next.height === current.height
+  ) {
+    return;
+  }
+  petWindow.setBounds(next, false);
 }
 let agentLastNotificationAt = 0;
 let agentLastProgressBubbleAt = 0;
@@ -544,6 +554,11 @@ function getSettings(): Settings {
     customReminders: normalizeCustomReminders(stored.customReminders),
     userName: normalizeUserName(stored.userName),
     avatarImage: normalizeAvatar(stored.avatarImage),
+    avatarPet: typeof stored.avatarPet === "string" ? stored.avatarPet.slice(0, 80) : "",
+    avatarColor:
+      typeof stored.avatarColor === "string" && /^#[0-9a-f]{6}$/i.test(stored.avatarColor)
+        ? stored.avatarColor
+        : DEFAULT_SETTINGS.avatarColor,
     seenPetIds: Array.isArray(stored.seenPetIds)
       ? stored.seenPetIds.filter((id): id is string => typeof id === "string")
       : DEFAULT_SETTINGS.seenPetIds,
@@ -1204,33 +1219,38 @@ function updateTrayMenu(): void {
 function showPetContextMenu(): void {
   if (getSettings().lyricsModeEnabled) return;
   const labels = text().menu;
+  const petName = getSettings().petNickname.trim();
   const template: Electron.MenuItemConstructorOptions[] = [
-    { label: labels.settings, click: createSettingsWindow },
+    { label: "Open Companion", click: createSettingsWindow },
+    { type: "separator" },
     {
-      label: focusActive ? labels.stopFocusMode : labels.startFocusMode,
+      label: "Log a glass of water",
+      enabled: !blockingMode,
+      click: () => handleBubbleAction("hydration:done")
+    },
+    {
+      label: focusActive ? "End focus session" : "Start focus session",
+      enabled: !blockingMode || focusActive,
       click: () => {
         if (focusActive) stopFocusMode(false);
         else startFocusMode();
       }
     },
-    ...(app.isPackaged
-      ? []
-      : [
-          { type: "separator" as const },
-          { label: labels.demoBreakReminder, click: () => triggerDemo("break") },
-          { label: labels.demoHydrationReminder, click: () => triggerDemo("hydration") },
-          { label: labels.demoFocusWarning, click: () => triggerDemo("focusWarning") },
-          { label: labels.demoHappyReaction, click: () => triggerDemo("happy") }
-        ]),
+    {
+      label: "Take a break now",
+      enabled: !blockingMode,
+      click: () => triggerBreakReminder(true)
+    },
     { type: "separator" },
     {
-      label: labels.hideDog,
+      label: petName ? `Hide ${petName}` : labels.hideDog,
       click: () => {
         petWindow?.hide();
         updateTrayMenu();
         sendToAll("app:snapshot", snapshot());
       }
-    }
+    },
+    { label: "Quit Companion", click: () => app.quit() }
   ];
 
   Menu.buildFromTemplate(template).popup({ window: petWindow ?? undefined });
@@ -1688,6 +1708,10 @@ function startBreakRun(): void {
   setPetFacing("right");
   breakRunVelocity = chooseBreakRunVelocity();
   breakRunMotion = null;
+  if (petWindow && !petWindow.isDestroyed()) {
+    const { width, height } = petWindow.getBounds();
+    breakRunWindowSize = { width, height };
+  }
   nextBreakRunTurnAt = Date.now() + 600;
   const settings = getSettings();
   const durationMs = Math.max(15, settings.screenBlockDurationSeconds) * 1000;

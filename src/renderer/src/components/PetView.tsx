@@ -216,7 +216,6 @@ export function PetView(): JSX.Element {
               ))}
             </p>
           ) : null}
-          <span className="greet__rule" aria-hidden="true" />
           <p className="greet__line">{bubble.message}</p>
         </section>
       ) : bubble ? (

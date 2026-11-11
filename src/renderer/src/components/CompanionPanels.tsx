@@ -4,6 +4,8 @@ import type { CSSProperties, JSX, ReactNode } from "react";
 import { DAILY_WATER_GOAL } from "../../../shared/constants";
 import type { InstalledPet, PetState, UpdateStatus } from "../../../shared/types";
 import { getSelectedPetAsset } from "../assets";
+import { AvatarArt } from "./AvatarArt";
+import type { AvatarArtId } from "./AvatarArt";
 import appLogo from "../assets/applogo.png";
 
 const ArrowIcon = (): JSX.Element => (
@@ -216,10 +218,11 @@ export function greetingForHour(hour: number): string {
 /** Overview header + three quick cards (hydration, focus, companion). */
 export function TodayOverview({
   userName,
-  avatarImage,
+  avatar,
   watersLogged,
   focusActive,
   focusMinutesLeft,
+  focusDurationMinutes,
   pet,
   petNickname,
   companionDays,
@@ -229,10 +232,11 @@ export function TodayOverview({
   stopFocusLabel
 }: {
   userName: string;
-  avatarImage: string;
+  avatar: AvatarLook;
   watersLogged: number;
   focusActive: boolean;
   focusMinutesLeft: number;
+  focusDurationMinutes: number;
   pet: InstalledPet | undefined;
   petNickname: string;
   companionDays: number;
@@ -251,7 +255,7 @@ export function TodayOverview({
   return (
     <>
       <header className="ov-head">
-        <Avatar image={avatarImage} pet={pet} size={44} />
+        <Avatar {...avatar} size={44} />
         <div>
           <h1 className="ov-head__title">
             {greetingForHour(now.getHours())}
@@ -264,53 +268,58 @@ export function TodayOverview({
       <p className="ov-section-label">Today</p>
 
       <div className="ov-cards">
-        <section className="ov-card">
-          <div className="ov-card__top">
-            <span className="ov-card__icon" aria-hidden="true">
+        <section className="mcard">
+          <div className="mcard__head">
+            <span className="mcard__label">Hydration</span>
+            <span className="mcard__icon" aria-hidden="true">
               <DropIcon />
             </span>
-            <span className="ov-card__label">Hydration</span>
-            <button type="button" className="ov-icon-btn" onClick={onDrink} aria-label="Log a glass of water" title="Log a glass">
-              <PlusIcon size={15} />
+          </div>
+          <p className="mcard__value">
+            {watersLogged}
+            <span>/{DAILY_WATER_GOAL}</span>
+          </p>
+          <p className="mcard__sub">{remaining > 0 ? `${remaining} more glasses to today's goal` : "Daily goal reached"}</p>
+          <div className="mcard__foot">
+            <div className="mcard__segments" aria-hidden="true">
+              {Array.from({ length: DAILY_WATER_GOAL }, (_, index) => (
+                <span key={index} className={index < watersLogged ? "is-on" : undefined} />
+              ))}
+            </div>
+            <button type="button" className="mcard__action" onClick={onDrink}>
+              <PlusIcon size={13} />
+              Log
             </button>
           </div>
-          <p className="ov-card__value">
-            {watersLogged}
-            <small>of {DAILY_WATER_GOAL} glasses</small>
-          </p>
-          <div className="ov-segments" aria-hidden="true">
-            {Array.from({ length: DAILY_WATER_GOAL }, (_, index) => (
-              <span key={index} className={index < watersLogged ? "is-on" : undefined} />
-            ))}
-          </div>
-          <p className="ov-card__hint">{remaining > 0 ? `${remaining} more to reach today's goal` : "Goal reached today"}</p>
         </section>
 
-        <section className={`ov-card${focusActive ? " is-focus" : ""}`}>
-          <div className="ov-card__top">
-            <span className="ov-card__icon" aria-hidden="true">
+        <section className="mcard">
+          <div className="mcard__head">
+            <span className="mcard__label">Focus</span>
+            <span className="mcard__icon" aria-hidden="true">
               <FocusIcon />
             </span>
-            <span className="ov-card__label">Focus</span>
-            <button type="button" className={`ov-pill-btn${focusActive ? " is-live" : ""}`} onClick={onToggleFocus}>
+          </div>
+          <p className="mcard__value">
+            {focusActive ? focusMinutesLeft : focusDurationMinutes}
+            <span>min</span>
+          </p>
+          <p className="mcard__sub">{focusActive ? "left in this session" : "per focus session"}</p>
+          <div className="mcard__foot">
+            <div className="mcard__track" aria-hidden="true">
+              <span
+                style={{
+                  width: focusActive
+                    ? `${Math.max(4, 100 - (focusMinutesLeft / Math.max(1, focusDurationMinutes)) * 100)}%`
+                    : "0%"
+                }}
+              />
+            </div>
+            <button type="button" className="mcard__action" onClick={onToggleFocus}>
               {focusActive ? <StopIcon size={11} /> : <PlayIcon size={11} />}
-              {focusActive ? stopFocusLabel : focusLabel}
+              {focusActive ? "End" : "Start"}
             </button>
           </div>
-          <p className="ov-card__value">
-            {focusActive ? focusMinutesLeft : "Ready"}
-            {focusActive ? <small>min left</small> : null}
-          </p>
-          {focusActive ? (
-            <div className="ov-meter is-focus" aria-hidden="true">
-              <span style={{ width: "100%" }} />
-            </div>
-          ) : (
-            <div className="ov-meter-spacer" aria-hidden="true" />
-          )}
-          <p className="ov-card__hint">
-            {focusActive ? "Distracting apps and sites are being closed." : "Start a session to block distractions."}
-          </p>
         </section>
 
         <section className="ov-card ov-card--pet">
@@ -331,18 +340,21 @@ export function TodayOverview({
 export function SpriteView({
   pet,
   state = "idle",
-  scale
+  scale,
+  still = false
 }: {
   pet: InstalledPet;
   state?: PetState;
   scale: number;
+  /** Show the first frame only, with no animation. */
+  still?: boolean;
 }): JSX.Element | null {
   const asset = useMemo(() => getSelectedPetAsset(pet.slug, [pet], state), [pet, state]);
   if (asset.kind !== "sprite") return null;
   return (
     <span
       key={`${asset.src}:${asset.animation.row}`}
-      className="sprite-pet"
+      className={`sprite-pet${still ? " is-still" : ""}`}
       role="img"
       aria-label={pet.manifest.displayName}
       style={
@@ -511,45 +523,59 @@ export function NewPetSpotlight({
 
 /* ── Avatar & sidebar profile ───────────────────────────────── */
 
-/** Round avatar: the user's photo, or their companion when no photo is set. */
+/** The user's avatar: their photo, or a still pet portrait on a chosen colour. */
+/** Everything needed to draw the user's avatar. */
+export type AvatarLook = {
+  image: string;
+  pet: InstalledPet | undefined;
+  color: string;
+  art?: AvatarArtId;
+};
+
 export function Avatar({
   image,
   pet,
   size,
+  color = "#E9E3D8",
+  art,
+  shape = "circle",
   ring = false
 }: {
   image: string;
   pet: InstalledPet | undefined;
   size: number;
+  color?: string;
+  art?: AvatarArtId;
+  shape?: "circle" | "rounded";
   ring?: boolean;
 }): JSX.Element {
   return (
     <span
-      className={`avatar${ring ? " avatar--ring" : ""}${image ? " avatar--photo" : ""}`}
-      style={{ width: size, height: size } as CSSProperties}
+      className={`avatar is-${shape}${ring ? " avatar--ring" : ""}${image ? " avatar--photo" : ""}`}
+      style={{ width: size, height: size, background: image ? undefined : color } as CSSProperties}
     >
       {image ? (
         <img src={image} alt="Profile" />
+      ) : art ? (
+        <AvatarArt id={art} color={color} size={size} />
       ) : pet ? (
         <span className="avatar__pet">
-          <SpriteView pet={pet} scale={(size * 1.18) / 208} />
+          <SpriteView pet={pet} scale={(size * 0.86) / 208} still />
         </span>
       ) : null}
     </span>
   );
 }
 
-
 const menuIcon = (paths: ReactNode): JSX.Element => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {paths}
   </svg>
 );
 
 /** Compact account row pinned to the bottom of the sidebar, with a dropdown menu. */
 export function AccountMenu({
-  image,
-  pet,
+  avatar,
   userName,
   watersLogged,
   focusActive,
@@ -562,8 +588,7 @@ export function AccountMenu({
   onSignOut,
   email
 }: {
-  image: string;
-  pet: InstalledPet | undefined;
+  avatar: AvatarLook;
   userName: string;
   watersLogged: number;
   focusActive: boolean;
@@ -607,10 +632,10 @@ export function AccountMenu({
       {open ? (
         <div className="account__menu" role="menu">
           <div className="account__header">
-            <Avatar image={image} pet={pet} size={40} />
+            <Avatar {...avatar} size={40} />
             <div className="account__header-text">
               <p className="account__header-name">{name}</p>
-              <p className="account__greeting">{email || greeting}</p>
+              <p className="account__greeting">{greeting}</p>
             </div>
           </div>
           <div className="account__chips">
@@ -649,7 +674,7 @@ export function AccountMenu({
                 <circle cx="12" cy="13" r="3" />
               </>
             )}
-            {image ? "Change photo" : "Add a photo"}
+            Change avatar
           </button>
           <div className="account__sep" />
           <button type="button" role="menuitem" className="account__item" onClick={() => run(onCheckUpdates)}>
@@ -684,10 +709,9 @@ export function AccountMenu({
         onClick={() => setOpen((value) => !value)}
       >
         <span className="account__trigger-inner">
-          <Avatar image={image} pet={pet} size={36} />
+          <Avatar {...avatar} size={34} />
           <span className="account__who">
             <span className="account__name">{name}</span>
-            <span className="account__email">{email}</span>
           </span>
           {updateReady ? <span className="account__trigger-dot" aria-label="Update available" /> : null}
           <svg className="account__chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
