@@ -2,23 +2,35 @@
 
 import { useEffect, useState } from 'react';
 
-const SHEET = '/pets/savage-codex-hacker/spritesheet.webp';
+const WORKERS = {
+  // Savage Codex Hacker: row 0 is the typing loop.
+  hacker: { sheet: '/pets/savage-codex-hacker/spritesheet.webp', rows: 9, row: 0, frames: 6 },
+  // JokeBear: row 1 is the calm laptop-typing loop.
+  jokebear: { sheet: '/pets/jokebear-codexpet/spritesheet.webp', rows: 11, row: 1, frames: 8 }
+} as const;
+
 const FRAME_W = 192;
 const FRAME_H = 208;
 const COLS = 8;
-const ROWS = 9;
-// Row 0 is the typing loop.
-const WORK_FRAMES = 6;
 
-/** The Codex hacker pet, typing away on its laptop. Sized in em so it tracks the text beside it. */
-export default function CodexHacker({ width = 0.82, className = '' }: { width?: number; className?: string }) {
+/** A pet typing on its laptop. Sized in em so it tracks the text beside it. */
+export default function CodexHacker({
+  pet = 'hacker',
+  width = 0.82,
+  className = ''
+}: {
+  pet?: keyof typeof WORKERS;
+  width?: number;
+  className?: string;
+}) {
+  const worker = WORKERS[pet];
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => setFrame(value => (value + 1) % WORK_FRAMES), 150);
+    const id = window.setInterval(() => setFrame(value => (value + 1) % worker.frames), 150);
     return () => window.clearInterval(id);
-  }, []);
+  }, [worker.frames]);
 
   const height = (width * FRAME_H) / FRAME_W;
   return (
@@ -28,9 +40,9 @@ export default function CodexHacker({ width = 0.82, className = '' }: { width?: 
       style={{
         width: `${width}em`,
         height: `${height}em`,
-        backgroundImage: `url('${SHEET}')`,
-        backgroundPosition: `${-frame * width}em 0em`,
-        backgroundSize: `${width * COLS}em ${height * ROWS}em`,
+        backgroundImage: `url('${worker.sheet}')`,
+        backgroundPosition: `${-frame * width}em ${-worker.row * height}em`,
+        backgroundSize: `${width * COLS}em ${height * worker.rows}em`,
         backgroundRepeat: 'no-repeat',
         imageRendering: 'pixelated'
       }}

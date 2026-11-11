@@ -1,232 +1,160 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
 
-interface Asset {
-  id: number;
-  name: string;
-  browser_download_url: string;
-  size: number;
-  content_type: string;
-}
+export const metadata: Metadata = {
+  title: 'Changelog',
+  description: 'New features, improvements and fixes in every Companion release.',
+  alternates: { canonical: '/changelog' }
+};
 
-interface Release {
-  id: number;
-  tag_name: string;
-  name: string;
-  body: string;
-  published_at: string;
-  html_url: string;
-  prerelease: boolean;
-  assets: Asset[];
-}
+const DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
+
+type Release = {
+  version: string;
+  date: string;
+  title: string;
+  summary: string;
+  latest?: boolean;
+  sections: { heading: 'New' | 'Improved' | 'Fixed'; items: { name: string; detail: string }[] }[];
+};
+
+const RELEASES: Release[] = [
+  {
+    version: 'v1.1.0',
+    date: '2026-11-11',
+    title: 'Accounts, Compboard and a smarter focus mode',
+    summary:
+      'The biggest update yet. Companion now knows who you are, keeps your clipboard close, guards your focus sessions and lets your pet deliver every message.',
+    latest: true,
+    sections: [
+      {
+        heading: 'New',
+        items: [
+          { name: 'Accounts', detail: 'Create an account, sign in and sign out. Your companion, name and progress stay with you.' },
+          { name: 'Onboarding', detail: 'Pick your first companion and give it a name the first time you open the app.' },
+          { name: 'Profile', detail: 'Edit your name and choose a pet avatar or upload your own photo.' },
+          { name: 'Compboard', detail: 'Click your pet to open quick actions and your recent clipboard history, right beside it.' },
+          { name: 'Focus mode', detail: 'Distracting tabs and games close automatically during a focus session. Add your own sites.' },
+          { name: 'Coding agent alerts', detail: 'Your pet pokes you when Claude Code or Codex needs your input.' },
+          { name: 'Pet check-ins', detail: 'If you have been away for a while, your companion says hello when you return.' },
+          { name: 'Updates page', detail: 'See your version and install new releases from inside the app.' }
+        ]
+      },
+      {
+        heading: 'Improved',
+        items: [
+          { name: 'Notifications', detail: 'Reminders now arrive as speech bubbles from your pet instead of system toasts.' },
+          { name: 'Movement', detail: 'Smoother walking and turning, including during focus sessions.' },
+          { name: 'Dashboard', detail: 'A redesigned dashboard with trend charts, a full-width activity heatmap and a realistic water glass.' },
+          { name: 'Launch at login', detail: 'Companion can start with Windows and greet you when it opens.' }
+        ]
+      },
+      {
+        heading: 'Fixed',
+        items: [
+          { name: 'Scaled displays', detail: 'The pet window no longer grows on displays set above 100% scaling.' },
+          { name: 'Click-through', detail: 'Only your pet is clickable, so the rest of your screen works normally around it.' }
+        ]
+      }
+    ]
+  },
+  {
+    version: 'v1.0.1',
+    date: '2026-10-02',
+    title: 'Companion beta',
+    summary: 'Where it all started: a pixel pet that lives on your desktop and keeps you company while you work.',
+    sections: [
+      {
+        heading: 'New',
+        items: [
+          { name: 'Desktop pets', detail: 'Animated pixel companions that roam your screen while you work.' },
+          { name: 'Hydration reminders', detail: 'Set a daily water goal and get gentle reminders through the day.' },
+          { name: 'Break reminders', detail: 'Regular nudges to stand up, stretch and rest your eyes.' },
+          { name: 'Transparent overlay', detail: 'Built for Windows to blend into your workspace without getting in the way.' }
+        ]
+      }
+    ]
+  }
+];
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 }
 
-function formatBytes(bytes: number) {
-  if (bytes > 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
-  return `${(bytes / 1_000).toFixed(0)} KB`;
-}
-
-function parseInline(text: string, titleColor: string) {
-  return text.split(/(\*\*.*?\*\*)/g).map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} style={{ color: titleColor, fontWeight: 500 }}>{part.slice(2, -2)}</strong>;
-    }
-    return part;
-  });
-}
-
-function ReleaseBody({ body, colors }: { body: string; colors: { title: string; sub: string; body: string; dot: string } }) {
-  if (!body) return null;
-  const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      {lines.map((line, i) => {
-        if (line.startsWith('## ')) {
-          const text = line.replace(/^##\s*/, '');
-          return (
-            <h2 key={i} className="text-[22px] md:text-[26px] font-medium tracking-tight mb-4 mt-2 first:mt-0" style={{ color: colors.title }}>
-              {text}
-            </h2>
-          );
-        }
-        if (line.startsWith('### ')) {
-          const text = line.replace(/^###\s*/, '');
-          return (
-            <p key={i} className="text-[11px] font-bold tracking-[0.08em] uppercase mt-5 mb-1" style={{ color: colors.body }}>
-              {text}
-            </p>
-          );
-        }
-        if (line.startsWith('- ') || line.startsWith('* ')) {
-          return (
-            <div key={i} className="flex items-start gap-2.5 mt-2">
-              <span className="mt-[10px] w-1 h-1 rounded-full shrink-0" style={{ background: colors.dot }} />
-              <p className="text-[15px] leading-[1.7]" style={{ color: colors.sub }}>
-                {parseInline(line.replace(/^[-*]\s*/, ''), colors.title)}
-              </p>
-            </div>
-          );
-        }
-        // Full changelog link — ignore it entirely
-        if (line.startsWith('**Full Changelog**')) {
-          return null;
-        }
-        return (
-          <p key={i} className="text-[15px] leading-[1.7] mt-3" style={{ color: colors.sub }}>
-            {parseInline(line, colors.title)}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
+const SECTION_DOT: Record<Release['sections'][number]['heading'], string> = {
+  New: '#3B82F6',
+  Improved: '#16A34A',
+  Fixed: '#F59E0B'
+};
 
 export default function ChangelogPage() {
-  const [isDark, setIsDark] = useState(false);
-  const [releases, setReleases] = useState<Release[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/pradhan-not-found/Companion-/releases')
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setReleases(data); })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const toggleDark = () => {
-    setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
-  };
-
-  const bg = isDark ? '#111111' : '#FFFFFF';
-  const title = isDark ? '#FFFFFF' : '#2E2E2D';
-  const sub = isDark ? '#A0A0A0' : '#6E6D6A';
-  const body = isDark ? '#666' : '#A8A7A4';
-  const cardBg = isDark ? '#171717' : '#FFFFFF';
-  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
-  const divider = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-  const tagBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
-  const assetBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)';
-  const assetBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)';
-
-  const bodyColors = { title, sub, body, dot: body };
-
-  const fallbackInitialReleaseBody = `
-## Companion Beta is here!
-Where it all started. A virtual pet that lives as a buddy on your desktop. It can roam your screen, remind you to stay hydrated, and even take breaks with you, kinda like having a real companion next to you.
-
-### What's New
-* **Animated Desktop Pets**: Choose between a variety of cute pets (cats, dogs, and foxes) that roam freely on your screen while you work.
-* **Pricing Plans**: Introduced simple, honest pricing with Free, Pro, and Max tiers.
-* **Smart Hydration Tracker**: Set your daily water intake goals and receive gentle, non-intrusive reminders.
-* **Transparent Overlay**: Built natively for Windows to seamlessly blend into your workspace without getting in the way.
-  `.trim();
-
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-300 relative" style={{ backgroundColor: bg }}>
-      <div className="relative z-10 flex flex-col min-h-screen">
+    <div className="min-h-dvh flex flex-col bg-white text-[#111]">
       <NavBar />
 
-      <main className="flex-1 flex flex-col items-center px-6 py-16">
-        <div className="w-full max-w-4xl">
+      <main className="flex-1 w-full max-w-[920px] mx-auto px-5 sm:px-8 py-14 sm:py-20">
+        <header className="mb-14 sm:mb-20">
+          <h1 className="text-[34px] sm:text-[44px] font-semibold tracking-[-0.035em] leading-[1.05]">Changelog</h1>
+          <p className="mt-3 text-[15.5px] leading-[1.6] text-[#6D6D6D] max-w-[480px]">
+            Every new feature, improvement and fix in Companion.
+          </p>
+        </header>
 
-          {/* Header */}
-          {/* Removed big title header to match screenshot */}
+        <ol className="flex flex-col">
+          {RELEASES.map((release, index) => (
+            <li key={release.version} className="relative">
+              <article className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-5 md:gap-12">
+                <div className="md:sticky md:top-24 self-start flex md:flex-col items-center md:items-start gap-3 md:gap-2">
+                  <span className="gel gel--blue gel--tag no-underline">
+                    <span className="gel__shine" aria-hidden="true" />
+                    <span className="relative z-10">{release.version}</span>
+                  </span>
+                  <time dateTime={release.date} className="text-[13px] text-[#8A8A8A]">
+                    {formatDate(release.date)}
+                  </time>
+                  {release.latest ? <span className="text-[12px] font-medium text-[#16A34A]">Latest</span> : null}
+                </div>
 
-          {/* Loading skeletons */}
-          {loading && (
-            <div className="flex flex-col gap-4">
-              {[1, 2].map(i => (
-                <div
-                  key={i}
-                  className="h-40 rounded-[14px] animate-pulse"
-                  style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-                />
-              ))}
-            </div>
-          )}
+                <div className="min-w-0">
+                  <h2 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.03em] leading-[1.15]">{release.title}</h2>
+                  <p className="mt-3 text-[15.5px] leading-[1.7] text-[#5F5F5D]">{release.summary}</p>
 
-          {/* Empty state */}
-          {!loading && releases.length === 0 && (
-            <div
-              className="flex flex-col items-center justify-center py-20 rounded-[16px] gap-3 text-center"
-              style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-7 h-7 opacity-25" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: sub }}>
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <p className="text-[14px]" style={{ color: sub }}>No releases yet. Check back soon.</p>
-            </div>
-          )}
+                  {release.sections.map(section => (
+                    <section key={section.heading} className="mt-9">
+                      <h3 className="flex items-center gap-2 text-[13.5px] font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: SECTION_DOT[section.heading] }} aria-hidden="true" />
+                        {section.heading}
+                      </h3>
+                      <ul className="mt-3 flex flex-col divide-y divide-black/[0.06] border-y border-black/[0.06]">
+                        {section.items.map(item => (
+                          <li key={item.name} className="py-3.5 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-1 sm:gap-6">
+                            <span className="text-[14.5px] font-medium">{item.name}</span>
+                            <span className="text-[14.5px] leading-[1.6] text-[#6D6D6D]">{item.detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
 
-          {/* Releases */}
-          <div className="flex flex-col mt-12">
-            {releases.map((release, idx) => {
-              const bodyContent = (release.tag_name === 'v1.0.1' || release.tag_name === '1.0.1' || (!release.body || release.body.includes('**Full Changelog**') && release.body.length < 150)) 
-                ? fallbackInitialReleaseBody 
-                : release.body;
-
-              return (
-                <div key={release.id}>
-                  <div className="flex flex-col md:flex-row gap-6 md:gap-14 items-start">
-                    
-                    {/* Left: Sticky Meta */}
-                    <div className="md:w-[150px] shrink-0 md:sticky md:top-24 flex flex-col items-start gap-1.5">
-                      <div className="relative rounded-[20px] flex items-center justify-center overflow-hidden px-3 py-[2px]"
-                           style={{
-                             background: 'linear-gradient(to bottom, #dbe4ff 0%, #b8cfff 100%)',
-                             border: '1px solid #7592fb',
-                             boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8)'
-                           }}>
-                        <div className="absolute top-[1px] left-[2px] right-[2px] h-[45%] rounded-t-full pointer-events-none"
-                             style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%)' }} />
-                        <span className="relative z-10 text-[#1e2a5c] font-[Arial,Helvetica,sans-serif] text-[12px] font-semibold tracking-wide">
-                          {release.tag_name}
-                        </span>
-                      </div>
-                      <span className="text-[12px] font-medium" style={{ color: sub }}>
-                        {formatDate(release.published_at)}
-                      </span>
-                    </div>
-
-                    {/* Right: Content */}
-                    <div className="flex-1 min-w-0 pb-2 md:pb-4">
-                      {/* Release name */}
-                      {release.name && release.name !== release.tag_name && (
-                        <h2 className="text-[22px] md:text-[26px] font-medium tracking-tight mb-4" style={{ color: title }}>
-                          {release.name}
-                        </h2>
-                      )}
-
-                      {/* Release body */}
-                      {bodyContent && (
-                        <div className="mb-8">
-                          <ReleaseBody body={bodyContent} colors={bodyColors} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                {/* Divider Line between releases */}
-                {idx !== releases.length - 1 && (
-                  <div className="w-full h-px my-14 md:my-20" style={{ background: divider }} />
-                )}
-              </div>
-              );
-            })}
-          </div>
-        </div>
+                  {release.latest ? (
+                    <a href={DOWNLOAD} className="gel gel--white mt-9 no-underline">
+                      <span className="gel__shine" aria-hidden="true" />
+                      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="relative z-10">
+                        <rect x="2" y="2" width="9.5" height="9.5" fill="#F25022" />
+                        <rect x="12.5" y="2" width="9.5" height="9.5" fill="#7FBA00" />
+                        <rect x="2" y="12.5" width="9.5" height="9.5" fill="#00A4EF" />
+                        <rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#FFB900" />
+                      </svg>
+                      <span className="relative z-10">download {release.version} for windows</span>
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+              {index < RELEASES.length - 1 ? <div className="h-px bg-black/[0.07] my-14 sm:my-20" /> : null}
+            </li>
+          ))}
+        </ol>
       </main>
-      </div>
     </div>
   );
 }

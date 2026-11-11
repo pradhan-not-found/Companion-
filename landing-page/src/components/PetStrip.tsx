@@ -18,7 +18,7 @@ interface PetConfig {
 export const PETS: PetConfig[] = [
   { id: 'angry-cat', name: 'Angry Cat', src: '/pets/angry-cat/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'capy-puff', name: 'Capy Puff', src: '/pets/capy-puff/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'jokebear-codexpet', name: 'JokeBear', src: '/pets/jokebear-codexpet/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 8, row: 1 },
+  { id: 'jokebear-codexpet', name: 'JokeBear', src: '/pets/jokebear-codexpet/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
   { id: 'pupu', name: 'Pupu', src: '/pets/pupu/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'droid', name: 'Droid', src: '/pets/droid/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'boba', name: 'Boba', src: '/pets/boba/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
@@ -68,17 +68,6 @@ export default function PetStrip() {
   const [last, setLast] = useState<number | null>(null);
   const [origin, setOrigin] = useState({ x: 50, y: 50 });
   const box = useRef<HTMLDivElement>(null);
-  const intent = useRef<number | undefined>(undefined);
-
-  // Hover intent: a short rest before opening, a longer one before switching pets,
-  // so sweeping the cursor across the grid does not flash colours.
-  const OPEN_DELAY = 140;
-  const SWITCH_DELAY = 320;
-  const schedule = (run: () => void, ms: number) => {
-    window.clearTimeout(intent.current);
-    intent.current = window.setTimeout(run, ms);
-  };
-  useEffect(() => () => window.clearTimeout(intent.current), []);
 
   useEffect(() => {
     const id = window.setInterval(() => setFrame(value => value + 1), 180);
@@ -97,7 +86,7 @@ export default function PetStrip() {
     return () => observer.disconnect();
   }, []);
 
-  const rowHeight = phone ? height / 4 : height / 3;
+  const rowHeight = phone ? height / 2 : height / 3;
   // One shared scale: each pet fills ~58% of its row, clamped for very small/large screens.
   const scale = rowHeight ? Math.min(0.72, Math.max(0.26, (rowHeight * 0.58) / 208)) : 0.44;
   const bigScale = height ? Math.min(1.5, Math.max(0.5, (height * 0.42) / 208)) : 1;
@@ -116,7 +105,6 @@ export default function PetStrip() {
   }
 
   function close() {
-    window.clearTimeout(intent.current);
     setActive(null);
   }
 
@@ -132,7 +120,7 @@ export default function PetStrip() {
       onMouseLeave={close}
     >
       <div
-        className={`h-full w-full grid ${phone ? 'grid-cols-2 grid-rows-4' : ''}`}
+        className={`h-full w-full grid ${phone ? 'grid-cols-4 grid-rows-2' : ''}`}
         style={phone ? undefined : { gridTemplateColumns: '1.15fr 0.85fr 1.05fr 0.95fr', gridTemplateRows: '1fr 1fr 1fr' }}
       >
         {TILES.map((tile, index) => {
@@ -140,16 +128,17 @@ export default function PetStrip() {
           return (
             <div
               key={pet.id}
-              className="flex items-center justify-center overflow-hidden"
               style={{ background: tile.color, ...(phone ? {} : { gridColumn: tile.column, gridRow: tile.row }) }}
-              title={pet.name}
-              onMouseEnter={event => {
-                const target = event.currentTarget;
-                if (active === index) {
-                  window.clearTimeout(intent.current);
-                  return;
+              role="button"
+              tabIndex={0}
+              aria-label={`Show ${pet.name}`}
+              className="flex items-center justify-center overflow-hidden cursor-pointer outline-none"
+              onClick={event => focus(index, event.currentTarget)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  focus(index, event.currentTarget);
                 }
-                schedule(() => focus(index, target), open ? SWITCH_DELAY : OPEN_DELAY);
               }}
             >
               <Sprite pet={pet} frame={frame} scale={scale} />
@@ -167,9 +156,11 @@ export default function PetStrip() {
           transition: open
             ? 'clip-path 680ms cubic-bezier(0.22, 1, 0.36, 1), background-color 420ms ease'
             : 'clip-path 460ms cubic-bezier(0.65, 0, 0.35, 1)',
-          pointerEvents: 'none'
+          pointerEvents: open ? 'auto' : 'none',
+          cursor: open ? 'pointer' : undefined
         }}
-        aria-hidden="true"
+        onClick={close}
+        aria-hidden={!open}
       >
         {shownPet ? (
           <div key={shownPet.id} className="pet-pop flex flex-col items-center gap-5">

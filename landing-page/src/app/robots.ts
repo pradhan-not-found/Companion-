@@ -1,14 +1,10 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://companion.app";
 
 export default function robots(): MetadataRoute.Robots {
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://companion.app";
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: "/",
-      },
-    ],
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/checkout", "/get-beta"] }],
     sitemap: `${BASE_URL}/sitemap.xml`,
     host: BASE_URL,
   };

@@ -20,11 +20,11 @@ export const metadata: Metadata = {
 
   // ── Core ──────────────────────────────────────────────────
   title: {
-    default: "Companion — Your Desktop Pet, Always By Your Side",
+    default: "Companion: a desktop pet that keeps you company while you work",
     template: "%s | Companion",
   },
   description:
-    "Companion is a beautifully crafted desktop pet that lives on your screen. Stay hydrated, stay focused, and never work alone. Join the private beta waitlist.",
+    "Companion is a pixel desktop pet for Windows that lives on your screen, reminds you to drink water and take breaks, guards your focus sessions and pings you when your coding agent needs you. Free to download.",
   keywords: [
     "desktop pet",
     "productivity app",
@@ -36,9 +36,14 @@ export const metadata: Metadata = {
     "work from home",
     "pomodoro",
     "animated pet",
+    "windows desktop pet",
+    "virtual pet for pc",
+    "claude code notifications",
+    "codex notifications",
+    "clipboard history",
   ],
-  authors: [{ name: "Companion" }],
-  creator: "Companion",
+  authors: [{ name: "Souradeep Pradhan", url: "/creator" }],
+  creator: "Souradeep Pradhan",
   publisher: "Companion",
   category: "Productivity",
 
@@ -53,26 +58,17 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: BASE_URL,
     siteName: "Companion",
-    title: "Companion — Your Desktop Pet, Always By Your Side",
+    title: "Companion: never work alone",
     description:
-      "A beautifully crafted desktop pet that lives on your screen. Stay hydrated, stay focused, never work alone. Join the waitlist.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Companion — Desktop Pet App",
-      },
-    ],
+      "A pixel desktop pet for Windows that keeps you hydrated, focused and company while you work. Free to download.",
   },
 
   // ── Twitter / X ───────────────────────────────────────────
   twitter: {
     card: "summary_large_image",
-    title: "Companion — Your Desktop Pet, Always By Your Side",
+    title: "Companion: never work alone",
     description:
-      "A beautifully crafted desktop pet that lives on your screen. Stay hydrated, stay focused, never work alone.",
-    images: ["/og-image.png"],
+      "A pixel desktop pet for Windows that keeps you hydrated, focused and company while you work. Free to download.",
   },
 
   // ── Robots ────────────────────────────────────────────────
@@ -116,21 +112,18 @@ export default function RootLayout({
               "@type": "SoftwareApplication",
               name: "Companion",
               applicationCategory: "ProductivityApplication",
-              operatingSystem: "Windows, macOS",
+              operatingSystem: "Windows 10, Windows 11",
               description:
-                "A beautifully crafted desktop pet that lives on your screen. Stay hydrated, stay focused, and never work alone.",
+                "A pixel desktop pet that lives on your screen, reminds you to drink water and take breaks, guards your focus sessions and pings you when your coding agent needs you.",
               url: BASE_URL,
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "USD",
-                availability: "https://schema.org/PreOrder",
-              },
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: "5",
-                reviewCount: "1",
-              },
+              image: `${BASE_URL}/opengraph-image.png`,
+              softwareVersion: "1.1.0",
+              downloadUrl: "https://github.com/pradhan-not-found/Companion-/releases/latest",
+              author: { "@type": "Person", name: "Souradeep Pradhan" },
+              offers: [
+                { "@type": "Offer", name: "Download", price: "0", priceCurrency: "INR" },
+                { "@type": "Offer", name: "Companion Pro", price: "250", priceCurrency: "INR", url: `${BASE_URL}/pricing` },
+              ],
             }),
           }}
         />

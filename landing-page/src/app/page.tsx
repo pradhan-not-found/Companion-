@@ -1,39 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import PetStrip from '@/components/PetStrip';
 import CodexHacker from '@/components/CodexHacker';
+import AskAI from '@/components/AskAI';
 
 const WINDOWS_DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
 
 export default function LandingPage() {
-  const [email, setEmail] = useState('');
-  const [joined, setJoined] = useState(false);
-  const [macOpen, setMacOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!email.trim() || loading) return;
-    setLoading(true);
-    try {
-      await fetch('https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      setJoined(true);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to join waitlist. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-dvh lg:h-dvh lg:overflow-hidden bg-white text-[#111] flex flex-col">
@@ -48,8 +25,11 @@ export default function LandingPage() {
             <Image src="/applogo.png" alt="" width={36} height={36} className="rounded-[9px]" priority />
             <span className="text-[18px] font-semibold tracking-[-0.04em] leading-none">Companion</span>
           </div>
-          <h1 className="font-semibold tracking-[-0.05em] leading-[0.92] text-[clamp(40px,10vw,78px)]">
-            Never work
+          <h1 className="font-semibold tracking-[-0.05em] leading-[0.92] text-[clamp(38px,9.4vw,78px)] lg:text-[clamp(52px,6.1vw,78px)]">
+            <span className="relative inline-block">
+              Never work
+              <CodexHacker pet="jokebear" width={0.8} className="absolute left-full bottom-[0.02em] ml-[0.02em]" />
+            </span>
             <br />
             <span className="relative inline-block">
               alone.
@@ -64,13 +44,13 @@ export default function LandingPage() {
         <div className="mt-8">
           <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-start gap-x-4 gap-y-3">
             <div className="flex flex-col items-center gap-1.5">
-              <button type="button" onClick={() => setMacOpen(open => !open)} aria-expanded={macOpen} className="gel gel--blue">
+              <Link href="/mac" className="gel gel--blue no-underline">
                 <span className="gel__shine" aria-hidden="true" />
                 <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="relative z-10 text-[#111]">
                   <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="currentColor" />
                 </svg>
                 <span className="relative z-10 text-[#111]">download for mac</span>
-              </button>
+              </Link>
               <span className="text-[11.5px] leading-none text-center text-[#111]">coming soon · mac</span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
@@ -88,31 +68,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="h-11 mt-3">
-            {macOpen ? (
-              <div className="mac-wait max-w-[380px]">
-                {!joined ? (
-                  <form onSubmit={handleSubmit} className="flex gap-2">
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={event => setEmail(event.target.value)}
-                      placeholder="Email for the Mac launch"
-                      autoFocus
-                      className="flex-1 min-w-0 h-10 px-4 rounded-full border border-black/15 text-[14px] focus:outline-none"
-                    />
-                    <button type="submit" disabled={loading} className="gel gel--white gel--sm">
-                      <span className="gel__shine" aria-hidden="true" />
-                      <span className="relative z-10">{loading ? 'Adding…' : 'Notify me'}</span>
-                    </button>
-                  </form>
-                ) : (
-                  <p className="text-[14px]">You&apos;re on the list. We&apos;ll email {email} when Mac launches.</p>
-                )}
-              </div>
-            ) : null}
-          </div>
 
           </div>
         </div>
@@ -120,10 +75,7 @@ export default function LandingPage() {
         <div>
           <footer className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[12px] text-[#8a8a8a]">
             <span>© 2026 Companion. All rights reserved.</span>
-            <span className="flex items-center gap-4 shrink-0">
-              <Link href="/pricing" className="no-underline text-inherit">Pricing</Link>
-              <Link href="/changelog" className="no-underline text-inherit">Changelog</Link>
-            </span>
+            <AskAI />
           </footer>
         </div>
       </section>

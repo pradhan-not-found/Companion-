@@ -64,7 +64,7 @@ function Check({ size = 10, color = 'currentColor', weight = 3.2 }: { size?: num
 }
 
 export default function CheckoutPage() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark] = useState(false);
   const [step, setStep] = useState<Step>('details');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -263,13 +263,6 @@ export default function CheckoutPage() {
             Beta
           </span>
         </Link>
-        <span className="inline-flex items-center gap-1.5 text-[12.5px]" style={{ color: c.muted }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="4" y="11" width="16" height="10" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-          Secure checkout
-        </span>
       </header>
 
       <main className="flex-1 min-h-0 w-full max-w-[1080px] mx-auto px-5 sm:px-8 pb-5 grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-16 items-center">
@@ -314,7 +307,7 @@ export default function CheckoutPage() {
                 return (
                   <li key={item.id} className="flex items-center gap-1.5">
                     <span
-                      className="inline-flex items-center gap-1.5 h-[24px] pl-1 pr-2.5 rounded-full text-[11.5px] font-medium transition-colors"
+                      className="inline-flex items-center gap-1.5 h-[24px] pl-1 pr-1 sm:pr-2.5 rounded-full text-[11.5px] font-medium transition-colors"
                       style={{ background: active ? c.ink : done ? c.rowActive : 'transparent', color: active ? c.inkText : done ? c.text : c.subtle }}
                       aria-current={active ? 'step' : undefined}
                     >
@@ -324,7 +317,7 @@ export default function CheckoutPage() {
                       >
                         {done ? <Check size={9} weight={3.4} /> : index + 1}
                       </span>
-                      {item.label}
+                      <span className={active ? '' : 'hidden sm:inline'}>{item.label}</span>
                     </span>
                     {index < steps.length - 1 ? <span className="w-3 h-px" style={{ background: c.border }} /> : null}
                   </li>

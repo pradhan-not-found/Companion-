@@ -190,3 +190,29 @@ body {
 .creator-icon:active {
   transform: scale(0.92);
 }
+
+.gel--tag {
+  cursor: default;
+  font-size: 12.5px;
+  font-weight: 600;
+  height: 26px;
+  padding: 0 12px;
+}
+
+.gel--tag:hover {
+  filter: none;
+  transform: none;
+}
+
+.ask-ai {
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.ask-ai:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #111111;
+}
+
+.ask-ai:active {
+  transform: scale(0.9);
+}
