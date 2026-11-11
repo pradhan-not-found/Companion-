@@ -57,7 +57,18 @@ export function PouchView(): JSX.Element {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [closing, setClosing] = useState(false);
+  // The window is kept warm between opens; each open replays the entrance animation.
+  const [openCount, setOpenCount] = useState(0);
   useEffect(() => window.companion.onPouchClosing(() => setClosing(true)), []);
+  useEffect(
+    () =>
+      window.companion.onPouchOpening(() => {
+        setClosing(false);
+        setConfirmClear(false);
+        setOpenCount(count => count + 1);
+      }),
+    []
+  );
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -93,7 +104,7 @@ export function PouchView(): JSX.Element {
   }
 
   return (
-    <main className={`pouch${closing ? " is-closing" : ""}`}>
+    <main key={openCount} className={`pouch${closing ? " is-closing" : ""}`}>
       <header className="hb__head">
         <div className="hb__titles">
           <h1 className="hb__title">Compboard</h1>

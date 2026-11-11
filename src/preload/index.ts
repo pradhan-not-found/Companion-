@@ -73,6 +73,7 @@ const api = {
   openDashboard: (): void => ipcRenderer.send("helpboard:dashboard"),
   onPouchUpdated: (callback: (items: PouchItem[]) => void): Unsubscribe => onChannel("pouch:updated", callback),
   onPouchClosing: (callback: () => void): Unsubscribe => onChannel("pouch:closing", callback),
+  onPouchOpening: (callback: () => void): Unsubscribe => onChannel("pouch:opening", callback),
   chooseAvatar: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("profile:choose-avatar"),
   onPetState: (callback: (state: PetState) => void): Unsubscribe =>
     onChannel("pet:set-state", callback),

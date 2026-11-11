@@ -7,7 +7,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "", priority: 1, changeFrequency: "weekly" },
     { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
     { path: "/changelog", priority: 0.8, changeFrequency: "weekly" },
-    { path: "/mac", priority: 0.7, changeFrequency: "monthly" },
     { path: "/creator", priority: 0.5, changeFrequency: "monthly" },
   ];
   return pages.map(page => ({

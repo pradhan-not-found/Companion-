@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import NavBar from '@/components/NavBar';
+import PetStrip from '@/components/PetStrip';
 import { UPI_APPS } from '@/lib/upiApps';
 import { UPI_ID, newOrderId, qrSvg, upiLink } from '@/lib/upiQr';
 
@@ -241,54 +243,34 @@ export default function CheckoutPage() {
         @media (prefers-reduced-motion: reduce) { .ck-reveal, .ck-step, .ck-backdrop, .ck-dialog { animation: none; } }
       `}</style>
 
-      {/* Top bar */}
-      <header className="w-full max-w-[1080px] mx-auto px-5 sm:px-8 h-[68px] flex items-center justify-between shrink-0">
-        <Link href="/" className="flex items-center gap-2.5 no-underline" style={{ color: c.text }}>
-          <span
-            className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0"
-            style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.08)', background: isDark ? '#1C1C1C' : '#FFFFFF', border: `1px solid ${c.border}` }}
-          >
-            <Image src="/applogo.png" alt="" width={32} height={32} className="object-cover w-full h-full rounded-[6px]" priority />
-          </span>
-          <span className="font-semibold text-[17px] tracking-tight">Companion</span>
-          <span
-            className="px-2 py-[2px] rounded-full text-[10px] font-semibold tracking-wide"
-            style={{
-              background: 'linear-gradient(to bottom, #dbe4ff 0%, #b8cfff 100%)',
-              border: '1px solid #7592fb',
-              color: '#142a70',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)'
-            }}
-          >
-            Beta
-          </span>
-        </Link>
-      </header>
+      <NavBar />
 
-      <main className="flex-1 min-h-0 w-full max-w-[1080px] mx-auto px-5 sm:px-8 pb-5 grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-16 items-center">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:min-h-0">
+        <div className="hidden lg:block lg:min-h-0">
+          <PetStrip />
+        </div>
+
+      <main className="min-h-0 lg:overflow-y-auto flex items-center justify-center px-5 sm:px-10 lg:px-14 py-8 lg:py-6">
+        <div className="w-full max-w-[480px] flex flex-col gap-5">
         {/* Summary */}
-        <section aria-label="Order summary" className="lg:self-start lg:pt-12">
-          <h1 className="text-[30px] sm:text-[34px] font-semibold tracking-[-0.03em] leading-[1.1]">Get {PRODUCT}</h1>
-          <p className="text-[14.5px] mt-2.5 max-w-[400px] leading-relaxed" style={{ color: c.muted }}>
-            One license unlocks every feature in Companion, today and in every future update.
-          </p>
-          <div className="flex items-end gap-2.5 mt-7">
-            <span className="text-[44px] font-semibold tracking-[-0.035em] leading-none tabular-nums">₹{PRICE}.00</span>
-            <span className="text-[13px] leading-tight pb-1" style={{ color: c.muted }}>
-              one-time
-              <br />
-              payment
+        <section aria-label="Order summary">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.035em] leading-[1.1]">Get {PRODUCT}</h1>
+            <span
+              className="px-2 py-[2px] rounded-full text-[10px] font-semibold tracking-wide"
+              style={{
+                background: 'linear-gradient(to bottom, #dbe4ff 0%, #b8cfff 100%)',
+                border: '1px solid #7592fb',
+                color: '#142a70',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)'
+              }}
+            >
+              Beta
             </span>
           </div>
-
-          <div className="hidden lg:flex flex-col gap-2.5 mt-8 text-[13.5px]" style={{ color: c.muted }}>
-            {['Every companion, including new ones', 'Focus mode that closes distractions', 'Compboard with clipboard history', 'Coding agent alerts', 'Lifetime updates'].map(item => (
-              <span key={item} className="inline-flex items-center gap-2.5">
-                <Check size={14} color={c.text} weight={2.4} />
-                {item}
-              </span>
-            ))}
-          </div>
+          <p className="text-[14px] mt-1.5 leading-relaxed" style={{ color: c.muted }}>
+            ₹{PRICE}.00, paid once. Every companion, focus mode, Compboard and lifetime updates.
+          </p>
         </section>
 
         {/* Payment panel */}
@@ -471,7 +453,9 @@ export default function CheckoutPage() {
             <span className="font-semibold tabular-nums">₹{PRICE}.00</span>
           </div>
         </section>
+        </div>
       </main>
+      </div>
 
       {/* Payment dialog */}
       {step === 'pay' ? (

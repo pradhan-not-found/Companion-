@@ -1079,39 +1079,40 @@ function ensurePetWindowVisible(): void {
 }
 
 let pouchWindow: Electron.BrowserWindow | null = null;
+let pouchOpen = false;
+let pouchHideTimer: NodeJS.Timeout | null = null;
 const POUCH_SIZE = { width: 360, height: 560 };
 
 function sendPouch(): void {
   if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.webContents.send("pouch:updated", listPouch());
 }
 
-/** Fades a window's opacity between two values over `ms`, then calls `done`. */
-function fadeWindow(win: Electron.BrowserWindow, from: number, to: number, ms: number, done?: () => void): void {
-  const started = Date.now();
-  win.setOpacity(from);
-  const tick = setInterval(() => {
-    if (win.isDestroyed()) {
-      clearInterval(tick);
-      return;
-    }
-    const t = Math.min(1, (Date.now() - started) / ms);
-    const eased = 1 - (1 - t) ** 3;
-    win.setOpacity(from + (to - from) * eased);
-    if (t >= 1) {
-      clearInterval(tick);
-      done?.();
-    }
-  }, 8);
+/** True while the Compboard is on screen (the window itself is kept warm while hidden). */
+function isPouchOpen(): boolean {
+  return pouchOpen && !!pouchWindow && !pouchWindow.isDestroyed();
 }
 
+/** Plays the exit animation in the renderer, then hides the window for reuse. */
 function closePouchWindow(): void {
+  if (!isPouchOpen() || !pouchWindow) return;
+  pouchOpen = false;
   const closing = pouchWindow;
-  pouchWindow = null;
-  if (!closing || closing.isDestroyed()) return;
   closing.webContents.send("pouch:closing");
-  fadeWindow(closing, closing.getOpacity(), 0, 140, () => {
-    if (!closing.isDestroyed()) closing.close();
-  });
+  if (pouchHideTimer) clearTimeout(pouchHideTimer);
+  pouchHideTimer = setTimeout(() => {
+    pouchHideTimer = null;
+    if (!closing.isDestroyed() && !pouchOpen) closing.hide();
+  }, 170);
+}
+
+/** Destroys the warm Compboard window (session end or feature turned off). */
+function destroyPouchWindow(): void {
+  pouchOpen = false;
+  if (pouchHideTimer) clearTimeout(pouchHideTimer);
+  pouchHideTimer = null;
+  const win = pouchWindow;
+  pouchWindow = null;
+  if (win && !win.isDestroyed()) win.destroy();
 }
 
 /** Where the Compboard sits: just above the pet, or beside it near the top edge. */
@@ -1134,24 +1135,17 @@ function pouchPosition(): { x: number; y: number } {
 
 /** Keeps an open Compboard attached to the pet as it moves. */
 function followPetWithPouch(): void {
-  if (!pouchWindow || pouchWindow.isDestroyed()) return;
+  if (!isPouchOpen() || !pouchWindow) return;
   const { x, y } = pouchPosition();
   const [cx, cy] = pouchWindow.getPosition();
   if (cx !== x || cy !== y) pouchWindow.setBounds({ x, y, ...POUCH_SIZE }, false);
 }
 
-/** Opens the Compboard just above (or beside) the pet. */
-function togglePouchWindow(): void {
-  if (pouchWindow && !pouchWindow.isDestroyed()) {
-    closePouchWindow();
-    return;
-  }
-  if (!petWindow || petWindow.isDestroyed()) return;
+/** Creates the Compboard window once, hidden, so opening it is instant. */
+function ensurePouchWindow(): Electron.BrowserWindow {
+  if (pouchWindow && !pouchWindow.isDestroyed()) return pouchWindow;
   const { x, y } = pouchPosition();
-  stopAmbientRoam(false);
-  stopAmbientPose(true);
-
-  pouchWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     ...POUCH_SIZE,
     x,
     y,
@@ -1172,21 +1166,13 @@ function togglePouchWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      backgroundThrottling: false,
       webSecurity: !IS_DEV
     }
   });
-  pouchWindow.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "pop-up-menu");
-  loadRenderer(pouchWindow, "pouch");
-  pouchWindow.once("ready-to-show", () => {
-    const opening = pouchWindow;
-    if (!opening || opening.isDestroyed()) return;
-    opening.setOpacity(0);
-    opening.show();
-    opening.focus();
-    sendPouch();
-    fadeWindow(opening, 0, 1, 180);
-  });
-  pouchWindow.on("blur", () => {
+  win.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "pop-up-menu");
+  loadRenderer(win, "pouch");
+  win.on("blur", () => {
     // Stay open while you drag the pet (focus moves to the pet window);
     // close when you move on to anything else.
     setTimeout(() => {
@@ -1194,10 +1180,45 @@ function togglePouchWindow(): void {
       closePouchWindow();
     }, 0);
   });
-  const created = pouchWindow;
-  created.on("closed", () => {
-    if (pouchWindow === created) pouchWindow = null;
+  win.on("closed", () => {
+    if (pouchWindow === win) {
+      pouchWindow = null;
+      pouchOpen = false;
+    }
   });
+  pouchWindow = win;
+  return win;
+}
+
+/** Opens the Compboard just above (or beside) the pet, or closes it if open. */
+function togglePouchWindow(): void {
+  if (isPouchOpen()) {
+    closePouchWindow();
+    return;
+  }
+  if (!petWindow || petWindow.isDestroyed()) return;
+  stopAmbientRoam(false);
+  stopAmbientPose(true);
+
+  const win = ensurePouchWindow();
+  pouchOpen = true;
+  if (pouchHideTimer) {
+    clearTimeout(pouchHideTimer);
+    pouchHideTimer = null;
+  }
+  const { x, y } = pouchPosition();
+  win.setBounds({ x, y, ...POUCH_SIZE }, false);
+
+  const present = (): void => {
+    if (win.isDestroyed() || !pouchOpen || pouchWindow !== win) return;
+    sendPouch();
+    // Start the entrance animation on the frame the window appears.
+    win.webContents.send("pouch:opening");
+    win.show();
+    win.focus();
+  };
+  if (win.webContents.isLoading()) win.webContents.once("did-finish-load", present);
+  else present();
 }
 
 function createSettingsWindow(): void {
@@ -1452,7 +1473,7 @@ function canAmbientRoam(): boolean {
       !currentBubble &&
       !dragTimer &&
       !dragSafetyTimer &&
-      !(pouchWindow && !pouchWindow.isDestroyed()) &&
+      !isPouchOpen() &&
       (petState === "idle" || petState === "sitting" || petState === "sleeping")
   );
 }
@@ -4952,10 +4973,14 @@ app.whenReady().then(() => {
 function applyPouchSetting(): void {
   if (sessionActive && getSettings().clipboardPouchEnabled) {
     startPouch(sendPouch);
+    // Warm the Compboard window in the background so the first click opens instantly.
+    setTimeout(() => {
+      if (sessionActive && getSettings().clipboardPouchEnabled && !pouchWindow) ensurePouchWindow();
+    }, 2500);
   } else {
     stopPouch();
     clearPouch();
-    closePouchWindow();
+    destroyPouchWindow();
   }
 }
 
@@ -5019,7 +5044,7 @@ function runCheckIn(): void {
     focusActive ||
     currentBubble ||
     dragTimer ||
-    (pouchWindow && !pouchWindow.isDestroyed()) ||
+    isPouchOpen() ||
     !petWindow?.isVisible();
   if (!quiet) {
     const missing = Date.now() - lastPetInteractionAt > MISS_YOU_AFTER_MS;
@@ -5076,7 +5101,7 @@ function endSession(): void {
   sessionActive = false;
   stopPouch();
   clearPouch();
-  closePouchWindow();
+  destroyPouchWindow();
   if (checkInTimer) clearTimeout(checkInTimer);
   checkInTimer = null;
   clearSessionTimers();

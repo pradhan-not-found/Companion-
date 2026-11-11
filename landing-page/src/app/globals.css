@@ -216,3 +216,143 @@ body {
 .ask-ai:active {
   transform: scale(0.9);
 }
+
+/* Inline Mac waitlist: button morphs into an email field, then a confirmation. */
+.mac-swap {
+  animation: macSwap 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left center;
+}
+
+@keyframes macSwap {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.mac-field {
+  align-items: center;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  border: 1px solid #9c9c9c;
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  gap: 6px;
+  height: 40px;
+  padding: 0 4px 0 18px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+  width: min(300px, 100%);
+}
+
+.mac-field:focus-within {
+  border-color: #1f46c4;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(91, 156, 255, 0.22);
+}
+
+.mac-field.is-invalid {
+  animation: macShake 320ms ease;
+  border-color: #dc2626;
+}
+
+@keyframes macShake {
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.mac-field input {
+  background: transparent;
+  border: 0;
+  color: #111111;
+  flex: 1;
+  font-size: 14.5px;
+  min-width: 0;
+  outline: none;
+}
+
+.mac-field input::placeholder {
+  color: #9a9a9a;
+}
+
+.mac-send {
+  align-items: center;
+  background: linear-gradient(180deg, #a9cbff 0%, #6fa8ff 52%, #5b9cff 72%, #8cc2ff 100%);
+  border: 1px solid #1f46c4;
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #0d1424;
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 30px;
+  justify-content: center;
+  transition: transform 140ms ease, filter 140ms ease;
+  width: 30px;
+}
+
+.mac-send:hover {
+  filter: brightness(1.05);
+}
+
+.mac-send:active {
+  transform: scale(0.92);
+}
+
+.mac-spinner {
+  animation: macSpin 700ms linear infinite;
+  border: 2px solid rgba(13, 20, 36, 0.25);
+  border-radius: 9999px;
+  border-top-color: #0d1424;
+  height: 13px;
+  width: 13px;
+}
+
+@keyframes macSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mac-done {
+  align-items: center;
+  background: #f4fbf6;
+  border: 1px solid #b7e2c4;
+  border-radius: 9999px;
+  color: #14532d;
+  display: inline-flex;
+  font-size: 14.5px;
+  font-weight: 500;
+  gap: 9px;
+  height: 40px;
+  padding: 0 18px 0 12px;
+  white-space: nowrap;
+}
+
+.mac-done__check {
+  align-items: center;
+  background: #16a34a;
+  border-radius: 9999px;
+  color: #ffffff;
+  display: inline-flex;
+  height: 18px;
+  justify-content: center;
+  width: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mac-swap,
+  .mac-field.is-invalid {
+    animation: none;
+  }
+}

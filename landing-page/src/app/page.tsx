@@ -6,8 +6,8 @@ import NavBar from '@/components/NavBar';
 import PetStrip from '@/components/PetStrip';
 import CodexHacker from '@/components/CodexHacker';
 import AskAI from '@/components/AskAI';
+import MacWaitlist from '@/components/MacWaitlist';
 
-const WINDOWS_DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
 
 export default function LandingPage() {
 
@@ -44,17 +44,11 @@ export default function LandingPage() {
         <div className="mt-8">
           <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-start gap-x-4 gap-y-3">
             <div className="flex flex-col items-center gap-1.5">
-              <Link href="/mac" className="gel gel--blue no-underline">
-                <span className="gel__shine" aria-hidden="true" />
-                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="relative z-10 text-[#111]">
-                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="currentColor" />
-                </svg>
-                <span className="relative z-10 text-[#111]">download for mac</span>
-              </Link>
+              <MacWaitlist />
               <span className="text-[11.5px] leading-none text-center text-[#111]">coming soon · mac</span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
-              <a href={WINDOWS_DOWNLOAD} className="gel gel--white">
+              <Link href="/checkout" className="gel gel--white no-underline">
                 <span className="gel__shine" aria-hidden="true" />
                 <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="relative z-10">
                   <rect x="2" y="2" width="9.5" height="9.5" fill="#F25022" />
@@ -63,8 +57,8 @@ export default function LandingPage() {
                   <rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#FFB900" />
                 </svg>
                 <span className="relative z-10">download for windows</span>
-              </a>
-              <span className="text-[11.5px] leading-none text-center text-[#111]">free download · windows 10 or higher</span>
+              </Link>
+              <span className="text-[11.5px] leading-none text-center text-[#111]">lifetime license · windows 10 or higher</span>
             </div>
           </div>
 
