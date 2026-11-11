@@ -105,6 +105,8 @@ export type SpeechBubble = {
   message: string;
   /** When set, the bubble is rendered as a branded agent status card. */
   agent?: AgentActivity;
+  /** When set, the bubble is the animated startup greeting. */
+  greeting?: { salutation: string; name: string };
   /** When set, the bubble introduces a newly added companion. */
   newPet?: { slug: string; name: string; count: number };
   actions?: BubbleAction[];

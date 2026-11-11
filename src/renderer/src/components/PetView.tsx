@@ -98,6 +98,28 @@ export function PetView(): JSX.Element {
     if (clicked) window.companion.petClicked();
   }
 
+  // Click-through: the window ignores the mouse except over the pet, its
+  // bubble and badges. The main process forwards moves so we can tell.
+  useEffect(() => {
+    let interactive = false;
+    const report = (next: boolean): void => {
+      if (next === interactive) return;
+      interactive = next;
+      window.companion.setPointerInteractive(next);
+    };
+    const onMove = (event: MouseEvent): void => {
+      const target = document.elementFromPoint(event.clientX, event.clientY);
+      report(Boolean(target?.closest(".pet-button, .speech-bubble, .bubble-button, .focus-badge, .reminder-countdowns")));
+    };
+    const onLeave = (): void => report(false);
+    window.addEventListener("mousemove", onMove);
+    document.documentElement.addEventListener("mouseleave", onLeave);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      document.documentElement.removeEventListener("mouseleave", onLeave);
+    };
+  }, []);
+
   useEffect(() => {
     const cancelActiveDrag = (): void => finishPointerDrag(false);
     window.addEventListener("pointerup", cancelActiveDrag);
@@ -179,7 +201,25 @@ export function PetView(): JSX.Element {
             }
       }
     >
-      {bubble ? (
+      {bubble?.greeting ? (
+        <section className="speech-bubble is-greeting" key={bubble.id} aria-live="polite">
+          <p className="greet__salutation">
+            {bubble.greeting.salutation}
+            {bubble.greeting.name ? "," : ""}
+          </p>
+          {bubble.greeting.name ? (
+            <p className="greet__name" aria-label={bubble.greeting.name}>
+              {[...bubble.greeting.name].map((letter, index) => (
+                <span key={index} style={{ animationDelay: `${220 + index * 45}ms` }} aria-hidden="true">
+                  {letter}
+                </span>
+              ))}
+            </p>
+          ) : null}
+          <span className="greet__rule" aria-hidden="true" />
+          <p className="greet__line">{bubble.message}</p>
+        </section>
+      ) : bubble ? (
         bubbleClickActionId ? (
           <button
             className={`speech-bubble speech-bubble--button${bubble.agent ? " is-agent" : ""}`}

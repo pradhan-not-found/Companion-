@@ -106,7 +106,7 @@ landing-page/   Next.js marketing site
 
 ## 📜 License
 
-Released under the [MIT License](LICENSE). Companion's desktop engine is adapted from the MIT-licensed [PawPause](https://github.com/angziii/PawPause) and [PawPal](https://github.com/zebangeth/PawPal) projects. Pet artwork stays subject to its original creators' terms.
+Released under the [MIT License](LICENSE). Pet artwork stays subject to its original creators' terms.
 
 <div align="center">
   <p>Built with 🤍 by <a href="https://github.com/pradhan-not-found">pradhan-not-found</a></p>

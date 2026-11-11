@@ -801,13 +801,20 @@ function setPetFacing(next: PetFacing): void {
   publishSnapshot();
 }
 
+// True while the cursor is over the pet, its bubble or badges (reported by the
+// renderer from forwarded mouse moves). Everywhere else the transparent pet
+// window lets clicks fall through to the apps underneath.
+let petPointerInteractive = false;
+let petMouseIgnored: boolean | null = null;
+
 function updatePetWindowMouseEvents(lyricsModeEnabled = getSettings().lyricsModeEnabled): void {
   if (!petWindow || petWindow.isDestroyed()) return;
-  if (lyricsModeEnabled) {
-    petWindow.setIgnoreMouseEvents(true, { forward: true });
-    return;
-  }
-  petWindow.setIgnoreMouseEvents(false);
+  const screenBlock = blockingMode === "breakRun" || blockingMode === "focusWarning";
+  const ignore = lyricsModeEnabled || (!screenBlock && !dragTimer && !petPointerInteractive);
+  if (ignore === petMouseIgnored) return;
+  petMouseIgnored = ignore;
+  if (ignore) petWindow.setIgnoreMouseEvents(true, { forward: true });
+  else petWindow.setIgnoreMouseEvents(false);
 }
 
 function bubbleDisplayMs(): number {
@@ -822,7 +829,21 @@ function bubbleAutoDismissMs(bubble: SpeechBubble): number | null {
   return bubble.autoDismissMs ? bubbleDisplayMs() : null;
 }
 
-function showBubble(bubble: SpeechBubble): void {
+function withoutEmoji(text: string): string {
+  return text
+    .replace(/\p{Extended_Pictographic}\uFE0F?/gu, "")
+    .replace(/[\u200D\uFE0F]/g, "")
+    .replace(/\s+([!?.,~])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function showBubble(input: SpeechBubble): void {
+  const bubble: SpeechBubble = {
+    ...input,
+    message: withoutEmoji(input.message),
+    actions: input.actions?.map((action) => ({ ...action, label: withoutEmoji(action.label) }))
+  };
   if (bubbleTimer) {
     clearTimeout(bubbleTimer);
     bubbleTimer = null;
@@ -973,6 +994,8 @@ function showPetWindowInactive(): void {
     petWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
   petWindow.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "normal");
+  petMouseIgnored = null;
+  petPointerInteractive = false;
   updatePetWindowMouseEvents();
   updateTrayMenu();
   sendPetLayout();
@@ -1699,6 +1722,7 @@ function expandPetWindowForScreenBlock(coverageRatio?: number): void {
   petLayout = layoutForPetAnchor(petWindow.getBounds());
   sendPetLayout();
   petWindow.setAlwaysOnTop(true, process.platform === "darwin" ? "screen-saver" : "pop-up-menu");
+  updatePetWindowMouseEvents();
 }
 
 function restorePetWindowAfterScreenBlock(): void {
@@ -1712,6 +1736,8 @@ function restorePetWindowAfterScreenBlock(): void {
   petLayout = layoutForPetAnchor(petWindow.getBounds());
   sendPetLayout();
   petWindow.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "normal");
+  // Screen block is over; blockingMode is cleared right after, so re-check shortly.
+  setTimeout(() => updatePetWindowMouseEvents(), 0);
 }
 
 function scheduleReminderTimers(): void {
@@ -2246,13 +2272,18 @@ function applyLaunchAtLogin(): void {
 // While the hello is on screen, agent activity only updates its status pill.
 let greetingUntil = 0;
 
-function startupGreeting(name: string): string {
+function startupGreeting(name: string): { salutation: string; name: string; line: string } {
   const hour = new Date().getHours();
-  const who = name ? `, ${name}` : "";
-  if (hour < 5) return pick([`Up late${who}? I'll keep you company 🌙`, `Burning the midnight oil${who}? Don't forget to rest.`]);
-  if (hour < 12) return pick([`Good morning${who}! ☀️ Ready for a great day?`, `Good morning${who}! Let's start with a glass of water 💧`]);
-  if (hour < 17) return pick([`Good afternoon${who}! 👋 How's it going?`, `Good afternoon${who}! Remember to stretch a little.`]);
-  return pick([`Good evening${who}! 🌆 Nice to see you.`, `Good evening${who}! Let's wrap up the day gently.`]);
+  const salutation = hour < 5 ? "Good night" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const line =
+    hour < 5
+      ? pick(["Working late? I'm right here.", "Don't forget to rest soon."])
+      : hour < 12
+        ? pick(["Let's start with a glass of water.", "Ready for a great day?"])
+        : hour < 17
+          ? pick(["How's the day going?", "A good moment to stretch."])
+          : pick(["Nice to see you.", "Let's wrap up the day gently."]);
+  return { salutation, name: name.split(/\s+/)[0] ?? "", line };
 }
 
 /** The mascot waves hello every time Companion starts (including at sign-in). */
@@ -2269,7 +2300,13 @@ function greetOnStartup(attempt = 0): void {
   clearAgentPose(false);
   setPetState("waving");
   greetingUntil = Date.now() + 5000;
-  showBubble({ id: "startup-greeting", message: startupGreeting(settings.userName.trim()), autoDismissMs: 4800 });
+  const greeting = startupGreeting(settings.userName.trim());
+  showBubble({
+    id: "startup-greeting",
+    message: greeting.line,
+    greeting: { salutation: greeting.salutation, name: greeting.name },
+    autoDismissMs: 5200
+  });
   setTimeout(() => {
     if (petState === "waving") setPetState(focusActive ? "focusGuard" : "idle");
     if (!focusActive && !blockingMode) {
@@ -4485,7 +4522,14 @@ function registerIpc(): void {
   ipcMain.on("pet:drag-start", (_event, offset: { offsetX: number; offsetY: number }) =>
     startPetDrag(offset)
   );
-  ipcMain.on("pet:drag-stop", stopPetDrag);
+  ipcMain.on("pet:drag-stop", () => {
+    stopPetDrag();
+    updatePetWindowMouseEvents();
+  });
+  ipcMain.on("pet:pointer-interactive", (_event, interactive: unknown) => {
+    petPointerInteractive = interactive === true;
+    updatePetWindowMouseEvents();
+  });
   ipcMain.on("bubble:action", (_event, actionId: string) => handleBubbleAction(actionId));
   ipcMain.on("app:open-external", (_event, url: string) => openExternalUrl(url));
   ipcMain.on("settings:update", (_event, partial: Partial<Settings>) => {

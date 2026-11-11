@@ -138,8 +138,8 @@ export const BUNDLED_PETS: InstalledPet[] = [
     slug: "round-maodie",
     manifest: {
       id: "round-maodie",
-      displayName: "圆头耄耋",
-      description: "由圆头耄耋表情包素材转制的 Codex 宠物。",
+      displayName: "Marmalade",
+      description: "A round-faced orange tabby with big, serious eyes and a soft heart.",
       spritesheet: "spritesheet.webp",
       source: "builtin"
     },

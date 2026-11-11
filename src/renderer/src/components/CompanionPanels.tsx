@@ -26,7 +26,35 @@ const FocusIcon = (): JSX.Element => (
   </svg>
 );
 
-/** First run after creating an account: pick a companion and give it a name. */
+const ONBOARDING_STEPS = ["Companion", "Name", "Ready"] as const;
+const NAME_SUGGESTIONS = ["Mochi", "Biscuit", "Pixel", "Nugget", "Pebble"];
+
+function Stepper({ step }: { step: number }): JSX.Element {
+  return (
+    <ol className="stepper" aria-label="Setup progress">
+      {ONBOARDING_STEPS.map((label, index) => {
+        const state = index < step ? "done" : index === step ? "current" : "todo";
+        return (
+          <li key={label} className={`stepper__item is-${state}`} aria-current={state === "current" ? "step" : undefined}>
+            <span className="stepper__dot">
+              {state === "done" ? (
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              ) : (
+                index + 1
+              )}
+            </span>
+            <span className="stepper__label">{label}</span>
+            {index < ONBOARDING_STEPS.length - 1 ? <span className="stepper__bar" aria-hidden="true" /> : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** After creating an account: pick a companion, name it, and get started. */
 export function Onboarding({
   userName,
   pets,
@@ -44,55 +72,136 @@ export function Onboarding({
   onPetChange: (petId: string) => void;
   onComplete: (petId: string, nickname: string) => void;
 }): JSX.Element {
+  const [step, setStep] = useState(0);
   const [petId, setPetId] = useState(initialPetId);
   const [nickname, setNickname] = useState(initialNickname);
   const selected = pets.find((pet) => pet.slug === petId);
   const firstName = userName.trim().split(/\s+/)[0] ?? "";
+  const petName = nickname.trim() || selected?.manifest.displayName || "your companion";
 
   function choose(nextPetId: string): void {
     setPetId(nextPetId);
     onPetChange(nextPetId);
   }
 
-  function submit(): void {
-    onComplete(petId, nickname.trim());
+  function next(): void {
+    if (step < ONBOARDING_STEPS.length - 1) setStep(step + 1);
+    else onComplete(petId, nickname.trim());
   }
 
+  const heading = [
+    { title: firstName ? `Welcome, ${firstName}` : "Welcome", subtitle: "Choose the companion that will live on your desktop." },
+    { title: "Give it a name", subtitle: `What should we call your ${selected?.manifest.displayName ?? "companion"}?` },
+    { title: `Meet ${petName}`, subtitle: "You're all set. Here's what your companion will do for you." }
+  ][step];
+
   return (
-    <main className="onboarding">
-      <div className="onboarding__content">
-        <p className="onboarding__step">Step 1 of 1 · Your companion</p>
-        <h1 className="onboarding__title">{firstName ? `Welcome, ${firstName}!` : "Welcome!"}</h1>
-        <p className="onboarding__subtitle">Pick a companion to live on your desktop, then give it a name.</p>
+    <main className="ob">
+      <header className="ob__top">
+        <Stepper step={step} />
+      </header>
 
-        <div className="pet-picker" role="radiogroup" aria-label="Choose your companion">
-          {pets.map((pet) => renderPet(pet, pet.slug === petId, () => choose(pet.slug)))}
-        </div>
+      <div className="ob__body" key={step}>
+        <h1 className="ob__title">{heading.title}</h1>
+        <p className="ob__subtitle">{heading.subtitle}</p>
 
-        <div className="onboarding__name">
-          <span className="onboarding__name-preview">{selected ? <SpriteView pet={selected} state="waving" scale={0.3} /> : null}</span>
-          <label className="onboarding__name-field">
-            <span>Name your companion</span>
-            <input
-              className="c-input"
-              type="text"
-              maxLength={24}
-              placeholder={selected?.manifest.displayName ?? "e.g. Mochi"}
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") submit();
-              }}
-            />
-          </label>
-        </div>
+        {step === 0 ? (
+          <div className="pet-picker" role="radiogroup" aria-label="Choose your companion">
+            {pets.map((pet) => renderPet(pet, pet.slug === petId, () => choose(pet.slug)))}
+          </div>
+        ) : null}
 
-        <button type="button" className="c-btn c-btn--primary c-btn--block c-btn--arrow onboarding__go" onClick={submit}>
-          Let&apos;s go
+        {step === 1 ? (
+          <div className="ob-name">
+            <span className="ob-name__stage">{selected ? <SpriteView pet={selected} state="waving" scale={0.62} /> : null}</span>
+            <div className="ob-name__form">
+              <label className="ob-name__field">
+                <span>Companion name</span>
+                <input
+                  className="c-input"
+                  type="text"
+                  maxLength={24}
+                  placeholder={selected?.manifest.displayName ?? "e.g. Mochi"}
+                  value={nickname}
+                  autoFocus
+                  onChange={(event) => setNickname(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") next();
+                  }}
+                />
+              </label>
+              <div className="ob-name__chips" aria-label="Suggestions">
+                {NAME_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    className={`ob-chip${nickname === suggestion ? " is-selected" : ""}`}
+                    onClick={() => setNickname(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+              <p className="ob-name__hint">Leave it empty to keep “{selected?.manifest.displayName}”. You can rename it any time.</p>
+            </div>
+          </div>
+        ) : null}
+
+        {step === 2 ? (
+          <div className="ob-ready">
+            <span className="ob-ready__stage">{selected ? <SpriteView pet={selected} state="waving" scale={0.7} /> : null}</span>
+            <ul className="ob-ready__list">
+              <li>
+                <span className="ob-ready__icon">
+                  <DropIcon />
+                </span>
+                <span>
+                  <strong>Hydration reminders</strong>
+                  Gentle nudges to drink water through the day.
+                </span>
+              </li>
+              <li>
+                <span className="ob-ready__icon">
+                  <FocusIcon />
+                </span>
+                <span>
+                  <strong>Breaks and focus</strong>
+                  Timely breaks, and focus sessions that close distractions.
+                </span>
+              </li>
+              <li>
+                <span className="ob-ready__icon">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                  </svg>
+                </span>
+                <span>
+                  <strong>Coding agent alerts</strong>
+                  A poke when Claude Code or Codex needs you.
+                </span>
+              </li>
+            </ul>
+          </div>
+        ) : null}
+      </div>
+
+      <footer className="ob__footer">
+        {step > 0 ? (
+          <button type="button" className="c-btn c-btn--ghost" onClick={() => setStep(step - 1)}>
+            Back
+          </button>
+        ) : (
+          <span />
+        )}
+        <span className="ob__count">
+          Step {step + 1} of {ONBOARDING_STEPS.length}
+        </span>
+        <button type="button" className="c-btn c-btn--primary c-btn--arrow ob__next" onClick={next}>
+          {step === ONBOARDING_STEPS.length - 1 ? "Start using Companion" : "Continue"}
           <ArrowIcon />
         </button>
-        <p className="onboarding__footnote">You can change your companion and its name any time.</p>
-      </div>
+      </footer>
     </main>
   );
 }
@@ -157,45 +266,51 @@ export function TodayOverview({
       <div className="ov-cards">
         <section className="ov-card">
           <div className="ov-card__top">
-            <span className="ov-card__icon is-water" aria-hidden="true">
+            <span className="ov-card__icon" aria-hidden="true">
               <DropIcon />
             </span>
             <span className="ov-card__label">Hydration</span>
+            <button type="button" className="ov-icon-btn" onClick={onDrink} aria-label="Log a glass of water" title="Log a glass">
+              <PlusIcon size={15} />
+            </button>
           </div>
           <p className="ov-card__value">
             {watersLogged}
-            <small>/ {DAILY_WATER_GOAL} glasses</small>
+            <small>of {DAILY_WATER_GOAL} glasses</small>
           </p>
-          <div className="ov-meter" aria-hidden="true">
-            <span style={{ width: `${ratio * 100}%` }} />
+          <div className="ov-segments" aria-hidden="true">
+            {Array.from({ length: DAILY_WATER_GOAL }, (_, index) => (
+              <span key={index} className={index < watersLogged ? "is-on" : undefined} />
+            ))}
           </div>
-          <p className="ov-card__hint">{remaining > 0 ? `${remaining} to go today` : "Goal reached today"}</p>
-          <button type="button" className="ov-card__action" onClick={onDrink}>
-            <PlusIcon size={14} />
-            Log a glass
-          </button>
+          <p className="ov-card__hint">{remaining > 0 ? `${remaining} more to reach today's goal` : "Goal reached today"}</p>
         </section>
 
         <section className={`ov-card${focusActive ? " is-focus" : ""}`}>
           <div className="ov-card__top">
-            <span className="ov-card__icon is-focus" aria-hidden="true">
+            <span className="ov-card__icon" aria-hidden="true">
               <FocusIcon />
             </span>
             <span className="ov-card__label">Focus</span>
-            {focusActive ? <span className="ov-live">Live</span> : null}
+            <button type="button" className={`ov-pill-btn${focusActive ? " is-live" : ""}`} onClick={onToggleFocus}>
+              {focusActive ? <StopIcon size={11} /> : <PlayIcon size={11} />}
+              {focusActive ? stopFocusLabel : focusLabel}
+            </button>
           </div>
           <p className="ov-card__value">
-            {focusActive ? focusMinutesLeft : "Off"}
+            {focusActive ? focusMinutesLeft : "Ready"}
             {focusActive ? <small>min left</small> : null}
           </p>
-          <div className="ov-meter is-focus" aria-hidden="true">
-            <span style={{ width: focusActive ? "100%" : "0%" }} />
-          </div>
-          <p className="ov-card__hint">{focusActive ? "Blocked apps and sites are closed." : "Start a session to block distractions."}</p>
-          <button type="button" className="ov-card__action" onClick={onToggleFocus}>
-            {focusActive ? <StopIcon size={12} /> : <PlayIcon size={12} />}
-            {focusActive ? stopFocusLabel : focusLabel}
-          </button>
+          {focusActive ? (
+            <div className="ov-meter is-focus" aria-hidden="true">
+              <span style={{ width: "100%" }} />
+            </div>
+          ) : (
+            <div className="ov-meter-spacer" aria-hidden="true" />
+          )}
+          <p className="ov-card__hint">
+            {focusActive ? "Distracting apps and sites are being closed." : "Start a session to block distractions."}
+          </p>
         </section>
 
         <section className="ov-card ov-card--pet">
