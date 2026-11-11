@@ -271,55 +271,55 @@ export function TodayOverview({
         <section className="mcard">
           <div className="mcard__head">
             <span className="mcard__label">Hydration</span>
-            <span className="mcard__icon" aria-hidden="true">
-              <DropIcon />
-            </span>
+            <button type="button" className="mcard__btn" onClick={onDrink}>
+              <PlusIcon size={12} />
+              Log glass
+            </button>
           </div>
           <p className="mcard__value">
             {watersLogged}
-            <span>/{DAILY_WATER_GOAL}</span>
+            <span>/ {DAILY_WATER_GOAL} glasses</span>
           </p>
-          <p className="mcard__sub">{remaining > 0 ? `${remaining} more glasses to today's goal` : "Daily goal reached"}</p>
-          <div className="mcard__foot">
-            <div className="mcard__segments" aria-hidden="true">
-              {Array.from({ length: DAILY_WATER_GOAL }, (_, index) => (
-                <span key={index} className={index < watersLogged ? "is-on" : undefined} />
-              ))}
+          <p className="mcard__sub">{remaining > 0 ? `${remaining} more to reach today's goal` : "Daily goal reached"}</p>
+          <div className="mcard__progress">
+            <div className="mcard__bar" aria-hidden="true">
+              <span style={{ width: `${ratio * 100}%` }} />
             </div>
-            <button type="button" className="mcard__action" onClick={onDrink}>
-              <PlusIcon size={13} />
-              Log
-            </button>
+            <span className="mcard__pct">{Math.round(ratio * 100)}%</span>
           </div>
         </section>
 
         <section className="mcard">
           <div className="mcard__head">
             <span className="mcard__label">Focus</span>
-            <span className="mcard__icon" aria-hidden="true">
-              <FocusIcon />
-            </span>
+            <button type="button" className="mcard__btn" onClick={onToggleFocus}>
+              {focusActive ? <StopIcon size={11} /> : <PlayIcon size={11} />}
+              {focusActive ? "End session" : "Start session"}
+            </button>
           </div>
           <p className="mcard__value">
             {focusActive ? focusMinutesLeft : focusDurationMinutes}
             <span>min</span>
           </p>
-          <p className="mcard__sub">{focusActive ? "left in this session" : "per focus session"}</p>
-          <div className="mcard__foot">
-            <div className="mcard__track" aria-hidden="true">
-              <span
-                style={{
-                  width: focusActive
-                    ? `${Math.max(4, 100 - (focusMinutesLeft / Math.max(1, focusDurationMinutes)) * 100)}%`
-                    : "0%"
-                }}
-              />
+          <p className="mcard__sub">{focusActive ? "left in this session" : "per session · blocks distractions"}</p>
+          {focusActive ? (
+            <div className="mcard__progress">
+              <div className="mcard__bar" aria-hidden="true">
+                <span
+                  style={{
+                    width: `${Math.max(2, 100 - (focusMinutesLeft / Math.max(1, focusDurationMinutes)) * 100)}%`
+                  }}
+                />
+              </div>
+              <span className="mcard__pct">
+                {Math.round(100 - (focusMinutesLeft / Math.max(1, focusDurationMinutes)) * 100)}%
+              </span>
             </div>
-            <button type="button" className="mcard__action" onClick={onToggleFocus}>
-              {focusActive ? <StopIcon size={11} /> : <PlayIcon size={11} />}
-              {focusActive ? "End" : "Start"}
-            </button>
-          </div>
+          ) : (
+            <div className="mcard__progress is-idle">
+              <span className="mcard__idle">Not running</span>
+            </div>
+          )}
         </section>
 
         <section className="ov-card ov-card--pet">

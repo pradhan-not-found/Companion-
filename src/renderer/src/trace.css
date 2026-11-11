@@ -2969,3 +2969,190 @@ textarea,
     border-color: rgba(255, 255, 255, 0.18);
   }
 }
+
+/* ============================================================
+   Buttons that blend in: subtle glass secondary, flat ink primary
+   (replaces the glossy finish)
+   ============================================================ */
+:root {
+  --blend-bg: rgba(0, 0, 0, 0.035);
+  --blend-bg-hover: rgba(0, 0, 0, 0.065);
+  --blend-edge: rgba(0, 0, 0, 0.09);
+  --blend-highlight: rgba(255, 255, 255, 0.7);
+  --blend-fg: var(--t-ink);
+  --solid-bg: #232325;
+  --solid-bg-hover: #2f2f32;
+  --solid-fg: #fafafa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blend-bg: rgba(255, 255, 255, 0.055);
+    --blend-bg-hover: rgba(255, 255, 255, 0.09);
+    --blend-edge: rgba(255, 255, 255, 0.09);
+    --blend-highlight: rgba(255, 255, 255, 0.06);
+    --blend-fg: #f2f2f2;
+    --solid-bg: #f2f2f2;
+    --solid-bg-hover: #ffffff;
+    --solid-fg: #141416;
+  }
+}
+
+.mcard__action::before,
+.c-btn--primary::before,
+.c-btn--ghost::before,
+.pref-button::before,
+.pref-action::before,
+.reminder-composer__add::before {
+  display: none;
+}
+
+/* secondary: blends with the surface */
+.mcard__btn,
+.mcard__action,
+.ov-icon-btn,
+.ov-pill-btn,
+.c-btn--ghost,
+.pref-button,
+.pref-action {
+  background: var(--blend-bg);
+  border: 1px solid var(--blend-edge);
+  box-shadow: inset 0 1px 0 var(--blend-highlight);
+  color: var(--blend-fg);
+  text-shadow: none;
+  transform: none;
+}
+
+.mcard__btn:hover,
+.mcard__action:hover,
+.ov-icon-btn:hover,
+.ov-pill-btn:hover,
+.c-btn--ghost:hover,
+.pref-button:hover,
+.pref-action:hover {
+  background: var(--blend-bg-hover);
+  border-color: var(--blend-edge);
+  box-shadow: inset 0 1px 0 var(--blend-highlight);
+  color: var(--blend-fg);
+  transform: none;
+}
+
+/* primary: flat, solid ink */
+.c-btn--primary,
+.c-btn--water,
+.pref-button.is-primary,
+.reminder-composer__add,
+.ob-chip.is-selected {
+  background: var(--solid-bg);
+  border: 1px solid var(--solid-bg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  color: var(--solid-fg);
+  text-shadow: none;
+  transform: none;
+}
+
+.c-btn--primary:hover,
+.c-btn--water:hover,
+.pref-button.is-primary:hover,
+.reminder-composer__add:hover {
+  background: var(--solid-bg-hover);
+  border-color: var(--solid-bg-hover);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  color: var(--solid-fg);
+  transform: none;
+}
+
+.mcard__btn:active,
+.mcard__action:active,
+.ov-icon-btn:active,
+.c-btn--primary:active,
+.c-btn--ghost:active,
+.pref-button:active,
+.pref-action:active,
+.reminder-composer__add:active {
+  box-shadow: none;
+  transform: scale(0.98);
+}
+
+.c-btn:disabled,
+.c-btn--primary:disabled {
+  box-shadow: none;
+  opacity: 0.4;
+}
+
+/* Sign out: flat red to match */
+.c-btn--danger,
+.c-btn--danger:hover,
+.c-btn--danger:active {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  text-shadow: none;
+}
+
+.c-btn--danger:hover {
+  background: #e23b3b;
+  border-color: #e23b3b;
+  transform: none;
+}
+
+/* ── Metric cards: action in the header, fine progress line ── */
+.mcard__head {
+  margin-bottom: 14px;
+}
+
+.mcard__btn {
+  align-items: center;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 500;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  transition: background 150ms ease;
+}
+
+.mcard__value span {
+  font-size: 13.5px;
+  margin-left: 2px;
+}
+
+.mcard__progress {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.mcard__bar {
+  background: color-mix(in srgb, var(--t-ink) 7%, transparent);
+  border-radius: 999px;
+  flex: 1;
+  height: 3px;
+  overflow: hidden;
+}
+
+.mcard__bar span {
+  background: var(--t-ink);
+  border-radius: 999px;
+  display: block;
+  height: 100%;
+  min-width: 0;
+  transition: width 0.6s var(--ease-out);
+}
+
+.mcard__pct,
+.mcard__idle {
+  color: var(--t-subtle);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.mcard__pct {
+  min-width: 30px;
+  text-align: right;
+}
