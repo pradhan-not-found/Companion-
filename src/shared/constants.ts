@@ -21,9 +21,11 @@ export const DEFAULT_SETTINGS: Settings = {
   onboardingDismissed: false,
   userName: "",
   avatarImage: "",
+  launchAtLogin: true,
   // Pets bundled with this build count as already introduced on a fresh install;
   // pets added by later updates are then announced as new.
   seenPetIds: BUNDLED_PETS.map((pet) => pet.slug),
+  announcedPetIds: BUNDLED_PETS.map((pet) => pet.slug),
   breakReminderEnabled: true,
   breakIntervalMinutes: 45,
   screenBlockReminderEnabled: true,

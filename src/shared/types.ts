@@ -69,9 +69,33 @@ export type BubbleAction = {
   kind?: "primary" | "secondary" | "danger";
 };
 
+export type AgentSource = "Codex" | "Claude Code" | "OpenCode" | "DeepSeek TUI" | "Hermes";
+
+export type AgentStatus =
+  | "working"
+  | "thinking"
+  | "tool"
+  | "script"
+  | "permission"
+  | "choice"
+  | "complete"
+  | "failed"
+  | "needs-review";
+
+/** What a coding agent (Claude Code, Codex, …) is doing right now. */
+export type AgentActivity = {
+  source: AgentSource;
+  status: AgentStatus;
+  updatedAt: number;
+};
+
 export type SpeechBubble = {
   id: string;
   message: string;
+  /** When set, the bubble is rendered as a branded agent status card. */
+  agent?: AgentActivity;
+  /** When set, the bubble introduces a newly added companion. */
+  newPet?: { slug: string; name: string; count: number };
   actions?: BubbleAction[];
   clickActionId?: string;
   autoDismissMs?: number;
@@ -115,8 +139,12 @@ export type Settings = {
   userName: string;
   /** Profile photo as a data URL; empty means "show my companion". */
   avatarImage: string;
+  /** Start Companion automatically when the user signs in to Windows. */
+  launchAtLogin: boolean;
   /** Pet ids the user has already been introduced to. */
   seenPetIds: string[];
+  /** Pet ids the desktop pet has already announced (each new pet is announced once). */
+  announcedPetIds: string[];
   breakReminderEnabled: boolean;
   breakIntervalMinutes: number;
   screenBlockReminderEnabled: boolean;
@@ -199,6 +227,7 @@ export type AppSnapshot = {
   screenBlockActive: boolean;
   screenBlockEndsAt: number | null;
   update: UpdateStatus;
+  agentActivity: AgentActivity | null;
 };
 
 export type PetImportResult =
@@ -213,7 +242,9 @@ export type DemoTrigger =
   | "break"
   | "hydration"
   | "focusWarning"
-  | "happy";
+  | "happy"
+  | "agentDone"
+  | "agentApproval";
 
 export type RendererEventMap = {
   "pet:set-state": PetState;

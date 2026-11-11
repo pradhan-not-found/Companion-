@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, JSX, ReactNode } from "react";
 import { DAILY_WATER_GOAL } from "../../../shared/constants";
 import type { InstalledPet, PetState, UpdateStatus } from "../../../shared/types";
@@ -594,15 +594,25 @@ function greetingForHour(hour: number): string {
   return "Good evening";
 }
 
-export function SidebarProfile({
+const menuIcon = (paths: ReactNode): JSX.Element => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {paths}
+  </svg>
+);
+
+/** Compact account row pinned to the bottom of the sidebar, with a dropdown menu. */
+export function AccountMenu({
   image,
   pet,
   userName,
   watersLogged,
   focusActive,
   focusMinutesLeft,
+  updateReady,
   onOpenProfile,
-  onTrack
+  onTrack,
+  onChangePhoto,
+  onCheckUpdates
 }: {
   image: string;
   pet: InstalledPet | undefined;
@@ -610,34 +620,114 @@ export function SidebarProfile({
   watersLogged: number;
   focusActive: boolean;
   focusMinutesLeft: number;
+  updateReady: boolean;
   onOpenProfile: () => void;
   onTrack: () => void;
+  onChangePhoto: () => void;
+  onCheckUpdates: () => void;
 }): JSX.Element {
-  const name = userName.trim();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const name = userName.trim() || "Your profile";
   const greeting = greetingForHour(new Date().getHours());
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent): void => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  function run(action: () => void): void {
+    setOpen(false);
+    action();
+  }
+
   return (
-    <div className="side-profile">
-      <button type="button" className="side-profile__avatar" onClick={onOpenProfile} aria-label="Open profile">
-        <Avatar image={image} pet={pet} size={64} ring />
-      </button>
-      <p className="side-profile__greeting">{greeting},</p>
-      <p className="side-profile__name">{name || "friend"}</p>
-      <div className="side-profile__chips">
-        <span className="side-profile__chip">
-          <span className="side-profile__dot is-water" aria-hidden="true" />
-          {watersLogged}/{DAILY_WATER_GOAL} water
-        </span>
-        <span className="side-profile__chip">
-          <span className={`side-profile__dot${focusActive ? " is-focus" : ""}`} aria-hidden="true" />
-          {focusActive ? `${focusMinutesLeft}m focus` : "Focus off"}
-        </span>
-      </div>
-      <button type="button" className="c-btn c-btn--primary c-btn--block side-profile__track" onClick={onTrack}>
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M3 3v18h18" />
-          <path d="m7 15 4-4 3 3 5-6" />
+    <div className={`account${open ? " is-open" : ""}`} ref={rootRef}>
+      {open ? (
+        <div className="account__menu" role="menu">
+          <div className="account__header">
+            <Avatar image={image} pet={pet} size={40} />
+            <div className="account__header-text">
+              <p className="account__greeting">{greeting}</p>
+              <p className="account__header-name">{name}</p>
+            </div>
+          </div>
+          <div className="account__chips">
+            <span className="account__chip">
+              <span className="account__dot is-water" aria-hidden="true" />
+              {watersLogged}/{DAILY_WATER_GOAL} water
+            </span>
+            <span className="account__chip">
+              <span className={`account__dot${focusActive ? " is-focus" : ""}`} aria-hidden="true" />
+              {focusActive ? `${focusMinutesLeft}m focus left` : "Focus off"}
+            </span>
+          </div>
+          <div className="account__sep" />
+          <button type="button" role="menuitem" className="account__item" onClick={() => run(onOpenProfile)}>
+            {menuIcon(
+              <>
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </>
+            )}
+            View profile
+          </button>
+          <button type="button" role="menuitem" className="account__item" onClick={() => run(onTrack)}>
+            {menuIcon(
+              <>
+                <path d="M3 3v18h18" />
+                <path d="m7 15 4-4 3 3 5-6" />
+              </>
+            )}
+            Track progress
+          </button>
+          <button type="button" role="menuitem" className="account__item" onClick={() => run(onChangePhoto)}>
+            {menuIcon(
+              <>
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </>
+            )}
+            {image ? "Change photo" : "Add a photo"}
+          </button>
+          <div className="account__sep" />
+          <button type="button" role="menuitem" className="account__item" onClick={() => run(onCheckUpdates)}>
+            {menuIcon(
+              <>
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                <path d="M21 3v6h-6" />
+              </>
+            )}
+            {updateReady ? "Update available" : "Check for updates"}
+            {updateReady ? <span className="account__badge">New</span> : null}
+          </button>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        className="account__trigger"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <Avatar image={image} pet={pet} size={30} />
+        <span className="account__name">{name}</span>
+        {updateReady ? <span className="account__trigger-dot" aria-label="Update available" /> : null}
+        <svg className="account__chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m7 15 5-5 5 5" />
         </svg>
-        Track progress
       </button>
     </div>
   );

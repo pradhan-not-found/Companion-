@@ -24,7 +24,7 @@ import {
   PageHeader,
   ProfileCard,
   Sidebar,
-  SidebarProfile,
+  AccountMenu,
   TodayCard,
   UpdatesCard
 } from "./CompanionPanels";
@@ -824,6 +824,16 @@ export function SettingsView(): JSX.Element {
     setPage("pets");
   }, [newPets.length, draft.onboardingDismissed]);
 
+  function choosePhoto(): void {
+    setPhotoError(null);
+    void window.companion.chooseAvatar().then((result) => {
+      if (!result.ok && result.error && result.error !== "cancelled") {
+        setPhotoError(result.error);
+        selectPage("profile");
+      }
+    });
+  }
+
   function markPetsSeen(petIds: string[]): void {
     updateDraft({ seenPetIds: [...new Set([...draft.seenPetIds, ...petIds])] });
   }
@@ -887,15 +897,21 @@ export function SettingsView(): JSX.Element {
         active={page}
         onSelect={selectPage}
         footer={
-          <SidebarProfile
+          <AccountMenu
             image={draft.avatarImage}
             pet={selectedPet}
             userName={draft.userName}
             watersLogged={stats.watersLogged}
             focusActive={snapshot.focusActive}
             focusMinutesLeft={focusMinutesLeft}
+            updateReady={updateReady}
             onOpenProfile={() => selectPage("profile")}
             onTrack={() => selectPage("stats")}
+            onChangePhoto={choosePhoto}
+            onCheckUpdates={() => {
+              selectPage("profile");
+              if (!updateReady) window.companion.checkForUpdates();
+            }}
           />
         }
       />
@@ -1014,12 +1030,7 @@ export function SettingsView(): JSX.Element {
             userName={draft.userName}
             avatarImage={draft.avatarImage}
             onNameChange={(userName) => updateDraft({ userName })}
-            onChoosePhoto={() => {
-              setPhotoError(null);
-              void window.companion.chooseAvatar().then((result) => {
-                if (!result.ok && result.error && result.error !== "cancelled") setPhotoError(result.error);
-              });
-            }}
+            onChoosePhoto={choosePhoto}
             onRemovePhoto={() => updateDraft({ avatarImage: "" })}
             photoError={photoError}
             companionDays={companionDays}
@@ -1089,7 +1100,18 @@ export function SettingsView(): JSX.Element {
       {page === "settings" ? (
         <>
           <section className="prefs__group prefs__group--first">
-            <h2 className="prefs__group-title">{labels.language}</h2>
+            <h2 className="prefs__group-title">General</h2>
+            <Row
+              label="Start with Windows"
+              hint="Companion opens quietly when you sign in and stays in the tray until you quit."
+              control={
+                <ToggleControl
+                  checked={draft.launchAtLogin}
+                  onChange={(launchAtLogin) => updateDraft({ launchAtLogin })}
+                  ariaLabel="Start with Windows"
+                />
+              }
+            />
             <Row
               label={labels.language}
               control={
@@ -1413,6 +1435,8 @@ export function SettingsView(): JSX.Element {
             <DemoChip trigger="hydration" label={labels.demoWater} />
             <DemoChip trigger="focusWarning" label={labels.demoFocusWarning} />
             <DemoChip trigger="happy" label={labels.demoHappy} />
+              <DemoChip trigger="agentDone" label="Agent done" />
+              <DemoChip trigger="agentApproval" label="Agent needs approval" />
             <button type="button" className="pref-chip-button" onClick={window.companion.resetToday}>
               {labels.resetToday}
             </button>

@@ -35,3 +35,11 @@ SOFTWARE.
 The bundled pets in `pets/` use the PetDex `pet.json + spritesheet` format. Pet
 artwork is not covered by the MIT License above; each pet remains subject to the
 terms set by its original creator. Verify an asset's license before redistributing it.
+
+## Agent logos
+
+The Claude Code, Codex, DeepSeek, OpenCode and Hermes Agent marks in
+`src/renderer/src/assets/agents/` come from **LobeHub Icons**
+(https://github.com/lobehub/lobe-icons, MIT License). The marks themselves are
+trademarks of their respective owners. Companion shows them only to identify
+which tool is waiting for you; no endorsement is implied.

@@ -29,7 +29,10 @@ import type {
   StatsHistory,
   SpeechBubble,
   TodayStats,
-  UpdateStatus
+  UpdateStatus,
+  AgentActivity,
+  AgentSource,
+  AgentStatus
 } from "../shared/types";
 import {
   APP_ID,
@@ -126,7 +129,6 @@ const BATTERY_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const LOW_BATTERY_ALERT_COOLDOWN_MS = 30 * 60 * 1000;
 const LOW_BATTERY_THRESHOLD_PERCENT = 20;
 
-type AgentSource = "Codex" | "Claude Code" | "OpenCode" | "DeepSeek TUI" | "Hermes";
 type AgentEventKind = "complete" | "failed" | "needs-review" | "working";
 type AgentProgressKind =
   | "working"
@@ -524,6 +526,11 @@ function getSettings(): Settings {
     seenPetIds: Array.isArray(stored.seenPetIds)
       ? stored.seenPetIds.filter((id): id is string => typeof id === "string")
       : DEFAULT_SETTINGS.seenPetIds,
+    announcedPetIds: Array.isArray(stored.announcedPetIds)
+      ? stored.announcedPetIds.filter((id): id is string => typeof id === "string")
+      : Array.isArray(stored.seenPetIds)
+        ? stored.seenPetIds.filter((id): id is string => typeof id === "string")
+        : DEFAULT_SETTINGS.announcedPetIds,
     selectedPetId,
     installedPets
   };
@@ -710,7 +717,8 @@ function snapshot(): AppSnapshot {
     focusActive,
     screenBlockActive: blockingMode === "breakRun" || blockingMode === "focusWarning",
     screenBlockEndsAt,
-    update: updateStatus
+    update: updateStatus,
+    agentActivity
   };
 }
 
@@ -2183,23 +2191,90 @@ function installDownloadedUpdate(): void {
   autoUpdater.quitAndInstall(false, true);
 }
 
+/** Registers (or removes) Companion as a sign-in app so it runs in the background. */
+function applyLaunchAtLogin(): void {
+  if (!app.isPackaged || (process.platform !== "win32" && process.platform !== "darwin")) return;
+  const openAtLogin = getSettings().launchAtLogin;
+  // The portable exe unpacks to a temp folder on every run; register the real file.
+  const exePath = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
+  try {
+    app.setLoginItemSettings({ openAtLogin, path: exePath, args: ["--autostart"] });
+  } catch {
+    // Login items can be blocked by policy; the app works without it.
+  }
+}
+
+// While the hello is on screen, agent activity only updates its status pill.
+let greetingUntil = 0;
+
+function startupGreeting(name: string): string {
+  const hour = new Date().getHours();
+  const who = name ? `, ${name}` : "";
+  if (hour < 5) return pick([`Up late${who}? I'll keep you company 🌙`, `Burning the midnight oil${who}? Don't forget to rest.`]);
+  if (hour < 12) return pick([`Good morning${who}! ☀️ Ready for a great day?`, `Good morning${who}! Let's start with a glass of water 💧`]);
+  if (hour < 17) return pick([`Good afternoon${who}! 👋 How's it going?`, `Good afternoon${who}! Remember to stretch a little.`]);
+  return pick([`Good evening${who}! 🌆 Nice to see you.`, `Good evening${who}! Let's wrap up the day gently.`]);
+}
+
+/** The mascot waves hello every time Companion starts (including at sign-in). */
+function greetOnStartup(attempt = 0): void {
+  const settings = getSettings();
+  if (!settings.onboardingDismissed || blockingMode) return;
+  // The pet window may still be loading right after launch; wait for it.
+  if (!petWindow || petWindow.isDestroyed() || !petWindow.isVisible()) {
+    if (attempt < 12) setTimeout(() => greetOnStartup(attempt + 1), 500);
+    return;
+  }
+  stopAmbientRoam(false);
+  stopAmbientPose(true);
+  clearAgentPose(false);
+  setPetState("waving");
+  greetingUntil = Date.now() + 5000;
+  showBubble({ id: "startup-greeting", message: startupGreeting(settings.userName.trim()), autoDismissMs: 4800 });
+  setTimeout(() => {
+    if (petState === "waving") setPetState(focusActive ? "focusGuard" : "idle");
+    if (!focusActive && !blockingMode) {
+      scheduleAmbientRoam();
+      scheduleAmbientPose();
+    }
+  }, 5000);
+}
+
 /** Introduces pets that arrived with an update (bundled, but not seen yet). */
 function announceNewPets(): void {
   const settings = getSettings();
   if (!settings.onboardingDismissed) return;
   const seen = new Set(settings.seenPetIds);
-  const fresh = BUNDLED_PETS.filter((pet) => !seen.has(pet.slug));
+  const announced = new Set(settings.announcedPetIds);
+  // Only pets that genuinely arrived with an update, and only once each.
+  const fresh = BUNDLED_PETS.filter((pet) => !seen.has(pet.slug) && !announced.has(pet.slug));
   if (!fresh.length) return;
+  setSettings({ ...settings, announcedPetIds: [...announced, ...fresh.map((pet) => pet.slug)] });
+  const first = fresh[0];
   const names = fresh.map((pet) => pet.manifest.displayName);
-  const headline = fresh.length === 1 ? `New companion: ${names[0]}!` : `${fresh.length} new companions arrived!`;
-  notify(headline, `Meet ${names.join(", ")} in Companion → Companions.`, () => createSettingsWindow());
-  if (blockingMode || focusActive) return;
+  const headline = fresh.length === 1 ? `Meet ${names[0]}!` : `${fresh.length} new companions arrived`;
+  notify(`New companion · ${headline}`, `Say hi to ${names.join(", ")} in Companion.`, () => createSettingsWindow());
+  if (blockingMode) return;
+  ensurePetWindowVisible();
+  stopAmbientRoam(false);
+  stopAmbientPose(true);
+  setPetState("waving");
   showBubble({
     id: "new-pet",
-    message: `${headline} Click to say hi 👋`,
-    clickActionId: "pets:open",
-    autoDismissMs: 7000
+    message:
+      fresh.length === 1
+        ? `${first.manifest.displayName} just joined Companion. Want to say hi?`
+        : `${names.join(", ")} just joined Companion.`,
+    newPet: { slug: first.slug, name: first.manifest.displayName, count: fresh.length },
+    actions: [
+      { id: "pets:open", label: "Say hi", kind: "primary" },
+      { id: "bubble:dismiss", label: "Later" }
+    ],
+    autoDismissMs: 12_000
   });
+  setTimeout(() => {
+    if (petState === "waving") setPetState(focusActive ? "focusGuard" : "idle");
+  }, 3000);
 }
 
 async function checkForUpdates(manual = false): Promise<void> {
@@ -3488,6 +3563,41 @@ function collectClaudeStatusEvents(): AgentMonitorEvent[] {
   return events;
 }
 
+let agentActivity: AgentActivity | null = null;
+let agentActivityExpiryTimer: NodeJS.Timeout | null = null;
+
+function agentStatusFor(
+  event: Pick<AgentMonitorEvent, "kind" | "message" | "progressKind">,
+  working: boolean
+): AgentStatus {
+  const progressKind = event.progressKind ?? (working ? classifyAgentProgressKind(event.message) : undefined);
+  if (progressKind === "permission") return "permission";
+  if (progressKind === "choice") return "choice";
+  if (!working) {
+    if (event.kind === "failed") return "failed";
+    if (event.kind === "needs-review" || progressKind === "review") return "needs-review";
+    return "complete";
+  }
+  if (progressKind === "script") return "script";
+  if (progressKind === "tool") return "tool";
+  if (progressKind === "thinking") return "thinking";
+  if (progressKind === "review") return "needs-review";
+  return "working";
+}
+
+/** Publishes the live agent status pill; it fades out after `ttlMs` of silence. */
+function setAgentActivity(source: AgentSource, status: AgentStatus, ttlMs: number): AgentActivity {
+  agentActivity = { source, status, updatedAt: Date.now() };
+  if (agentActivityExpiryTimer) clearTimeout(agentActivityExpiryTimer);
+  agentActivityExpiryTimer = setTimeout(() => {
+    agentActivity = null;
+    agentActivityExpiryTimer = null;
+    publishSnapshot();
+  }, ttlMs);
+  publishSnapshot();
+  return agentActivity;
+}
+
 function clearAgentPose(restoreState: boolean): void {
   if (agentPoseTimer) {
     clearTimeout(agentPoseTimer);
@@ -3502,67 +3612,114 @@ function clearAgentPose(restoreState: boolean): void {
 function showAgentWorkingPose(
   event: Pick<AgentMonitorEvent, "source" | "sessionKey" | "message" | "progressKind" | "timestampMs">
 ): void {
-  if (blockingMode || focusActive) return;
   rememberAgentSession(event);
+  const status = agentStatusFor({ kind: "working", message: event.message, progressKind: event.progressKind }, true);
+  // Ordinary progress (thinking, tools, commands) stays silent: the pet only
+  // speaks up when the agent is blocked on you.
+  if (status !== "permission" && status !== "choice") return;
+  pokeUser({
+    source: event.source,
+    status,
+    message: agentProgressMessage(event),
+    clickActionId: registerAgentBubbleAction(event),
+    bubbleId: `agent-${status}-${event.timestampMs}`
+  });
+}
+
+const POKE_REPEAT_MS = 15_000;
+const lastPokeAt = new Map<string, number>();
+
+/*
+ * Gets the user's attention for an agent: a quick hop, a branded card bubble,
+ * a chime, and a Windows notification when the agent's own window isn't the
+ * one in front.
+ */
+function pokeUser(poke: {
+  source: AgentSource;
+  status: AgentStatus;
+  message: string;
+  clickActionId?: string;
+  bubbleId: string;
+}): boolean {
+  if (blockingMode || currentBubble?.actions?.length) return false;
+  const now = Date.now();
+  const key = `${poke.source}|${poke.status}`;
+  if (now - (lastPokeAt.get(key) ?? 0) < POKE_REPEAT_MS) return false;
+  lastPokeAt.set(key, now);
+
+  const failed = poke.status === "failed";
+  const activity = setAgentActivity(poke.source, poke.status, 45_000);
+  if (getSettings().agentCompletionSoundEnabled) shell.beep();
+
+  void readActiveWindow()
+    .then((active) => sourceFromAgentWindow(active.appName, active.windowTitle) !== poke.source)
+    .catch(() => true)
+    .then((elsewhere) => {
+      if (!elsewhere) return;
+      notify(`${poke.source} · ${agentPokeHeadline(poke.status)}`, poke.message, () => {
+        if (poke.clickActionId) handleBubbleAction(poke.clickActionId);
+      });
+    });
+
+  if (now < greetingUntil) return true;
   ensurePetWindowVisible();
-  if (!petWindow?.isVisible()) return;
   stopAmbientRoam(false);
   stopAmbientPose(true);
   clearAgentPose(false);
-  agentPoseActiveState = "thinking";
-  setPetState("thinking");
-  const now = Date.now();
-  if (!currentBubble?.actions?.length && now - agentLastProgressBubbleAt > 8000) {
-    agentLastProgressBubbleAt = now;
-    showBubble({
-      id: `agent-progress-${event.timestampMs}`,
-      message: agentProgressMessage(event),
-      clickActionId: registerAgentBubbleAction(event),
-      autoDismissMs: 3200
-    });
+  // A short hop first (the "poke"), then settle into the reaction pose.
+  setPetState(failed ? "failed" : "jumping");
+  agentPoseActiveState = failed ? "failed" : "jumping";
+  if (!failed) {
+    agentPoseTimer = setTimeout(() => {
+      agentPoseTimer = null;
+      if (petState === "jumping") {
+        setPetState("waving");
+        agentPoseActiveState = "waving";
+      }
+    }, 1300);
   }
-  agentPoseTimer = setTimeout(() => {
-    clearAgentPose(true);
+
+  const displayMs = Math.max(bubbleDisplayMs(), 8000);
+  showBubble({
+    id: poke.bubbleId,
+    message: poke.message,
+    agent: activity,
+    clickActionId: poke.clickActionId,
+    autoDismissMs: displayMs
+  });
+  setTimeout(() => {
+    if (currentBubble?.id === poke.bubbleId) hideBubble();
+    if (petState === "waving" || petState === "jumping" || petState === "failed") {
+      setPetState(focusActive ? "focusGuard" : "idle");
+    }
+    agentPoseActiveState = null;
     if (!focusActive && !blockingMode) {
-      scheduleAmbientRoam();
+      scheduleAmbientRoam(5000);
       scheduleAmbientPose();
     }
-  }, 5200);
+  }, displayMs + 200);
+  return true;
+}
+
+function agentPokeHeadline(status: AgentStatus): string {
+  if (status === "permission") return "needs your approval";
+  if (status === "choice") return "is waiting for your choice";
+  if (status === "needs-review") return "is ready for your review";
+  if (status === "failed") return "ran into a problem";
+  return "is done — waiting for your prompt";
 }
 
 function notifyAgentEvent(event: AgentMonitorEvent): boolean {
-  if (blockingMode || currentBubble?.actions?.length) return false;
   rememberAgentSession(event);
-  const now = Date.now();
-  if (now - agentLastNotificationAt < 7000) return false;
-  agentLastNotificationAt = now;
-  ensurePetWindowVisible();
-  stopAmbientRoam(false);
-  stopAmbientPose(true);
-  clearAgentPose(false);
-
-  const bubbleId = `agent-${event.kind}-${event.timestampMs}`;
-  playAgentCompletionSound(event);
-  setPetState(event.state);
-  const displayMs = bubbleDisplayMs();
-  showBubble({
-    id: bubbleId,
+  const poked = pokeUser({
+    source: event.source,
+    status: agentStatusFor(event, false),
     message: agentEventMessage(event),
     clickActionId: registerAgentBubbleAction(event),
-    autoDismissMs: displayMs
+    bubbleId: `agent-${event.kind}-${event.timestampMs}`
   });
-  setTimeout(
-    () => {
-      if (currentBubble?.id === bubbleId) hideBubble();
-      if (petState === event.state) setPetState(focusActive ? "focusGuard" : "idle");
-      if (!focusActive && !blockingMode) {
-        scheduleAmbientRoam(5000);
-        scheduleAmbientPose();
-      }
-    },
-    displayMs + 200
-  );
-  return true;
+  if (poked) agentLastNotificationAt = Date.now();
+  return poked;
 }
 
 async function checkAgentActivityNow(): Promise<void> {
@@ -4105,12 +4262,34 @@ function triggerDemo(trigger: DemoTrigger): void {
   if (trigger === "hydration") triggerHydrationReminder(true);
   if (trigger === "focusWarning") triggerFocusWarning("Twitter");
   if (trigger === "happy") happyFeedback(pick(text().bubble.woof));
+  if (trigger === "agentDone") {
+    lastPokeAt.clear();
+    pokeUser({
+      source: "Claude Code",
+      status: "complete",
+      message: "Claude Code finished the task. It's your turn.",
+      bubbleId: `demo-agent-${Date.now()}`
+    });
+  }
+  if (trigger === "agentApproval") {
+    lastPokeAt.clear();
+    pokeUser({
+      source: "Codex",
+      status: "permission",
+      message: "Codex wants to run a command and needs your approval.",
+      bubbleId: `demo-agent-${Date.now()}`
+    });
+  }
 }
 
 function handleBubbleAction(actionId: string): void {
   if (actionId === "pets:open") {
     hideBubble();
     createSettingsWindow();
+    return;
+  }
+  if (actionId === "bubble:dismiss") {
+    hideBubble();
     return;
   }
   if (getSettings().lyricsModeEnabled) return;
@@ -4271,7 +4450,12 @@ function registerIpc(): void {
   ipcMain.on("bubble:action", (_event, actionId: string) => handleBubbleAction(actionId));
   ipcMain.on("app:open-external", (_event, url: string) => openExternalUrl(url));
   ipcMain.on("settings:update", (_event, partial: Partial<Settings>) => {
-    setSettings({ ...getSettings(), ...partial });
+    const before = getSettings();
+    setSettings({ ...before, ...partial });
+    const after = getSettings();
+    if (after.launchAtLogin !== before.launchAtLogin) applyLaunchAtLogin();
+    // First run: say hello as soon as onboarding is finished.
+    if (!before.onboardingDismissed && after.onboardingDismissed) setTimeout(() => greetOnStartup(), 600);
   });
   ipcMain.on("demo:trigger", (_event, trigger: DemoTrigger) => triggerDemo(trigger));
   ipcMain.on("focus:start", startFocusMode);
@@ -4373,7 +4557,9 @@ app.whenReady().then(() => {
   if (IS_DEV || !getSettings().onboardingDismissed) {
     createSettingsWindow();
   }
-  setTimeout(announceNewPets, 6000);
+  applyLaunchAtLogin();
+  setTimeout(() => greetOnStartup(), 1500);
+  setTimeout(announceNewPets, 9000);
 
   app.on("activate", () => {
     if (!petWindow) createPetWindow();

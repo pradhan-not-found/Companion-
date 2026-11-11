@@ -4,6 +4,9 @@ import { i18n, resolveLanguage } from "../../../shared/i18n";
 import type { CustomReminder, PetLayout, SpeechBubble } from "../../../shared/types";
 import { getSelectedPetAsset } from "../assets";
 import { useNow, useSnapshot } from "../hooks";
+import { AgentBubbleHeader } from "./AgentBadge";
+import { SpriteView } from "./CompanionPanels";
+import { allPets } from "../../../shared/bundledPets";
 
 type DragRef = {
   pointerId: number;
@@ -178,14 +181,36 @@ export function PetView(): JSX.Element {
       {bubble ? (
         bubbleClickActionId ? (
           <button
-            className="speech-bubble speech-bubble--button"
+            className={`speech-bubble speech-bubble--button${bubble.agent ? " is-agent" : ""}`}
             onClick={() => window.companion.bubbleAction(bubbleClickActionId)}
             type="button"
           >
+            {bubble.agent ? <AgentBubbleHeader activity={bubble.agent} /> : null}
             <p>{bubble.message}</p>
           </button>
         ) : (
-          <section className="speech-bubble">
+          <section
+            className={`speech-bubble${bubble.agent ? " is-agent" : ""}${bubble.newPet ? " is-new-pet" : ""}`}
+          >
+            {bubble.agent ? <AgentBubbleHeader activity={bubble.agent} /> : null}
+            {bubble.newPet ? (
+              <div className="new-pet-card__head">
+                <span className="new-pet-card__preview">
+                  {(() => {
+                    const pet = allPets(snapshot.settings.installedPets).find(
+                      (candidate) => candidate.slug === bubble.newPet?.slug
+                    );
+                    return pet ? <SpriteView pet={pet} state="waving" scale={0.26} /> : null;
+                  })()}
+                </span>
+                <span className="new-pet-card__titles">
+                  <span className="new-pet-card__eyebrow">
+                    ✦ New companion{bubble.newPet.count > 1 ? `s · ${bubble.newPet.count}` : ""}
+                  </span>
+                  <span className="new-pet-card__name">Meet {bubble.newPet.name}</span>
+                </span>
+              </div>
+            ) : null}
             <p>{bubble.message}</p>
             {!lyricsModeEnabled && bubble.actions?.length ? (
               <div className="bubble-actions">

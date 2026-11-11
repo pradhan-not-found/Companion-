@@ -38,7 +38,8 @@ export function useSnapshot(): AppSnapshot {
     dogVisible: true,
     screenBlockActive: false,
     screenBlockEndsAt: null,
-    update: { state: "idle", currentVersion: "", canInstall: true }
+    update: { state: "idle", currentVersion: "", canInstall: true },
+    agentActivity: null
   });
 
   useEffect(() => {

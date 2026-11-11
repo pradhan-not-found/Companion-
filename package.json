@@ -31,16 +31,38 @@
       "out/**/*"
     ],
     "extraResources": [
-      { "from": "build/icon.png", "to": "icon.png" },
-      { "from": "build/tray-icon.png", "to": "tray-icon.png" },
-      { "from": "build/trayTemplate.png", "to": "trayTemplate.png" },
-      { "from": "pets", "to": "pets" }
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
+      },
+      {
+        "from": "build/tray-icon.png",
+        "to": "tray-icon.png"
+      },
+      {
+        "from": "build/trayTemplate.png",
+        "to": "trayTemplate.png"
+      },
+      {
+        "from": "pets",
+        "to": "pets"
+      }
     ],
     "win": {
       "icon": "build/icon.png",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -61,7 +83,15 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
-      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
       "extendInfo": {
         "NSAppleEventsUsageDescription": "Companion uses Apple Events to read the active app and window title, so distraction detection can nudge you when blocked apps or keywords appear."
       }
