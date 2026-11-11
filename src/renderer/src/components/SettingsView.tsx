@@ -1195,7 +1195,7 @@ export function SettingsView(): JSX.Element {
               />
             ) : null}
             <Row
-              label="Helpboard"
+              label="Compboard"
               hint="Click your pet for quick actions and recent copies. Clipboard items stay in memory only."
               control={
                 <ToggleControl

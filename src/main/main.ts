@@ -1090,7 +1090,7 @@ function closePouchWindow(): void {
   pouchWindow = null;
 }
 
-/** Where the Helpboard sits: just above the pet, or beside it near the top edge. */
+/** Where the Compboard sits: just above the pet, or beside it near the top edge. */
 function pouchPosition(): { x: number; y: number } {
   const pet = petWindow && !petWindow.isDestroyed() ? petWindow.getBounds() : { x: 0, y: 0, width: 0, height: 0 };
   const workArea = screen.getDisplayNearestPoint({ x: pet.x + pet.width / 2, y: pet.y + pet.height / 2 }).workArea;
@@ -1108,7 +1108,7 @@ function pouchPosition(): { x: number; y: number } {
   return { x, y };
 }
 
-/** Keeps an open Helpboard attached to the pet as it moves. */
+/** Keeps an open Compboard attached to the pet as it moves. */
 function followPetWithPouch(): void {
   if (!pouchWindow || pouchWindow.isDestroyed()) return;
   const { x, y } = pouchPosition();
@@ -1116,7 +1116,7 @@ function followPetWithPouch(): void {
   if (cx !== x || cy !== y) pouchWindow.setBounds({ x, y, ...POUCH_SIZE }, false);
 }
 
-/** Opens the Helpboard just above (or beside) the pet. */
+/** Opens the Compboard just above (or beside) the pet. */
 function togglePouchWindow(): void {
   if (pouchWindow && !pouchWindow.isDestroyed()) {
     closePouchWindow();

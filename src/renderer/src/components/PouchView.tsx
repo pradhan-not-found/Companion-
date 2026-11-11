@@ -44,7 +44,7 @@ const tileIcon = (paths: JSX.Element): JSX.Element => (
   </svg>
 );
 
-/** Helpboard: opened by clicking the pet. Quick actions plus recent clipboard items. */
+/** Compboard: opened by clicking the pet. Quick actions plus recent clipboard items. */
 export function PouchView(): JSX.Element {
   const snapshot = useSnapshot();
   const clock = useNow(15_000);
@@ -94,7 +94,7 @@ export function PouchView(): JSX.Element {
     <main className="pouch">
       <header className="hb__head">
         <div className="hb__titles">
-          <h1 className="hb__title">Helpboard</h1>
+          <h1 className="hb__title">Compboard</h1>
           <p className="hb__sub">{petName} is here to help</p>
         </div>
         <button type="button" className="pouch__icon-btn" aria-label="Close" onClick={() => window.companion.closePouch()}>

@@ -4187,7 +4187,7 @@ textarea,
   padding-right: calc(var(--pad-r) + max(0px, (100% - 1120px) / 2));
 }
 
-/* Helpboard: clear confirmation */
+/* Compboard: clear confirmation */
 .hb__confirm {
   animation: c-menu-in 0.16s var(--ease-out) both;
   background: var(--blend-bg);
