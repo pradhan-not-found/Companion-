@@ -38,12 +38,11 @@ export function mapPetStateToPetdexState(state: PetState): PetdexStateId {
   ) {
     return "waving";
   }
-  if (
-    state === "breakPrompt" ||
-    state === "focusGuard"
-  ) {
-    return "review";
-  }
+  // A focus session lasts many minutes: use the calm idle loop. The "review"
+  // row in most PetDex sheets is a burst of varied poses that looks frantic
+  // when it loops nonstop, so keep it for short-lived prompts only.
+  if (state === "focusGuard") return "idle";
+  if (state === "breakPrompt") return "review";
   if (state === "focusAlert" || state === "sad") return "failed";
   if (state === "hydrationPrompt" || state === "drinking") return "waiting";
   return "waiting";

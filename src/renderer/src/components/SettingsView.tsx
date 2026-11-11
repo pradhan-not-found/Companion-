@@ -17,10 +17,22 @@ import type {
 import { getSelectedPetAsset } from "../assets";
 import { distractionHelp, formatDistractionState, formatTimer, formatTimestamp, localeFor } from "../format";
 import { useNow, useSnapshot } from "../hooks";
+import {
+  NavIcons,
+  NewPetSpotlight,
+  Onboarding,
+  PageHeader,
+  ProfileCard,
+  Sidebar,
+  SidebarProfile,
+  TodayCard,
+  UpdatesCard
+} from "./CompanionPanels";
+import type { NavItem } from "./CompanionPanels";
 
 type SettingsCopy = ReturnType<typeof i18n>["settings"];
 type StatsRange = "day" | "month" | "all";
-type PrefsPage = "stats" | "pets" | "reminders" | "settings";
+type PrefsPage = "stats" | "pets" | "reminders" | "profile" | "settings";
 type StatsMetric = "breaksTaken" | "watersLogged" | "focusMinutes" | "focusWarnings";
 type StatsTrendPoint = TodayStats & {
   label: string;
@@ -41,7 +53,6 @@ type MonthMarker = {
   label: string;
   column: number;
 };
-const PETDEX_URL = "https://petdex.crafter.run/";
 const HEATMAP_WEEK_COUNT = 53;
 
 function Row({
@@ -778,18 +789,6 @@ export function SettingsView(): JSX.Element {
     updateCustomReminders(draft.customReminders.filter((reminder) => reminder.id !== reminderId));
   }
 
-  async function importPet(): Promise<void> {
-    setImportStatus(null);
-    const result = await window.companion.importPetPackage();
-    if (!result.ok) {
-      if (result.error !== "import_cancelled") {
-        setImportStatus(`${labels.importPetError}: ${result.error}`);
-      }
-      return;
-    }
-    setImportStatus(`${labels.importPetSuccess}: ${result.pet.manifest.displayName}`);
-  }
-
   async function removePet(pet: InstalledPet): Promise<void> {
     const displayName = pet.manifest.displayName;
     if (!window.confirm(labels.removePetConfirm(displayName))) return;
@@ -803,26 +802,117 @@ export function SettingsView(): JSX.Element {
   }
 
   const selectablePets = useMemo(() => allPets(draft.installedPets), [draft.installedPets]);
+  const seenPetIds = useMemo(() => new Set(draft.seenPetIds), [draft.seenPetIds]);
+  const newPets = selectablePets.filter(
+    (pet) => pet.manifest.source === "builtin" && !seenPetIds.has(pet.slug)
+  );
+  const lifetime = Object.values(allStatsByDate).reduce(
+    (total, entry) => ({
+      waters: total.waters + entry.watersLogged,
+      breaks: total.breaks + entry.breaksTaken,
+      focusMinutes: total.focusMinutes + entry.focusMinutes
+    }),
+    { waters: 0, breaks: 0, focusMinutes: 0 }
+  );
+  const updateReady = snapshot.update.state === "downloaded" || snapshot.update.state === "available";
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const selectedPet = selectablePets.find((pet) => pet.slug === draft.selectedPetId) ?? selectablePets[0];
+  const openedForNewPets = useRef(false);
+  useEffect(() => {
+    if (openedForNewPets.current || !newPets.length || !draft.onboardingDismissed) return;
+    openedForNewPets.current = true;
+    setPage("pets");
+  }, [newPets.length, draft.onboardingDismissed]);
+
+  function markPetsSeen(petIds: string[]): void {
+    updateDraft({ seenPetIds: [...new Set([...draft.seenPetIds, ...petIds])] });
+  }
+
+  const english = language === "en";
+  const navItems: NavItem<PrefsPage>[] = [
+    { id: "stats", label: english ? "Overview" : labels.statsHeading, icon: NavIcons.overview },
+    {
+      id: "pets",
+      label: english ? "Companions" : labels.petAppearance,
+      icon: NavIcons.pets,
+      badge: newPets.length ? "New" : undefined
+    },
+    { id: "reminders", label: labels.reminderPageTitle, icon: NavIcons.reminders },
+    { id: "profile", label: english ? "Profile" : "Profile", icon: NavIcons.profile, dot: updateReady },
+    { id: "settings", label: labels.title, icon: NavIcons.settings }
+  ];
+  const pageMeta: Record<PrefsPage, { title: string; subtitle: string }> = {
+    stats: { title: english ? "Overview" : labels.statsHeading, subtitle: "Your day at a glance." },
+    pets: {
+      title: english ? "Companions" : labels.petAppearance,
+      subtitle: "Pick who keeps you company on your desktop."
+    },
+    reminders: { title: labels.reminderPageTitle, subtitle: "Daily nudges that count down on your pet." },
+    profile: { title: "Profile", subtitle: "Your name, your progress, and app updates." },
+    settings: { title: labels.title, subtitle: "Fine-tune breaks, hydration, focus, and your companion." }
+  };
+  const focusMinutesLeft = snapshot.timers.focusEndsAt
+    ? Math.max(0, Math.ceil((snapshot.timers.focusEndsAt - now) / 60000))
+    : 0;
+
+  if (!draft.onboardingDismissed) {
+    return (
+      <Onboarding
+        title={labels.welcomeTitle}
+        pets={selectablePets}
+        initialName={draft.userName}
+        initialPetId={draft.selectedPetId}
+        onPetChange={(selectedPetId) => updateDraft({ selectedPetId })}
+        onComplete={(userName, selectedPetId) =>
+          updateDraft({ userName, selectedPetId, onboardingDismissed: true })
+        }
+        renderPet={(pet, selected, onSelect) => (
+          <PetCard
+            key={pet.slug}
+            pet={pet}
+            label={pet.manifest.displayName}
+            selected={selected}
+            onSelect={onSelect}
+            removeLabel={labels.removePet(pet.manifest.displayName)}
+          />
+        )}
+      />
+    );
+  }
 
   return (
-    <main ref={prefsRef} className="prefs" dir={language === "ar" ? "rtl" : "ltr"}>
-      <header className="prefs__topbar">
-        <SegmentedControl
-          value={page}
-          options={[
-            { value: "stats", label: labels.statsHeading },
-            { value: "pets", label: labels.petAppearance },
-            { value: "reminders", label: labels.reminderPageTitle },
-            { value: "settings", label: labels.title }
-          ]}
-          onChange={selectPage}
-        />
-      </header>
-      {page === "settings" ? <h1 className="prefs__page-title">{labels.title}</h1> : null}
-      {page === "reminders" ? <h1 className="prefs__page-title">{labels.reminderPageTitle}</h1> : null}
+    <div className="app-shell" dir={language === "ar" ? "rtl" : "ltr"}>
+      <Sidebar
+        items={navItems}
+        active={page}
+        onSelect={selectPage}
+        footer={
+          <SidebarProfile
+            image={draft.avatarImage}
+            pet={selectedPet}
+            userName={draft.userName}
+            watersLogged={stats.watersLogged}
+            focusActive={snapshot.focusActive}
+            focusMinutesLeft={focusMinutesLeft}
+            onOpenProfile={() => selectPage("profile")}
+            onTrack={() => selectPage("stats")}
+          />
+        }
+      />
+      <main ref={prefsRef} className="prefs">
+      <PageHeader title={pageMeta[page].title} subtitle={pageMeta[page].subtitle} />
 
       {page === "stats" ? (
         <section className="prefs__stats-panel" aria-label={labels.statsHeading}>
+          <TodayCard
+            userName={draft.userName}
+            watersLogged={stats.watersLogged}
+            focusActive={snapshot.focusActive}
+            onDrink={window.companion.logWater}
+            onToggleFocus={snapshot.focusActive ? window.companion.stopFocus : window.companion.startFocus}
+            focusLabel={labels.startFocus}
+            stopFocusLabel={labels.stopFocus}
+          />
           <div className="prefs__stats-head">
             <SegmentedControl
               value={statsRange}
@@ -876,24 +966,21 @@ export function SettingsView(): JSX.Element {
         </section>
       ) : null}
 
-      {page === "stats" && !draft.onboardingDismissed ? (
-        <aside className="prefs__welcome">
-          <p>
-            <strong>{labels.welcomeTitle}.</strong> {labels.welcomeCopy}
-          </p>
-          <button
-            type="button"
-            className="text-link"
-            onClick={() => updateDraft({ onboardingDismissed: true })}
-          >
-            {labels.dismissWelcome}
-          </button>
-        </aside>
-      ) : null}
-
       {page === "pets" ? (
-        <section className="prefs__group">
-          <div className="pref-block pref-block--flush">
+        <>
+          {newPets.length ? (
+            <NewPetSpotlight
+              pets={newPets}
+              onTry={(pet) => {
+                updateDraft({
+                  selectedPetId: pet.slug,
+                  seenPetIds: [...new Set([...draft.seenPetIds, pet.slug])]
+                });
+              }}
+              onDismiss={() => markPetsSeen(newPets.map((pet) => pet.slug))}
+            />
+          ) : null}
+          <section className="prefs__group">
             <div className="pet-picker">
               {selectablePets.map((pet) => (
                 <PetCard
@@ -901,7 +988,13 @@ export function SettingsView(): JSX.Element {
                   pet={pet}
                   label={pet.manifest.displayName}
                   selected={draft.selectedPetId === pet.slug}
-                  onSelect={() => updateDraft({ selectedPetId: pet.slug })}
+                  isNew={newPets.includes(pet)}
+                  onSelect={() =>
+                    updateDraft({
+                      selectedPetId: pet.slug,
+                      seenPetIds: [...new Set([...draft.seenPetIds, pet.slug])]
+                    })
+                  }
                   onRemove={
                     pet.manifest.source === "imported" ? () => void removePet(pet) : undefined
                   }
@@ -909,28 +1002,35 @@ export function SettingsView(): JSX.Element {
                 />
               ))}
             </div>
-          </div>
-          <Row
-            label={labels.importPet}
-            hint={importStatus ?? labels.importPetHint}
-            control={
-              <button type="button" className="pref-action" onClick={() => void importPet()}>
-                {labels.importPet}
-              </button>
-            }
+            {importStatus ? <p className="petdex-link">{importStatus}</p> : null}
+          </section>
+        </>
+      ) : null}
+
+      {page === "profile" ? (
+        <>
+          <ProfileCard
+            pet={selectedPet}
+            userName={draft.userName}
+            avatarImage={draft.avatarImage}
+            onNameChange={(userName) => updateDraft({ userName })}
+            onChoosePhoto={() => {
+              setPhotoError(null);
+              void window.companion.chooseAvatar().then((result) => {
+                if (!result.ok && result.error && result.error !== "cancelled") setPhotoError(result.error);
+              });
+            }}
+            onRemovePhoto={() => updateDraft({ avatarImage: "" })}
+            photoError={photoError}
+            companionDays={companionDays}
+            totals={lifetime}
           />
-          <p className="petdex-link">
-            <a
-              href={PETDEX_URL}
-              onClick={(event) => {
-                event.preventDefault();
-                window.companion.openExternal(PETDEX_URL);
-              }}
-            >
-              {labels.petdexDownloadCta}
-            </a>
-          </p>
-        </section>
+          <UpdatesCard
+            status={snapshot.update}
+            onCheck={window.companion.checkForUpdates}
+            onInstall={window.companion.installUpdate}
+          />
+        </>
       ) : null}
 
       {page === "reminders" ? (
@@ -1258,7 +1358,19 @@ export function SettingsView(): JSX.Element {
               }
             />
             <Row
+              label="Close distractions automatically"
+              hint="During a focus session, a blocked site closes just that browser tab, and a blocked app or game is closed (force-quit if it refuses). Windows only."
+              control={
+                <ToggleControl
+                  checked={draft.distractionAutoClose}
+                  onChange={(distractionAutoClose) => updateDraft({ distractionAutoClose })}
+                  ariaLabel="Close distractions automatically"
+                />
+              }
+            />
+            <Row
               label={labels.blockedApps}
+              hint="App or game process names, e.g. steam, VALORANT, Discord."
               control={
                 <ChipsControl
                   value={draft.distractionBlockedApps}
@@ -1269,6 +1381,7 @@ export function SettingsView(): JSX.Element {
             />
             <Row
               label={labels.blockedKeywords}
+              hint="Matched against the browser tab title, e.g. youtube, netflix, instagram."
               control={
                 <ChipsControl
                   value={draft.distractionBlockedKeywords}
@@ -1387,7 +1500,8 @@ export function SettingsView(): JSX.Element {
 
         </>
       ) : null}
-    </main>
+      </main>
+    </div>
   );
 }
 
@@ -1508,6 +1622,7 @@ function PetCard({
   pet,
   label,
   selected,
+  isNew = false,
   onSelect,
   onRemove,
   removeLabel
@@ -1515,6 +1630,7 @@ function PetCard({
   pet: InstalledPet;
   label: string;
   selected: boolean;
+  isNew?: boolean;
   onSelect: () => void;
   onRemove?: () => void;
   removeLabel: string;
@@ -1525,6 +1641,7 @@ function PetCard({
   );
   return (
     <div className={`pet-card${selected ? " is-selected" : ""}`}>
+      {isNew ? <span className="pet-card__new">New</span> : null}
       <button
         type="button"
         role="radio"

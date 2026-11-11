@@ -19,8 +19,8 @@ export const SCREEN_BLOCK_WINDOW = {
 } as const;
 
 export const SETTINGS_WINDOW = {
-  width: 760,
-  height: 680
+  width: 1080,
+  height: 740
 } as const;
 
 export const PRELOAD_PATH = join(__dirname, "../preload/index.cjs");
@@ -30,4 +30,4 @@ export const IS_DEV = Boolean(process.env.ELECTRON_RENDERER_URL);
 export const DISTRACTION_CHECK_INTERVAL_MS = 3000;
 export const DISTRACTION_WARNING_COOLDOWN_MS = 60_000;
 export const BREAK_RUN_DURATION_MS = 60_000;
-export const BREAK_RUN_TICK_MS = 16;
+export const BREAK_RUN_TICK_MS = 8;

@@ -1,12 +1,67 @@
 import { execFile } from "node:child_process";
 import type { Settings } from "../shared/types";
+import { readWindowsActiveWindow } from "./windowsFocus";
 
 export type ActiveWindowInfo = {
   appName: string;
   windowTitle: string;
+  /** Windows only: foreground window handle and owning process. */
+  hwnd?: string;
+  pid?: number;
 };
 
 const IGNORED_DISTRACTION_APPS = ["Companion", "Electron"];
+
+const BROWSER_PROCESSES = [
+  "chrome",
+  "msedge",
+  "firefox",
+  "brave",
+  "opera",
+  "opera_gx",
+  "vivaldi",
+  "arc",
+  "chromium",
+  "zen",
+  "librewolf",
+  "waterfox",
+  "yandex",
+  "whale"
+];
+
+// Never closed automatically, even if a rule happens to match them.
+const PROTECTED_PROCESSES = [
+  "companion",
+  "electron",
+  "explorer",
+  "dwm",
+  "winlogon",
+  "csrss",
+  "lockapp",
+  "searchhost",
+  "startmenuexperiencehost",
+  "shellexperiencehost",
+  "taskmgr",
+  "systemsettings",
+  "applicationframehost",
+  "windowsterminal",
+  "powershell",
+  "pwsh",
+  "cmd",
+  "conhost",
+  "code",
+  "devenv",
+  "idea64",
+  "notepad"
+];
+
+export function isBrowserProcess(appName: string): boolean {
+  return BROWSER_PROCESSES.includes(appName.trim().toLowerCase());
+}
+
+export function isProtectedProcess(appName: string): boolean {
+  return PROTECTED_PROCESSES.includes(appName.trim().toLowerCase());
+}
 
 function normalizeRule(value: string): string {
   return value.trim().toLowerCase();
@@ -27,6 +82,7 @@ return frontApp & linefeed & frontWindow
 }
 
 export function readActiveWindow(): Promise<ActiveWindowInfo> {
+  if (process.platform === "win32") return readWindowsActiveWindow();
   return new Promise((resolve, reject) => {
     execFile("/usr/bin/osascript", ["-e", activeWindowScript()], { timeout: 2500 }, (error, stdout) => {
       if (error) {

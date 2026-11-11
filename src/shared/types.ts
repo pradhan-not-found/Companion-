@@ -112,6 +112,11 @@ export type Settings = {
   selectedPetId: string;
   installedPets: InstalledPet[];
   onboardingDismissed: boolean;
+  userName: string;
+  /** Profile photo as a data URL; empty means "show my companion". */
+  avatarImage: string;
+  /** Pet ids the user has already been introduced to. */
+  seenPetIds: string[];
   breakReminderEnabled: boolean;
   breakIntervalMinutes: number;
   screenBlockReminderEnabled: boolean;
@@ -125,6 +130,7 @@ export type Settings = {
   agentCompletionSoundEnabled: boolean;
   distractionDetectionEnabled: boolean;
   distractionGraceSeconds: number;
+  distractionAutoClose: boolean;
   distractionBlockedApps: string[];
   distractionBlockedKeywords: string[];
 };
@@ -156,6 +162,28 @@ export type DistractionStatus = {
   error: string | null;
 };
 
+export type UpdateState =
+  | "idle"
+  | "checking"
+  | "available"
+  | "downloading"
+  | "downloaded"
+  | "not-available"
+  | "error"
+  | "unsupported";
+
+export type UpdateStatus = {
+  state: UpdateState;
+  currentVersion: string;
+  /** False for the portable build, which links to the release page instead. */
+  canInstall: boolean;
+  version?: string;
+  progress?: number;
+  releaseNotes?: string;
+  checkedAt?: number;
+  error?: string;
+};
+
 export type AppSnapshot = {
   settings: Settings;
   stats: TodayStats;
@@ -170,6 +198,7 @@ export type AppSnapshot = {
   dogVisible: boolean;
   screenBlockActive: boolean;
   screenBlockEndsAt: number | null;
+  update: UpdateStatus;
 };
 
 export type PetImportResult =

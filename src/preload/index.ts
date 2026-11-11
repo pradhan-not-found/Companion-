@@ -48,6 +48,11 @@ const api = {
   startScreenBlock: (): void => ipcRenderer.send("break:start-screen-block"),
   endScreenBlock: (): void => ipcRenderer.send("break:end-screen-block"),
   resetToday: (): void => ipcRenderer.send("stats:reset-today"),
+  logWater: (): void => ipcRenderer.send("hydration:log"),
+  checkForUpdates: (): void => ipcRenderer.send("update:check"),
+  installUpdate: (): void => ipcRenderer.send("update:install"),
+  markPetsSeen: (petIds: string[]): void => ipcRenderer.send("pets:mark-seen", petIds),
+  chooseAvatar: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("profile:choose-avatar"),
   onPetState: (callback: (state: PetState) => void): Unsubscribe =>
     onChannel("pet:set-state", callback),
   onPetLayout: (callback: (layout: PetLayout) => void): Unsubscribe =>

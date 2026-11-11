@@ -248,6 +248,8 @@ export function PetView(): JSX.Element {
       >
         {asset.kind === "sprite" ? (
           <span
+            // Remount on state change so every animation starts on its first frame.
+            key={`${asset.src}:${asset.animation.row}`}
             className="sprite-pet"
             role="img"
             aria-label={altText}

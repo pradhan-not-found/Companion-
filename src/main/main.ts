@@ -12,7 +12,7 @@ import {
   DEFAULT_SETTINGS,
   todayKey
 } from "../shared/constants";
-import { allPets } from "../shared/bundledPets";
+import { allPets, BUNDLED_PETS } from "../shared/bundledPets";
 import { i18n, pick, resolveLanguage } from "../shared/i18n";
 import { PETDEX_SPRITE_SIZE } from "../shared/spriteStates";
 import type {
@@ -28,7 +28,8 @@ import type {
   Settings,
   StatsHistory,
   SpeechBubble,
-  TodayStats
+  TodayStats,
+  UpdateStatus
 } from "../shared/types";
 import {
   APP_ID,
@@ -45,7 +46,14 @@ import {
   SCREEN_BLOCK_WINDOW,
   STORE_NAME
 } from "./config";
-import { classifyDistraction, isPermissionError, readActiveWindow } from "./distraction";
+import {
+  classifyDistraction,
+  isBrowserProcess,
+  isPermissionError,
+  isProtectedProcess,
+  readActiveWindow
+} from "./distraction";
+import { closeActiveTab, closeWindow, killProcess, shutdownWindowsFocusHelper } from "./windowsFocus";
 import type { ActiveWindowInfo } from "./distraction";
 import { parseClaudeLogRecord } from "./claudeEvents";
 import {
@@ -57,7 +65,21 @@ import {
 } from "./petPackages";
 import { createTrayImage } from "./trayIcon";
 
-const { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, protocol, screen, shell, Tray } = electron;
+const {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeImage,
+  nativeTheme,
+  net,
+  Notification,
+  protocol,
+  screen,
+  shell,
+  Tray
+} = electron;
 const { autoUpdater } = updater;
 
 type PetPosition = {
@@ -90,7 +112,11 @@ const BUBBLE_WINDOW_WIDTH = 300;
 const BUBBLE_RENDER_WIDTH = 276;
 const BUBBLE_WINDOW_EXTRA_HEIGHT = 190;
 const BUBBLE_RESIZE_SETTLE_MS = 34;
-const AMBIENT_ROAM_TICK_MS = 16;
+// Windows rounds timers up to its ~15.6 ms clock: a 16 ms interval really fires
+// every ~31 ms (choppy ~32 fps). An 8 ms interval lands on every clock tick
+// (~60 fps); movement itself is time-based, so the exact cadence doesn't matter.
+const MOTION_TICK_MS = 8;
+const AMBIENT_ROAM_TICK_MS = MOTION_TICK_MS;
 const AMBIENT_POSE_MIN_DELAY_MS = 12_000;
 const AMBIENT_POSE_MAX_DELAY_MS = 55_000;
 const AGENT_ACTIVITY_CHECK_INTERVAL_MS = 5000;
@@ -137,6 +163,26 @@ type BatteryStatus = {
 
 app.setName(APP_NAME);
 if (process.platform === "win32") app.setAppUserModelId(APP_ID);
+
+/*
+ * Windows shows a toast's app name and icon from the registered AppUserModelID.
+ * The installer's Start Menu shortcut registers it, but dev runs and the
+ * portable exe have no shortcut, so Windows falls back to "Electron" and the
+ * Electron logo. Registering the ID under HKCU (no admin needed) fixes both.
+ */
+function registerWindowsNotificationIdentity(): void {
+  if (process.platform !== "win32") return;
+  const key = ["HKCU", "Software", "Classes", "AppUserModelId", APP_ID].join("\\");
+  const iconPath = runtimeAssetPath("icon.png");
+  const values: Array<[string, string]> = [
+    ["DisplayName", APP_NAME],
+    ["IconUri", iconPath],
+    ["IconBackgroundColor", "FFFFFFFF"]
+  ];
+  for (const [name, data] of values) {
+    execFile("reg.exe", ["add", key, "/v", name, "/t", "REG_SZ", "/d", data, "/f"], { windowsHide: true }, () => undefined);
+  }
+}
 
 // Only one companion at a time: a second launch just surfaces the running one.
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -221,7 +267,20 @@ let ambientRoamDirection:
   | "upRight"
   | "downLeft"
   | "downRight" = "right";
-let ambientRoamSpeed = 2.4;
+let ambientRoamSpeed = 1.2;
+// Walks ease in and out instead of snapping between standing and full speed.
+const ROAM_EASE_MS = 420;
+let ambientRoamStartedAt = 0;
+let ambientRoamEndsAt = 0;
+
+function smoothstep(value: number): number {
+  const t = Math.min(Math.max(value, 0), 1);
+  return t * t * (3 - 2 * t);
+}
+
+function ambientRoamEase(now = Date.now()): number {
+  return smoothstep((now - ambientRoamStartedAt) / ROAM_EASE_MS) * smoothstep((ambientRoamEndsAt - now) / ROAM_EASE_MS);
+}
 
 /*
  * Smooth window motion. Speeds are expressed in px per 60 Hz frame, but each
@@ -460,9 +519,22 @@ function getSettings(): Settings {
         ? stored.agentCompletionSoundEnabled
         : DEFAULT_SETTINGS.agentCompletionSoundEnabled,
     customReminders: normalizeCustomReminders(stored.customReminders),
+    userName: normalizeUserName(stored.userName),
+    avatarImage: normalizeAvatar(stored.avatarImage),
+    seenPetIds: Array.isArray(stored.seenPetIds)
+      ? stored.seenPetIds.filter((id): id is string => typeof id === "string")
+      : DEFAULT_SETTINGS.seenPetIds,
     selectedPetId,
     installedPets
   };
+}
+
+function normalizeAvatar(value: unknown): string {
+  return typeof value === "string" && value.startsWith("data:image/") && value.length < 600_000 ? value : "";
+}
+
+function normalizeUserName(value: unknown): string {
+  return typeof value === "string" ? value.replace(/^\s+/, "").slice(0, 40) : "";
 }
 
 function text(): ReturnType<typeof i18n> {
@@ -476,6 +548,7 @@ function setSettings(next: Settings): void {
     : DEFAULT_SETTINGS.selectedPetId;
   const normalized = {
     ...next,
+    userName: normalizeUserName(next.userName),
     language: resolveLanguage(next.language),
     petAppearanceId: selectedPetId,
     petScale: normalizePetScale(next.petScale),
@@ -636,7 +709,8 @@ function snapshot(): AppSnapshot {
     dogVisible: Boolean(petWindow?.isVisible()),
     focusActive,
     screenBlockActive: blockingMode === "breakRun" || blockingMode === "focusWarning",
-    screenBlockEndsAt
+    screenBlockEndsAt,
+    update: updateStatus
   };
 }
 
@@ -943,12 +1017,11 @@ function createSettingsWindow(): void {
     height: SETTINGS_WINDOW.height,
     title: `${APP_NAME} ${text().menu.settings}`,
     resizable: true,
-    minWidth: 560,
-    maxWidth: 1200,
-    minHeight: 400,
+    minWidth: 820,
+    minHeight: 560,
     show: false,
     icon: runtimeAssetPath("icon.png"),
-    backgroundColor: nativeTheme.shouldUseDarkColors ? "#14110f" : "#ffffff",
+    backgroundColor: nativeTheme.shouldUseDarkColors ? "#0a0a0a" : "#faf9f6",
     ...(process.platform === "darwin"
       ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 14, y: 14 } }
       : { autoHideMenuBar: true }),
@@ -1106,6 +1179,15 @@ function movePetWithCursor(): void {
     x: cursor.x - dragOffset.x,
     y: cursor.y - dragOffset.y
   });
+  const current = petWindow.getBounds();
+  if (
+    current.x === bounds.x &&
+    current.y === bounds.y &&
+    current.width === bounds.width &&
+    current.height === bounds.height
+  ) {
+    return;
+  }
   petWindow.setBounds(bounds);
 }
 
@@ -1127,7 +1209,7 @@ function startPetDrag(offset: { offsetX: number; offsetY: number }): void {
   if (dragTimer) clearInterval(dragTimer);
   if (dragSafetyTimer) clearTimeout(dragSafetyTimer);
   movePetWithCursor();
-  dragTimer = setInterval(movePetWithCursor, 16);
+  dragTimer = setInterval(movePetWithCursor, MOTION_TICK_MS);
   dragSafetyTimer = setTimeout(stopPetDrag, 15_000);
 }
 
@@ -1288,12 +1370,14 @@ function startAmbientRoam(): void {
   stopAmbientPose(false);
   const settings = getSettings();
   setAmbientRoamDirection(randomAmbientDirection(settings.petRoamDirection));
-  ambientRoamSpeed = 1.8 + Math.random() * 1.6;
+  ambientRoamSpeed = 1.0 + Math.random() * 0.35;
 
   if (ambientRoamMoveTimer) clearInterval(ambientRoamMoveTimer);
   if (ambientRoamStopTimer) clearTimeout(ambientRoamStopTimer);
   ambientMotion = null;
   ambientRoamMoveTimer = setInterval(movePetForAmbientRoam, AMBIENT_ROAM_TICK_MS);
+  ambientRoamStartedAt = Date.now();
+  ambientRoamEndsAt = ambientRoamStartedAt + settings.petRoamDurationSeconds * 1000;
   ambientRoamStopTimer = setTimeout(
     () => stopAmbientRoam(true),
     settings.petRoamDurationSeconds * 1000
@@ -1321,7 +1405,8 @@ function movePetForAmbientRoam(): void {
   const isDiagonal = directionX !== 0 && directionY !== 0;
   const frame = motionFrameScale(ambientMotion, bounds);
   ambientMotion = frame.motion;
-  const step = (isDiagonal ? ambientRoamSpeed / Math.SQRT2 : ambientRoamSpeed) * frame.scale;
+  const step =
+    (isDiagonal ? ambientRoamSpeed / Math.SQRT2 : ambientRoamSpeed) * frame.scale * ambientRoamEase();
   const horizontalDelta = directionX * step;
   const verticalDelta = directionY * step;
   let nextX = ambientMotion.x + horizontalDelta;
@@ -1386,12 +1471,15 @@ function startClickRunReaction(direction: "left" | "right"): void {
   stopAmbientPose(true);
   clearAgentPose(true);
   setAmbientRoamDirection(direction);
-  ambientRoamSpeed = 4.2 + Math.random() * 2.4;
+  ambientRoamSpeed = 2.2 + Math.random() * 0.6;
   if (ambientRoamMoveTimer) clearInterval(ambientRoamMoveTimer);
   if (ambientRoamStopTimer) clearTimeout(ambientRoamStopTimer);
   ambientMotion = null;
   ambientRoamMoveTimer = setInterval(movePetForAmbientRoam, AMBIENT_ROAM_TICK_MS);
-  ambientRoamStopTimer = setTimeout(() => stopAmbientRoam(true), 1100 + Math.round(Math.random() * 700));
+  const clickRunMs = 1100 + Math.round(Math.random() * 700);
+  ambientRoamStartedAt = Date.now();
+  ambientRoamEndsAt = ambientRoamStartedAt + clickRunMs;
+  ambientRoamStopTimer = setTimeout(() => stopAmbientRoam(true), clickRunMs);
 }
 
 function clearBreakRunTimers(): void {
@@ -1436,7 +1524,7 @@ function showBreakRunCountdown(endsAt: number): void {
 }
 
 function chooseBreakRunVelocity(): PetPosition {
-  const speed = 3.5 + Math.random() * 2.9;
+  const speed = 2.2 + Math.random() * 1.2;
   const angle = Math.random() * Math.PI * 2;
   return {
     x: Math.cos(angle) * speed,
@@ -1610,7 +1698,56 @@ function setDistractionStatus(partial: Partial<DistractionStatus>): void {
   publishSnapshot();
 }
 
+const DISTRACTION_SUPPORTED = process.platform === "darwin" || process.platform === "win32";
+// Windows polling is a cheap request to a resident helper, so it can react fast.
+const DISTRACTION_POLL_MS = process.platform === "win32" ? 1500 : DISTRACTION_CHECK_INTERVAL_MS;
+const FORCE_QUIT_AFTER_MS = 4000;
+let distractionMatch: { key: string; since: number } | null = null;
+let distractionEnforcedAt = 0;
+let distractionCheckRunning = false;
+
+/*
+ * Focus-mode enforcement (Windows). Keyword rules only ever close the active
+ * browser tab (Ctrl+W), never a whole app, because keywords can also appear in
+ * editor or document titles. App rules close that app's window, and force-quit
+ * it if it is still in front a few seconds later (games often ignore close).
+ */
+async function enforceDistraction(active: ActiveWindowInfo, matchedRule: string): Promise<boolean> {
+  if (process.platform !== "win32" || !getSettings().distractionAutoClose) return false;
+  if (!active.hwnd || isProtectedProcess(active.appName)) return false;
+  const browser = isBrowserProcess(active.appName);
+
+  if (matchedRule.startsWith("keyword:")) {
+    if (!browser) return false;
+    return closeActiveTab(active.hwnd).catch(() => false);
+  }
+
+  const closed = await closeWindow(active.hwnd).catch(() => false);
+  if (!closed || browser || !active.pid) return closed;
+  const pid = active.pid;
+  const hwnd = active.hwnd;
+  setTimeout(() => {
+    void readActiveWindow()
+      .then((now) => {
+        if (!focusActive || now.pid !== pid || now.hwnd !== hwnd) return;
+        return killProcess(pid);
+      })
+      .catch(() => undefined);
+  }, FORCE_QUIT_AFTER_MS);
+  return true;
+}
+
 async function checkDistractionNow(): Promise<void> {
+  if (distractionCheckRunning) return;
+  distractionCheckRunning = true;
+  try {
+    await runDistractionCheck();
+  } finally {
+    distractionCheckRunning = false;
+  }
+}
+
+async function runDistractionCheck(): Promise<void> {
   const settings = getSettings();
   if (!settings.distractionDetectionEnabled) return;
 
@@ -1628,9 +1765,26 @@ async function checkDistractionNow(): Promise<void> {
       error: null
     });
 
-    if (!focusActive || blockingMode === "focusWarning") return;
-    if (!matchedRule) return;
+    if (!focusActive || !matchedRule) {
+      distractionMatch = null;
+      return;
+    }
+
+    // The distraction has to stay in front for the grace period before acting,
+    // so quickly alt-tabbing past a blocked window doesn't close it.
+    const key = `${matchedRule}|${active.hwnd ?? active.appName}`;
+    if (!distractionMatch || distractionMatch.key !== key) distractionMatch = { key, since: now };
+    if (now - distractionMatch.since < settings.distractionGraceSeconds * 1000) return;
+    if (now - distractionEnforcedAt < 1200) return;
+
+    distractionEnforcedAt = now;
+    distractionMatch = null;
+    const enforced = await enforceDistraction(active, matchedRule);
+    const label = matchedRule.replace(/^(app|keyword):/, "");
+
+    if (blockingMode === "focusWarning") return;
     if (
+      !enforced &&
       distractionStatus.lastWarningAt &&
       now - distractionStatus.lastWarningAt < DISTRACTION_WARNING_COOLDOWN_MS
     ) {
@@ -1638,7 +1792,7 @@ async function checkDistractionNow(): Promise<void> {
     }
 
     setDistractionStatus({ lastWarningAt: now });
-    triggerFocusWarning(matchedRule.replace(/^(app|keyword):/, ""));
+    triggerFocusWarning(label);
   } catch (error) {
     setDistractionStatus({
       state: isPermissionError(error) ? "permission-needed" : "error",
@@ -1669,17 +1823,17 @@ function scheduleDistractionDetection(): void {
   }
 
   setDistractionStatus({
-    state: process.platform === "darwin" ? "watching" : "unsupported",
-    error: process.platform === "darwin" ? null : text().system.unsupportedDistraction
+    state: DISTRACTION_SUPPORTED ? "watching" : "unsupported",
+    error: DISTRACTION_SUPPORTED ? null : text().system.unsupportedDistraction
   });
 
-  if (process.platform !== "darwin") return;
+  if (!DISTRACTION_SUPPORTED) return;
 
-  const firstCheckDelay = focusActive ? Math.max(0, settings.distractionGraceSeconds * 1000) : 0;
+  distractionMatch = null;
   distractionStartupTimer = setTimeout(() => {
     void checkDistractionNow();
-    distractionTimer = setInterval(() => void checkDistractionNow(), DISTRACTION_CHECK_INTERVAL_MS);
-  }, firstCheckDelay);
+    distractionTimer = setInterval(() => void checkDistractionNow(), DISTRACTION_POLL_MS);
+  }, 0);
 }
 
 function sourceFromAgentWindow(appName: string, title: string): AgentSource | null {
@@ -1978,67 +2132,166 @@ function openExternalUrl(rawUrl: string): void {
   }
 }
 
+// Portable builds can't self-install; they get a link to the release instead.
+const IS_PORTABLE = Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
+const RELEASES_URL = "https://github.com/pradhan-not-found/Companion-/releases/latest";
+let updateStatus: UpdateStatus = {
+  state: "idle",
+  currentVersion: app.getVersion(),
+  canInstall: !IS_PORTABLE
+};
+
+function setUpdateStatus(partial: Partial<UpdateStatus>): void {
+  updateStatus = { ...updateStatus, ...partial };
+  publishSnapshot();
+}
+
+function releaseNotesText(notes: unknown): string | undefined {
+  const raw = Array.isArray(notes)
+    ? notes.map((entry) => (typeof entry?.note === "string" ? entry.note : "")).join("\n")
+    : typeof notes === "string"
+      ? notes
+      : "";
+  // GitHub release notes arrive as HTML; keep them as readable plain text.
+  const textOnly = raw
+    .replace(/<\/(p|li|h\d)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li>/gi, "• ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return textOnly ? textOnly.slice(0, 1200) : undefined;
+}
+
+function notify(title: string, body: string, onClick?: () => void): void {
+  if (!Notification.isSupported()) return;
+  const notification = new Notification({ title, body, icon: runtimeAssetPath("icon.png"), silent: false });
+  if (onClick) notification.on("click", onClick);
+  notification.show();
+}
+
+function installDownloadedUpdate(): void {
+  if (updateStatus.state !== "downloaded" || !updateStatus.canInstall) {
+    void shell.openExternal(RELEASES_URL);
+    return;
+  }
+  autoUpdater.quitAndInstall(false, true);
+}
+
+/** Introduces pets that arrived with an update (bundled, but not seen yet). */
+function announceNewPets(): void {
+  const settings = getSettings();
+  if (!settings.onboardingDismissed) return;
+  const seen = new Set(settings.seenPetIds);
+  const fresh = BUNDLED_PETS.filter((pet) => !seen.has(pet.slug));
+  if (!fresh.length) return;
+  const names = fresh.map((pet) => pet.manifest.displayName);
+  const headline = fresh.length === 1 ? `New companion: ${names[0]}!` : `${fresh.length} new companions arrived!`;
+  notify(headline, `Meet ${names.join(", ")} in Companion → Companions.`, () => createSettingsWindow());
+  if (blockingMode || focusActive) return;
+  showBubble({
+    id: "new-pet",
+    message: `${headline} Click to say hi 👋`,
+    clickActionId: "pets:open",
+    autoDismissMs: 7000
+  });
+}
+
 async function checkForUpdates(manual = false): Promise<void> {
-  if (!app.isPackaged) return;
+  if (!app.isPackaged) {
+    setUpdateStatus({ state: "unsupported", checkedAt: Date.now() });
+    return;
+  }
+  if (updateStatus.state === "checking" || updateStatus.state === "downloading") return;
+  if (updateStatus.state === "downloaded") {
+    if (manual) installPromptForDownloaded();
+    return;
+  }
   manualUpdateCheck = manualUpdateCheck || manual;
+  setUpdateStatus({ state: "checking", error: undefined });
   try {
     await autoUpdater.checkForUpdates();
-  } catch {
+  } catch (error) {
+    setUpdateStatus({
+      state: "error",
+      checkedAt: Date.now(),
+      error: error instanceof Error ? error.message : String(error)
+    });
     if (!manualUpdateCheck) return;
     manualUpdateCheck = false;
-    const labels = text().system;
-    await dialog.showMessageBox({
-      type: "error",
-      title: APP_NAME,
-      message: labels.updateError
-    });
+    await dialog.showMessageBox({ type: "error", title: APP_NAME, message: text().system.updateError });
   }
 }
 
+async function installPromptForDownloaded(): Promise<void> {
+  const labels = text().system;
+  const result = await dialog.showMessageBox({
+    type: "info",
+    title: APP_NAME,
+    message: labels.updateDownloaded(updateStatus.version ?? ""),
+    buttons: [labels.restartToUpdate, labels.later],
+    defaultId: 0,
+    cancelId: 1
+  });
+  if (result.response === 0) installDownloadedUpdate();
+}
+
 function scheduleUpdateChecks(): void {
-  if (!app.isPackaged) return;
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
+  if (!app.isPackaged) {
+    updateStatus = { ...updateStatus, state: "unsupported" };
+    return;
+  }
+  autoUpdater.autoDownload = !IS_PORTABLE;
+  autoUpdater.autoInstallOnAppQuit = !IS_PORTABLE;
 
   autoUpdater.on("update-available", async (info) => {
+    setUpdateStatus({
+      state: IS_PORTABLE ? "available" : "downloading",
+      version: info.version,
+      progress: 0,
+      releaseNotes: releaseNotesText(info.releaseNotes),
+      checkedAt: Date.now()
+    });
+    notify(
+      `${APP_NAME} ${info.version} is available`,
+      IS_PORTABLE ? "Click to download the new version." : "Downloading in the background — we'll let you know when it's ready.",
+      IS_PORTABLE ? () => void shell.openExternal(RELEASES_URL) : () => createSettingsWindow()
+    );
     if (!manualUpdateCheck) return;
     manualUpdateCheck = false;
-    await dialog.showMessageBox({
-      type: "info",
-      title: APP_NAME,
-      message: text().system.updateAvailable(info.version)
-    });
+    await dialog.showMessageBox({ type: "info", title: APP_NAME, message: text().system.updateAvailable(info.version) });
+  });
+  autoUpdater.on("download-progress", (progress) => {
+    setUpdateStatus({ state: "downloading", progress: Math.round(progress.percent) });
   });
   autoUpdater.on("update-not-available", async () => {
+    setUpdateStatus({ state: "not-available", checkedAt: Date.now(), version: undefined });
     if (!manualUpdateCheck) return;
     manualUpdateCheck = false;
-    await dialog.showMessageBox({
-      type: "info",
-      title: APP_NAME,
-      message: text().system.updateNotAvailable
-    });
+    await dialog.showMessageBox({ type: "info", title: APP_NAME, message: text().system.updateNotAvailable });
   });
   autoUpdater.on("update-downloaded", async (info) => {
-    manualUpdateCheck = false;
-    const labels = text().system;
-    const result = await dialog.showMessageBox({
-      type: "info",
-      title: APP_NAME,
-      message: labels.updateDownloaded(info.version),
-      buttons: [labels.restartToUpdate, labels.later],
-      defaultId: 0,
-      cancelId: 1
+    setUpdateStatus({
+      state: "downloaded",
+      version: info.version,
+      progress: 100,
+      releaseNotes: releaseNotesText(info.releaseNotes) ?? updateStatus.releaseNotes
     });
-    if (result.response === 0) autoUpdater.quitAndInstall(false, true);
-  });
-  autoUpdater.on("error", async () => {
+    notify(`${APP_NAME} ${info.version} is ready`, "Click to restart and update now.", installDownloadedUpdate);
     if (!manualUpdateCheck) return;
     manualUpdateCheck = false;
-    await dialog.showMessageBox({
-      type: "error",
-      title: APP_NAME,
-      message: text().system.updateError
-    });
+    await installPromptForDownloaded();
+  });
+  autoUpdater.on("error", async (error) => {
+    setUpdateStatus({ state: "error", checkedAt: Date.now(), error: error?.message ?? String(error) });
+    if (!manualUpdateCheck) return;
+    manualUpdateCheck = false;
+    await dialog.showMessageBox({ type: "error", title: APP_NAME, message: text().system.updateError });
   });
 
   updateCheckTimer = setTimeout(() => void checkForUpdates(false), 30_000);
@@ -3855,6 +4108,11 @@ function triggerDemo(trigger: DemoTrigger): void {
 }
 
 function handleBubbleAction(actionId: string): void {
+  if (actionId === "pets:open") {
+    hideBubble();
+    createSettingsWindow();
+    return;
+  }
   if (getSettings().lyricsModeEnabled) return;
   if (actionId.startsWith("agent:open:")) {
     void focusAgentWindowForAction(actionId);
@@ -4019,6 +4277,43 @@ function registerIpc(): void {
   ipcMain.on("focus:start", startFocusMode);
   ipcMain.on("focus:stop", () => stopFocusMode(false));
   ipcMain.on("stats:reset-today", resetTodayStats);
+  ipcMain.handle("profile:choose-avatar", async () => {
+    const options: Electron.OpenDialogOptions = {
+      title: "Choose a profile photo",
+      properties: ["openFile"],
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "gif", "bmp"] }]
+    };
+    const result =
+      settingsWindow && !settingsWindow.isDestroyed()
+        ? await dialog.showOpenDialog(settingsWindow, options)
+        : await dialog.showOpenDialog(options);
+    const filePath = result.filePaths[0];
+    if (result.canceled || !filePath) return { ok: false, error: "cancelled" };
+    const image = nativeImage.createFromPath(filePath);
+    if (image.isEmpty()) return { ok: false, error: "That image format isn't supported. Try a PNG or JPG." };
+    // Center-crop to a square and keep it small: it lives in the settings file.
+    const { width, height } = image.getSize();
+    const side = Math.min(width, height);
+    const square = image
+      .crop({ x: Math.floor((width - side) / 2), y: Math.floor((height - side) / 2), width: side, height: side })
+      .resize({ width: 256, height: 256, quality: "best" });
+    const avatarImage = `data:image/jpeg;base64,${square.toJPEG(88).toString("base64")}`;
+    setSettings({ ...getSettings(), avatarImage });
+    return { ok: true };
+  });
+  ipcMain.on("update:check", () => void checkForUpdates(false));
+  ipcMain.on("update:install", installDownloadedUpdate);
+  ipcMain.on("pets:mark-seen", (_event, petIds: unknown) => {
+    if (!Array.isArray(petIds)) return;
+    const ids = petIds.filter((id): id is string => typeof id === "string");
+    const settings = getSettings();
+    const seen = new Set([...settings.seenPetIds, ...ids]);
+    setSettings({ ...settings, seenPetIds: [...seen] });
+  });
+  ipcMain.on("hydration:log", () => {
+    if (blockingMode && blockingMode !== "hydration") return;
+    handleBubbleAction("hydration:done");
+  });
 }
 
 protocol.registerSchemesAsPrivileged([
@@ -4030,6 +4325,7 @@ protocol.registerSchemesAsPrivileged([
 
 app.whenReady().then(() => {
   if (!hasSingleInstanceLock) return;
+  registerWindowsNotificationIdentity();
   const handleAssetRequest = (request: Request) => {
     let requestedPath = "";
     try {
@@ -4077,6 +4373,7 @@ app.whenReady().then(() => {
   if (IS_DEV || !getSettings().onboardingDismissed) {
     createSettingsWindow();
   }
+  setTimeout(announceNewPets, 6000);
 
   app.on("activate", () => {
     if (!petWindow) createPetWindow();
@@ -4084,6 +4381,7 @@ app.whenReady().then(() => {
 });
 
 app.on("before-quit", () => {
+  shutdownWindowsFocusHelper();
   clearCustomReminderTimers();
   for (const timer of [
     breakRunTimer,

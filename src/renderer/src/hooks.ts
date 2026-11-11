@@ -37,7 +37,8 @@ export function useSnapshot(): AppSnapshot {
     focusActive: false,
     dogVisible: true,
     screenBlockActive: false,
-    screenBlockEndsAt: null
+    screenBlockEndsAt: null,
+    update: { state: "idle", currentVersion: "", canInstall: true }
   });
 
   useEffect(() => {

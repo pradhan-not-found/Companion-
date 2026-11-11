@@ -544,7 +544,7 @@ const CORE_I18N = {
       enableAgentActivity: "Agent Completion Alerts",
       enableAgentCompletionSound: "Agent Completion Sound",
       enableDistractionDetection: "Enable Distraction Detection",
-      detectionGrace: "Detection Grace",
+      detectionGrace: "Grace Period",
       blockedApps: "Blocked Apps",
       blockedKeywords: "Blocked Keywords",
       today: "Today",
@@ -618,12 +618,12 @@ const CORE_I18N = {
       detectionPreviewHelp:
         "Previewing the active window. Start Focus to trigger distraction nudges from matched rules.",
       detectionFocusHelp:
-        "Watching during Focus. Matched blocked apps or keywords will trigger a distraction nudge.",
+        "Watching during Focus. If a blocked app or site stays in front past the grace period, your companion steps in.",
       agentActivityHelp:
         "Watches local Codex, Claude Code, OpenCode, DeepSeek TUI, and Hermes events, and only nudges on completion, failure, or review-needed items."
     },
     system: {
-      unsupportedDistraction: "Distraction detection currently supports macOS only.",
+      unsupportedDistraction: "Distraction detection supports Windows and macOS.",
       updateAvailable: (version: string) => `Companion ${version} is downloading in the background.`,
       updateNotAvailable: "You're using the latest Companion version.",
       updateDownloaded: (version: string) => `Companion ${version} is ready. Restart and install it now?`,

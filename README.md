@@ -63,8 +63,8 @@ npm run dev          # launches the app with hot reload
 
 ### Releasing
 
-1. Bump `"version"` in `package.json` (for example `1.0.1`).
-2. Commit, then tag and push: `git tag v1.0.1 && git push origin v1.0.1`.
+1. Bump `"version"` in `package.json` (for example `1.1.1`).
+2. Commit, then tag and push: `git tag v1.1.0 && git push origin v1.1.0`.
 3. GitHub Actions builds both exes and publishes the release, including `latest.yml` for auto-updates.
 
 ## 🐶 Adding pets

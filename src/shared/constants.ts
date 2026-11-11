@@ -1,6 +1,7 @@
-import { DEFAULT_PET_ID } from "./bundledPets";
+import { BUNDLED_PETS, DEFAULT_PET_ID } from "./bundledPets";
 import type { Settings, TodayStats } from "./types";
 
+export const DAILY_WATER_GOAL = 8;
 export const DEFAULT_CUSTOM_REMINDER_COUNTDOWN_LEAD_MINUTES = 10;
 export const DEFAULT_CUSTOM_REMINDER_DUE_SCALE_MULTIPLIER = 1.6;
 
@@ -18,6 +19,11 @@ export const DEFAULT_SETTINGS: Settings = {
   selectedPetId: DEFAULT_PET_ID,
   installedPets: [],
   onboardingDismissed: false,
+  userName: "",
+  avatarImage: "",
+  // Pets bundled with this build count as already introduced on a fresh install;
+  // pets added by later updates are then announced as new.
+  seenPetIds: BUNDLED_PETS.map((pet) => pet.slug),
   breakReminderEnabled: true,
   breakIntervalMinutes: 45,
   screenBlockReminderEnabled: true,
@@ -30,9 +36,16 @@ export const DEFAULT_SETTINGS: Settings = {
   agentActivityEnabled: true,
   agentCompletionSoundEnabled: true,
   distractionDetectionEnabled: false,
-  distractionGraceSeconds: 8,
+  distractionGraceSeconds: 3,
+  distractionAutoClose: true,
   distractionBlockedApps: [
     "Steam",
+    "EpicGamesLauncher",
+    "RiotClientServices",
+    "VALORANT",
+    "Battle.net",
+    "Minecraft",
+    "RobloxPlayerBeta",
     "Discord",
     "Telegram",
     "WeChat",
