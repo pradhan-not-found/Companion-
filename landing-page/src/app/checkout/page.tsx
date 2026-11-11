@@ -204,7 +204,7 @@ export default function CheckoutPage() {
   ];
   const stepIndex = step === 'done' ? 3 : steps.findIndex(item => item.id === step);
 
-  const fieldClass = 'ck-field h-[42px] w-full min-w-0 rounded-[10px] px-3.5 text-[14px] outline-none transition-[border-color,box-shadow]';
+  const fieldClass = 'ck-field h-[40px] w-full min-w-0 rounded-[10px] px-3.5 text-[14px] outline-none transition-[border-color,box-shadow]';
   const fieldStyle = (bad?: boolean) => ({ background: c.field, border: `1px solid ${bad ? c.error : c.border}`, color: c.text });
   const primary =
     'h-[46px] w-full rounded-[10px] text-[14.5px] font-semibold cursor-pointer transition-[transform,opacity] active:scale-[0.985] hover:opacity-90 disabled:opacity-40 disabled:cursor-default';
@@ -224,7 +224,7 @@ export default function CheckoutPage() {
   );
 
   return (
-    <div className="ck min-h-screen lg:h-screen lg:overflow-hidden flex flex-col" style={{ background: c.bg, color: c.text }}>
+    <div className="ck min-h-dvh flex flex-col" style={{ background: c.bg, color: c.text }}>
       <style>{`
         .ck input::placeholder { color: ${c.subtle}; }
         .ck-field:focus { border-color: ${c.ink} !important; box-shadow: 0 0 0 3px ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(24,24,27,0.07)'}; }
@@ -246,12 +246,12 @@ export default function CheckoutPage() {
       <NavBar />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:min-h-0">
-        <div className="hidden lg:block lg:min-h-0">
+        <div className="hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100dvh-56px)]">
           <PetStrip />
         </div>
 
-      <main className="min-h-0 lg:overflow-y-auto flex items-center justify-center px-5 sm:px-10 lg:px-14 py-8 lg:py-6">
-        <div className="w-full max-w-[480px] flex flex-col gap-5">
+      <main className="flex justify-center px-5 sm:px-10 lg:px-14 py-8 lg:py-6">
+        <div className="w-full max-w-[480px] my-auto flex flex-col gap-4">
         {/* Summary */}
         <section aria-label="Order summary">
           <div className="flex items-center gap-2.5">
@@ -280,7 +280,7 @@ export default function CheckoutPage() {
           style={{ background: c.card, border: `1px solid ${c.border}`, boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.04), 0 18px 44px -20px rgba(0,0,0,0.16)' }}
         >
           {/* Panel header with progress */}
-          <div className="flex items-center justify-between px-6 h-[54px] shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
+          <div className="flex items-center justify-between px-6 h-[50px] shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
             <span className="text-[14px] font-semibold">Checkout</span>
             <ol className="flex items-center gap-1.5" aria-label="Progress">
               {steps.map((item, index) => {
@@ -308,7 +308,7 @@ export default function CheckoutPage() {
             </ol>
           </div>
 
-          <div className="px-6 py-5 flex-1">
+          <div className="px-6 py-4 flex-1">
             {step === 'details' || step === 'pay' ? (
               <form key="details" className="ck-step flex flex-col" onSubmit={continueToPay} noValidate>
                 {section(
@@ -356,20 +356,20 @@ export default function CheckoutPage() {
                       </label>
                     </div>
                   </>,
-                  'mt-5'
+                  'mt-4'
                 )}
 
                 {section(
                   'Payment method',
                   <div className="grid grid-cols-2 gap-2.5">
-                    <div className="rounded-[10px] px-3.5 h-[48px] flex items-center gap-2.5" style={{ border: `1.5px solid ${c.ink}`, background: c.rowActive }}>
+                    <div className="rounded-[10px] px-3.5 h-[44px] flex items-center gap-2.5" style={{ border: `1.5px solid ${c.ink}`, background: c.rowActive }}>
                       <span className="w-[16px] h-[16px] rounded-full flex items-center justify-center shrink-0" style={{ background: c.ink }}>
                         <Check size={9} color={c.inkText} weight={3.4} />
                       </span>
                       <UpiBadge ink={c.text} />
                       <span className="text-[13.5px] font-semibold">UPI</span>
                     </div>
-                    <div className="rounded-[10px] px-3.5 h-[48px] flex items-center gap-2.5 opacity-50" style={{ border: `1px solid ${c.border}` }} aria-disabled="true">
+                    <div className="rounded-[10px] px-3.5 h-[44px] flex items-center gap-2.5 opacity-50" style={{ border: `1px solid ${c.border}` }} aria-disabled="true">
                       <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <rect x="2" y="5" width="20" height="14" rx="2.5" />
                         <path d="M2 10h20" />
@@ -380,10 +380,10 @@ export default function CheckoutPage() {
                       </span>
                     </div>
                   </div>,
-                  'mt-5'
+                  'mt-4'
                 )}
 
-                <button type="submit" className={`${primary} mt-5`} style={{ background: c.ink, color: c.inkText }}>
+                <button type="submit" className={`${primary} mt-4`} style={{ background: c.ink, color: c.inkText }}>
                   Pay ₹{PRICE}.00
                 </button>
               </form>
@@ -444,7 +444,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Panel footer: order line */}
-          <div className="flex items-center justify-between px-6 h-[50px] shrink-0 text-[13px]" style={{ borderTop: `1px solid ${c.border}`, background: c.field }}>
+          <div className="flex items-center justify-between px-6 h-[46px] shrink-0 text-[13px]" style={{ borderTop: `1px solid ${c.border}`, background: c.field }}>
             <span className="flex items-center gap-2.5 min-w-0">
               <Image src="/applogo.png" alt="" width={22} height={22} className="rounded-[6px] shrink-0" />
               <span className="font-medium truncate">{PRODUCT}</span>
