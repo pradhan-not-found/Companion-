@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SparklesIcon } from "./Icons";
 import type { CSSProperties, JSX, PointerEvent } from "react";
 import { i18n, resolveLanguage } from "../../../shared/i18n";
 import type { CustomReminder, PetLayout, SpeechBubble } from "../../../shared/types";
@@ -205,7 +206,8 @@ export function PetView(): JSX.Element {
                 </span>
                 <span className="new-pet-card__titles">
                   <span className="new-pet-card__eyebrow">
-                    ✦ New companion{bubble.newPet.count > 1 ? `s · ${bubble.newPet.count}` : ""}
+                    <SparklesIcon size={11} />
+                    New companion{bubble.newPet.count > 1 ? `s · ${bubble.newPet.count}` : ""}
                   </span>
                   <span className="new-pet-card__name">Meet {bubble.newPet.name}</span>
                 </span>

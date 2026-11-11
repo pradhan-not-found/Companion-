@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowLeftIcon } from "./Icons";
 import type { FormEvent, JSX } from "react";
 import type { InstalledPet } from "../../../shared/types";
 import appLogo from "../assets/applogo.png";
@@ -67,7 +68,8 @@ export function AuthView({ heroPet }: { heroPet: InstalledPet | undefined }): JS
         ) : (
           <form className="auth__card" onSubmit={(event) => void submit(event)} noValidate>
             <button type="button" className="auth__back" onClick={() => switchTo("welcome")}>
-              ← Back
+              <ArrowLeftIcon size={15} />
+              Back
             </button>
             <h1 className="auth__title">{mode === "create" ? "Create your account" : "Welcome back"}</h1>
             <p className="auth__subtitle">

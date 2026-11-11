@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PlayIcon, PlusIcon, SparklesIcon, StopIcon } from "./Icons";
 import type { CSSProperties, JSX, ReactNode } from "react";
 import { DAILY_WATER_GOAL } from "../../../shared/constants";
 import type { InstalledPet, PetState, UpdateStatus } from "../../../shared/types";
@@ -170,7 +171,8 @@ export function TodayOverview({
           </div>
           <p className="ov-card__hint">{remaining > 0 ? `${remaining} to go today` : "Goal reached today"}</p>
           <button type="button" className="ov-card__action" onClick={onDrink}>
-            + Log a glass
+            <PlusIcon size={14} />
+            Log a glass
           </button>
         </section>
 
@@ -191,6 +193,7 @@ export function TodayOverview({
           </div>
           <p className="ov-card__hint">{focusActive ? "Blocked apps and sites are closed." : "Start a session to block distractions."}</p>
           <button type="button" className="ov-card__action" onClick={onToggleFocus}>
+            {focusActive ? <StopIcon size={12} /> : <PlayIcon size={12} />}
             {focusActive ? stopFocusLabel : focusLabel}
           </button>
         </section>
@@ -368,7 +371,7 @@ export function NewPetSpotlight({
       </div>
       <div className="spotlight__body">
         <p className="spotlight__eyebrow">
-          <span className="spotlight__spark" aria-hidden="true">✦</span>
+          <SparklesIcon size={13} className="spotlight__spark" />
           New companion{pets.length > 1 ? ` · ${index + 1} of ${pets.length}` : ""}
         </p>
         <h2 className="spotlight__title">Meet {pet.manifest.displayName}</h2>

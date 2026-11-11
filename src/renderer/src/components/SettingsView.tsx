@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronRightIcon, XIcon } from "./Icons";
 import type { CSSProperties, JSX, ReactNode } from "react";
 import { i18n, LANGUAGE_OPTIONS, resolveLanguage } from "../../../shared/i18n";
 import { allPets } from "../../../shared/bundledPets";
@@ -280,7 +281,7 @@ function ChipsControl({
               aria-label={labels.removeListItem(entry)}
               onClick={() => onChange(value.filter((item) => item !== entry))}
             >
-              ×
+              <XIcon size={13} />
             </button>
           </span>
         ))}
@@ -1464,7 +1465,7 @@ export function SettingsView(): JSX.Element {
           aria-expanded={diagnosticsOpen}
         >
           <span>{labels.diagnostics}</span>
-          <span className="prefs__disclosure-caret">{diagnosticsOpen ? "▾" : "▸"}</span>
+          <ChevronRightIcon size={14} className={`prefs__disclosure-caret${diagnosticsOpen ? " is-open" : ""}`} />
         </button>
         {diagnosticsOpen ? (
           <div className="prefs__diag">
@@ -1647,7 +1648,7 @@ function ReminderCard({
           aria-label={labels.removeReminder(reminder.title)}
           onClick={onRemove}
         >
-          ×
+          <XIcon size={14} />
         </button>
       </div>
     </article>
@@ -1724,7 +1725,7 @@ function PetCard({
           title={removeLabel}
           onClick={onRemove}
         >
-          ×
+          <XIcon size={14} />
         </button>
       ) : null}
     </div>

@@ -1338,3 +1338,47 @@ body {
     animation: none;
   }
 }
+
+/* ── SVG icons inside controls ─────────────────────────────── */
+.icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.auth__back,
+.ov-card__action {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.auth__back .icon {
+  transition: transform 160ms var(--ease-out);
+}
+
+.auth__back:hover .icon {
+  transform: translateX(-2px);
+}
+
+.pet-card__remove,
+.reminder-card__remove {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.prefs__disclosure-caret {
+  color: var(--t-muted);
+  transition: transform 180ms var(--ease-out);
+}
+
+.prefs__disclosure-caret.is-open {
+  transform: rotate(90deg);
+}
+
+.new-pet-card__eyebrow {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
