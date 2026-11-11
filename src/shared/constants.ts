@@ -37,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   avatarPet: "",
   avatarColor: "#E9E3D8",
   launchAtLogin: true,
+  clipboardPouchEnabled: true,
   // Pets bundled with this build count as already introduced on a fresh install;
   // pets added by later updates are then announced as new.
   seenPetIds: BUNDLED_PETS.map((pet) => pet.slug),

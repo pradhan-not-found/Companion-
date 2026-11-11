@@ -1127,6 +1127,17 @@ export function SettingsView(): JSX.Element {
           <section className="prefs__group prefs__group--first">
             <h2 className="prefs__group-title">General</h2>
             <Row
+              label="Clipboard pouch"
+              hint="Click your pet to see recent copies and screenshots. Kept in memory only, never saved."
+              control={
+                <ToggleControl
+                  checked={draft.clipboardPouchEnabled}
+                  onChange={(clipboardPouchEnabled) => updateDraft({ clipboardPouchEnabled })}
+                  ariaLabel="Clipboard pouch"
+                />
+              }
+            />
+            <Row
               label="Start with Windows"
               hint="Companion opens quietly when you sign in and stays in the tray until you quit."
               control={

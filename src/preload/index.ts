@@ -1,6 +1,7 @@
 import electron from "electron";
 import type {
   AccountResult,
+  PouchItem,
   AppSnapshot,
   DemoTrigger,
   InstalledPet,
@@ -63,6 +64,12 @@ const api = {
     ipcRenderer.invoke("auth:update-profile", changes),
   changePassword: (input: { current: string; next: string }): Promise<AccountResult> =>
     ipcRenderer.invoke("auth:change-password", input),
+  listPouch: (): Promise<PouchItem[]> => ipcRenderer.invoke("pouch:list"),
+  copyPouchItem: (id: string): Promise<boolean> => ipcRenderer.invoke("pouch:copy", id),
+  removePouchItem: (id: string): void => ipcRenderer.send("pouch:remove", id),
+  clearPouch: (): void => ipcRenderer.send("pouch:clear"),
+  closePouch: (): void => ipcRenderer.send("pouch:close"),
+  onPouchUpdated: (callback: (items: PouchItem[]) => void): Unsubscribe => onChannel("pouch:updated", callback),
   chooseAvatar: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("profile:choose-avatar"),
   onPetState: (callback: (state: PetState) => void): Unsubscribe =>
     onChannel("pet:set-state", callback),

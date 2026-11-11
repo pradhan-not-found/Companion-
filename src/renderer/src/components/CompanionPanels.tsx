@@ -5,6 +5,7 @@ import { DAILY_WATER_GOAL } from "../../../shared/constants";
 import type { InstalledPet, PetState, UpdateStatus } from "../../../shared/types";
 import { getSelectedPetAsset } from "../assets";
 import { AvatarArt } from "./AvatarArt";
+import { WaterGlass } from "./WaterGlass";
 import type { AvatarArtId } from "./AvatarArt";
 import appLogo from "../assets/applogo.png";
 
@@ -276,16 +277,16 @@ export function TodayOverview({
               Log glass
             </button>
           </div>
-          <p className="mcard__value">
-            {watersLogged}
-            <span>/ {DAILY_WATER_GOAL} glasses</span>
-          </p>
-          <p className="mcard__sub">{remaining > 0 ? `${remaining} more to reach today's goal` : "Daily goal reached"}</p>
-          <div className="mcard__progress">
-            <div className="mcard__bar" aria-hidden="true">
-              <span style={{ width: `${ratio * 100}%` }} />
+          <div className="mcard__split">
+            <div>
+              <p className="mcard__value">
+                {watersLogged}
+                <span>/ {DAILY_WATER_GOAL} glasses</span>
+              </p>
+              <p className="mcard__sub">{remaining > 0 ? `${remaining} to go today` : "Goal reached"}</p>
+              <p className="mcard__pct mcard__pct--inline">{Math.round(ratio * 100)}% of goal</p>
             </div>
-            <span className="mcard__pct">{Math.round(ratio * 100)}%</span>
+            <WaterGlass filled={watersLogged} goal={DAILY_WATER_GOAL} size={50} />
           </div>
         </section>
 

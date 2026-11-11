@@ -3156,3 +3156,435 @@ textarea,
   min-width: 30px;
   text-align: right;
 }
+
+/* ── Water glass ──────────────────────────────────────────── */
+:root {
+  --glass-water-top: #7cb6f5;
+  --glass-water-bottom: #3d82e0;
+  --glass-water-back: rgba(124, 182, 245, 0.45);
+  --glass-body: rgba(23, 23, 23, 0.03);
+  --glass-line: rgba(23, 23, 23, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-water-top: #6aa9f0;
+    --glass-water-bottom: #2f6fd0;
+    --glass-water-back: rgba(106, 169, 240, 0.35);
+    --glass-body: rgba(255, 255, 255, 0.04);
+    --glass-line: rgba(255, 255, 255, 0.32);
+  }
+}
+
+.mcard__split {
+  align-items: flex-end;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.mcard__split > div {
+  min-width: 0;
+}
+
+.mcard__pct--inline {
+  margin: 10px 0 0;
+  text-align: left;
+}
+
+.glass {
+  display: block;
+  flex: 0 0 auto;
+  margin-bottom: -2px;
+  overflow: visible;
+}
+
+.glass__body {
+  fill: var(--glass-body);
+}
+
+.glass__outline {
+  fill: none;
+  stroke: var(--glass-line);
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.glass__tick {
+  stroke: var(--glass-line);
+  stroke-linecap: round;
+  stroke-width: 1;
+  opacity: 0.7;
+}
+
+.glass__water {
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass__wave {
+  animation: glass-wave 3.4s linear infinite;
+}
+
+.glass__wave--back {
+  animation-direction: reverse;
+  animation-duration: 4.6s;
+  fill: var(--glass-water-back);
+}
+
+@keyframes glass-wave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass__wave {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   CLIPBOARD POUCH — floating card above the pet
+   ============================================================ */
+.pouch {
+  animation: c-menu-in 0.2s var(--ease-out) both;
+  background: var(--t-card);
+  border: 1px solid var(--t-edge);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 16px 36px -12px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.08);
+  color: var(--t-ink);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font);
+  height: calc(100vh - 16px);
+  margin: 8px;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pouch {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -12px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.pouch__head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 14px 10px 16px;
+}
+
+.pouch__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.pouch__sub {
+  color: var(--t-muted);
+  font-size: 12px;
+  margin: 2px 0 0;
+}
+
+.pouch__head-actions {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+
+.pouch__text-btn {
+  background: none;
+  border: 0;
+  border-radius: 7px;
+  color: var(--t-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 8px;
+}
+
+.pouch__text-btn:hover {
+  background: var(--blend-bg-hover);
+  color: var(--t-ink);
+}
+
+.pouch__icon-btn {
+  align-items: center;
+  background: var(--blend-bg);
+  border: 1px solid var(--blend-edge);
+  border-radius: 8px;
+  color: var(--t-muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.pouch__icon-btn:hover {
+  background: var(--blend-bg-hover);
+  color: var(--t-ink);
+}
+
+.pouch__tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 14px 8px;
+}
+
+.pouch__tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--t-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 11px;
+}
+
+.pouch__tab:hover {
+  color: var(--t-ink);
+}
+
+.pouch__tab.is-active {
+  background: var(--blend-bg-hover);
+  border-color: var(--blend-edge);
+  color: var(--t-ink);
+}
+
+.pouch__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 10px 10px;
+  scrollbar-width: none;
+}
+
+.pouch__body::-webkit-scrollbar {
+  display: none;
+}
+
+.pouch__section + .pouch__section {
+  margin-top: 12px;
+}
+
+.pouch__label {
+  color: var(--t-subtle);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin: 2px 6px 8px;
+  text-transform: uppercase;
+}
+
+.pouch__grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pouch__thumb {
+  position: relative;
+}
+
+.pouch__thumb-btn {
+  aspect-ratio: 4 / 3;
+  background: var(--t-row);
+  border: 1px solid var(--t-row-edge);
+  border-radius: 11px;
+  cursor: pointer;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  transition: transform 160ms var(--ease-out), border-color 160ms ease;
+  width: 100%;
+}
+
+.pouch__thumb-btn:hover {
+  border-color: color-mix(in srgb, var(--t-ink) 25%, transparent);
+  transform: translateY(-1px);
+}
+
+.pouch__thumb-btn img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.pouch__copied {
+  align-items: center;
+  backdrop-filter: blur(6px);
+  background: rgba(20, 20, 22, 0.62);
+  color: #ffffff;
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  inset: 0;
+  justify-content: center;
+  position: absolute;
+}
+
+.pouch__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pouch__row {
+  position: relative;
+}
+
+.pouch__row-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--t-ink);
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  transition: background 120ms ease;
+  width: 100%;
+}
+
+.pouch__row-btn:hover {
+  background: var(--blend-bg);
+  border-color: var(--blend-edge);
+}
+
+.pouch__row-icon {
+  align-items: center;
+  background: var(--t-row);
+  border: 1px solid var(--t-row-edge);
+  border-radius: 8px;
+  color: var(--t-muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.pouch__row-text {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.pouch__row-meta {
+  color: var(--t-subtle);
+  flex: 0 0 auto;
+  font-size: 11px;
+  padding-right: 18px;
+}
+
+.pouch__row-copied {
+  align-items: center;
+  color: var(--t-ink);
+  display: inline-flex;
+  font-weight: 600;
+  gap: 4px;
+}
+
+.pouch__remove {
+  align-items: center;
+  background: var(--t-card);
+  border: 1px solid var(--t-edge);
+  border-radius: 50%;
+  color: var(--t-muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 20px;
+  justify-content: center;
+  opacity: 0;
+  padding: 0;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  transition: opacity 120ms ease;
+  width: 20px;
+}
+
+.pouch__remove--row {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pouch__thumb:hover .pouch__remove,
+.pouch__row:hover .pouch__remove {
+  opacity: 1;
+}
+
+.pouch__remove:hover {
+  color: var(--t-ink);
+}
+
+.pouch__empty {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 18px;
+  text-align: center;
+}
+
+.pouch__empty-icon {
+  align-items: center;
+  background: var(--t-row);
+  border: 1px solid var(--t-row-edge);
+  border-radius: 14px;
+  box-shadow: var(--t-row-shadow);
+  color: var(--t-muted);
+  display: inline-flex;
+  height: 48px;
+  justify-content: center;
+  margin-bottom: 14px;
+  width: 48px;
+}
+
+.pouch__empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.pouch__empty-text {
+  color: var(--t-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.pouch__empty-text kbd {
+  background: var(--t-row);
+  border: 1px solid var(--t-row-edge);
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 1px 5px;
+}
+
+.pouch__foot {
+  border-top: 1px solid var(--t-hairline);
+  color: var(--t-subtle);
+  font-size: 11px;
+  padding: 9px 16px;
+  text-align: center;
+}

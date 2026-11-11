@@ -57,6 +57,7 @@ import {
   readActiveWindow
 } from "./distraction";
 import { closeActiveTab, closeWindow, killProcess, shutdownWindowsFocusHelper } from "./windowsFocus";
+import { clearPouch, copyPouchItem, listPouch, removePouchItem, startPouch, stopPouch } from "./pouch";
 import {
   accountStoreName,
   changePassword,
@@ -907,7 +908,7 @@ function setPetScaleOverride(scale: number | null): void {
   publishSnapshot();
 }
 
-function rendererUrl(route: "pet" | "settings"): string {
+function rendererUrl(route: "pet" | "settings" | "pouch"): string {
   const devServer = process.env.ELECTRON_RENDERER_URL;
   if (devServer) return `${devServer}#${route}`;
   return RENDERER_HTML_PATH;
@@ -919,7 +920,7 @@ function runtimeAssetPath(filename: string): string {
     : resolve(process.cwd(), "build", filename);
 }
 
-function loadRenderer(win: Electron.BrowserWindow, route: "pet" | "settings"): void {
+function loadRenderer(win: Electron.BrowserWindow, route: "pet" | "settings" | "pouch"): void {
   const devServer = process.env.ELECTRON_RENDERER_URL;
   if (devServer) {
     void win.loadURL(rendererUrl(route));
@@ -1073,6 +1074,74 @@ function ensurePetWindowVisible(): void {
   if (!sessionActive) return;
   if (!petWindow || petWindow.isDestroyed()) createPetWindow();
   showPetWindowInactive();
+}
+
+let pouchWindow: Electron.BrowserWindow | null = null;
+const POUCH_SIZE = { width: 344, height: 460 };
+
+function sendPouch(): void {
+  if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.webContents.send("pouch:updated", listPouch());
+}
+
+function closePouchWindow(): void {
+  if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.close();
+  pouchWindow = null;
+}
+
+/** Opens the clipboard pouch just above (or beside) the pet. */
+function togglePouchWindow(): void {
+  if (pouchWindow && !pouchWindow.isDestroyed()) {
+    closePouchWindow();
+    return;
+  }
+  if (!petWindow || petWindow.isDestroyed()) return;
+  const pet = petWindow.getBounds();
+  const workArea = screen.getDisplayNearestPoint({ x: pet.x + pet.width / 2, y: pet.y + pet.height / 2 }).workArea;
+  const petCenterX = pet.x + pet.width / 2 + petLayout.petOffsetX;
+  let x = Math.round(petCenterX - POUCH_SIZE.width / 2);
+  let y = pet.y + pet.height - Math.round(visiblePetSize(currentPetDisplayScale()).height) - POUCH_SIZE.height - 6;
+  if (y < workArea.y + 8) {
+    // Not enough room above: open beside the pet instead.
+    y = Math.max(workArea.y + 8, pet.y + pet.height - POUCH_SIZE.height);
+    x = petCenterX + 70 + POUCH_SIZE.width < workArea.x + workArea.width ? Math.round(petCenterX + 70) : Math.round(petCenterX - 70 - POUCH_SIZE.width);
+  }
+  x = Math.min(Math.max(x, workArea.x + 8), workArea.x + workArea.width - POUCH_SIZE.width - 8);
+
+  pouchWindow = new BrowserWindow({
+    ...POUCH_SIZE,
+    x,
+    y,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    show: false,
+    hasShadow: false,
+    backgroundColor: "#00000000",
+    webPreferences: {
+      preload: PRELOAD_PATH,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: !IS_DEV
+    }
+  });
+  pouchWindow.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "pop-up-menu");
+  loadRenderer(pouchWindow, "pouch");
+  pouchWindow.once("ready-to-show", () => {
+    pouchWindow?.show();
+    pouchWindow?.focus();
+    sendPouch();
+  });
+  pouchWindow.on("blur", () => closePouchWindow());
+  pouchWindow.on("closed", () => {
+    pouchWindow = null;
+  });
 }
 
 function createSettingsWindow(): void {
@@ -4540,6 +4609,10 @@ function registerIpc(): void {
   ipcMain.on("break:end-screen-block", finishBreakRun);
   ipcMain.on("pet:clicked", () => {
     if (blockingMode || getSettings().lyricsModeEnabled) return;
+    if (getSettings().clipboardPouchEnabled) {
+      togglePouchWindow();
+      return;
+    }
     randomPetClickReaction();
   });
   ipcMain.on("pet:context-menu", showPetContextMenu);
@@ -4561,6 +4634,7 @@ function registerIpc(): void {
     setSettings({ ...before, ...partial });
     const after = getSettings();
     if (after.launchAtLogin !== before.launchAtLogin) applyLaunchAtLogin();
+    if (after.clipboardPouchEnabled !== before.clipboardPouchEnabled) applyPouchSetting();
     // First run: say hello as soon as onboarding is finished.
     if (!before.onboardingDismissed && after.onboardingDismissed) setTimeout(() => greetOnStartup(), 600);
   });
@@ -4656,6 +4730,13 @@ function registerIpc(): void {
     }
     return changePassword(account.id, input.current, input.next);
   });
+  ipcMain.handle("pouch:list", () => listPouch());
+  ipcMain.handle("pouch:copy", (_event, id: unknown) => (typeof id === "string" ? copyPouchItem(id) : false));
+  ipcMain.on("pouch:remove", (_event, id: unknown) => {
+    if (typeof id === "string") removePouchItem(id);
+  });
+  ipcMain.on("pouch:clear", () => clearPouch());
+  ipcMain.on("pouch:close", () => closePouchWindow());
   ipcMain.on("update:check", () => void checkForUpdates(false));
   ipcMain.on("update:install", installDownloadedUpdate);
   ipcMain.on("pets:mark-seen", (_event, petIds: unknown) => {
@@ -4729,6 +4810,16 @@ app.whenReady().then(() => {
   });
 });
 
+function applyPouchSetting(): void {
+  if (sessionActive && getSettings().clipboardPouchEnabled) {
+    startPouch(sendPouch);
+  } else {
+    stopPouch();
+    clearPouch();
+    closePouchWindow();
+  }
+}
+
 /** Starts the pet, reminders and monitors for the signed-in account. */
 function startSession(): void {
   if (sessionActive) return;
@@ -4743,6 +4834,7 @@ function startSession(): void {
   schedulePetLibraryMonitor();
   scheduleAmbientRoam();
   scheduleAmbientPose();
+  applyPouchSetting();
   updateTrayMenu();
   if (IS_DEV || !getSettings().onboardingDismissed) createSettingsWindow();
   setTimeout(() => greetOnStartup(), 1500);
@@ -4754,6 +4846,9 @@ function startSession(): void {
 function endSession(): void {
   if (!sessionActive) return;
   sessionActive = false;
+  stopPouch();
+  clearPouch();
+  closePouchWindow();
   clearSessionTimers();
   if (distractionTimer) clearInterval(distractionTimer);
   if (agentActivityTimer) clearInterval(agentActivityTimer);
@@ -4806,6 +4901,8 @@ function clearSessionTimers(): void {
 }
 
 app.on("before-quit", () => {
+  stopPouch();
+  clearPouch();
   shutdownWindowsFocusHelper();
   clearSessionTimers();
   if (updateCheckTimer) clearTimeout(updateCheckTimer);

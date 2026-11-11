@@ -69,6 +69,16 @@ export type BubbleAction = {
   kind?: "primary" | "secondary" | "danger";
 };
 
+export type PouchItem = {
+  id: string;
+  kind: "text" | "link" | "image";
+  /** Text content, or a data-URL thumbnail for images. */
+  preview: string;
+  width?: number;
+  height?: number;
+  createdAt: number;
+};
+
 export type AccountProfile = {
   id: string;
   name: string;
@@ -158,6 +168,8 @@ export type Settings = {
   avatarColor: string;
   /** The name the user gave their companion. */
   petNickname: string;
+  /** Keep a short in-memory clipboard history, opened by clicking the pet. */
+  clipboardPouchEnabled: boolean;
   /** Start Companion automatically when the user signs in to Windows. */
   launchAtLogin: boolean;
   /** Pet ids the user has already been introduced to. */
