@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import NavBar from '@/components/NavBar';
-import PetStrip from '@/components/PetStrip';
+import { PETS, Sprite } from '@/components/PetStrip';
+import CheckoutArt from '@/components/CheckoutArt';
 import { UPI_APPS } from '@/lib/upiApps';
 import { UPI_ID, newOrderId, qrSvg, upiLink } from '@/lib/upiQr';
 
@@ -62,6 +62,26 @@ function Check({ size = 10, color = 'currentColor', weight = 3.2 }: { size?: num
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>
+  );
+}
+
+const PARADE = ['angry-cat', 'capy-puff', 'pupu', 'jokebear-codexpet'];
+
+/** The companions lined up along the bottom of the brand panel, idling. */
+function PetParade() {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = window.setInterval(() => setFrame(value => value + 1), 180);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <div className="relative z-10 hidden lg:flex items-end gap-1 mb-6 -ml-2" aria-hidden="true">
+      {PARADE.map(id => {
+        const pet = PETS.find(item => item.id === id);
+        return pet ? <Sprite key={id} pet={pet} frame={frame} scale={0.36} /> : null;
+      })}
+    </div>
   );
 }
 
@@ -243,72 +263,74 @@ export default function CheckoutPage() {
         @media (prefers-reduced-motion: reduce) { .ck-reveal, .ck-step, .ck-backdrop, .ck-dialog { animation: none; } }
       `}</style>
 
-      <NavBar />
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:min-h-dvh">
+        {/* Brand panel with abstract art */}
+        <aside className="ck-art relative overflow-hidden text-white lg:sticky lg:top-0 lg:h-dvh flex flex-col px-6 sm:px-10 lg:px-14 pt-6 pb-8 lg:py-10">
+          <CheckoutArt />
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:min-h-0">
-        <div className="hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100dvh-56px)]">
-          <PetStrip />
-        </div>
+          <header className="relative z-10 flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2.5 no-underline text-white">
+              <span className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0 ring-1 ring-white/15">
+                <Image src="/applogo.png" alt="" width={32} height={32} className="object-cover w-full h-full" priority />
+              </span>
+              <span className="font-semibold text-[17px] tracking-tight">Companion</span>
+            </Link>
+          </header>
 
-      <main className="flex justify-center px-5 sm:px-10 lg:px-14 py-8 lg:py-6">
-        <div className="w-full max-w-[480px] my-auto flex flex-col gap-4">
-        {/* Summary */}
-        <section aria-label="Order summary">
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.035em] leading-[1.1]">Get {PRODUCT}</h1>
-            <span
-              className="px-2 py-[2px] rounded-full text-[10px] font-semibold tracking-wide"
-              style={{
-                background: 'linear-gradient(to bottom, #dbe4ff 0%, #b8cfff 100%)',
-                border: '1px solid #7592fb',
-                color: '#142a70',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)'
-              }}
-            >
-              Beta
+          <section aria-label="Order summary" className="relative z-10 mt-10 lg:my-auto">
+            <p className="text-[14px] font-medium text-white/80">{PRODUCT}</p>
+            <p className="mt-2 text-[44px] sm:text-[52px] font-semibold tracking-[-0.04em] leading-none tabular-nums">₹{PRICE}.00</p>
+            <p className="mt-3 text-[14px] text-white/80">One-time payment · lifetime license</p>
+            <ul className="hidden sm:flex flex-col gap-3 mt-9 text-[14px] text-white">
+              {['Every companion, including new ones', 'Focus mode that closes distractions', 'Compboard with clipboard history', 'Coding agent alerts', 'Every future update'].map(item => (
+                <li key={item} className="flex items-center gap-3">
+                  <span className="w-[18px] h-[18px] rounded-full bg-white/12 ring-1 ring-white/20 inline-flex items-center justify-center shrink-0">
+                    <Check size={10} color="#FFFFFF" weight={3} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <PetParade />
+
+          <footer className="relative z-10 hidden lg:flex items-center justify-between text-[12px] text-white/70">
+            <span>© 2026 Companion</span>
+            <span className="flex items-center gap-2">
+              Pay with any UPI app
+              <AppMarks size={12} />
             </span>
-          </div>
-          <p className="text-[14px] mt-1.5 leading-relaxed" style={{ color: c.muted }}>
-            ₹{PRICE}.00, paid once. Every companion, focus mode, Compboard and lifetime updates.
-          </p>
-        </section>
+          </footer>
+        </aside>
 
-        {/* Payment panel */}
-        <section
-          aria-label="Payment"
-          className="w-full rounded-2xl overflow-hidden flex flex-col"
-          style={{ background: c.card, border: `1px solid ${c.border}`, boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.04), 0 18px 44px -20px rgba(0,0,0,0.16)' }}
-        >
-          {/* Panel header with progress */}
-          <div className="flex items-center justify-between px-6 h-[50px] shrink-0" style={{ borderBottom: `1px solid ${c.border}` }}>
-            <span className="text-[14px] font-semibold">Checkout</span>
-            <ol className="flex items-center gap-1.5" aria-label="Progress">
+        {/* Checkout */}
+        <main className="flex justify-center px-6 sm:px-10 lg:px-16 py-8 lg:py-12">
+          <div className="w-full max-w-[460px] my-auto">
+            <h1 className="sr-only">Checkout</h1>
+            <ol className="flex items-center gap-2.5 mb-9 text-[13.5px]" aria-label="Progress">
               {steps.map((item, index) => {
-                const done = index < stepIndex;
                 const active = index === stepIndex;
+                const done = index < stepIndex;
                 return (
-                  <li key={item.id} className="flex items-center gap-1.5">
+                  <li key={item.id} className="flex items-center gap-2.5" aria-current={active ? 'step' : undefined}>
                     <span
-                      className="inline-flex items-center gap-1.5 h-[24px] pl-1 pr-1 sm:pr-2.5 rounded-full text-[11.5px] font-medium transition-colors"
-                      style={{ background: active ? c.ink : done ? c.rowActive : 'transparent', color: active ? c.inkText : done ? c.text : c.subtle }}
-                      aria-current={active ? 'step' : undefined}
+                      className="transition-colors duration-200"
+                      style={{ color: active ? c.text : done ? c.muted : c.subtle, fontWeight: active ? 600 : 500 }}
                     >
-                      <span
-                        className="w-4 h-4 rounded-full inline-flex items-center justify-center text-[9.5px] font-semibold tabular-nums"
-                        style={{ background: active ? c.inkText : done ? c.ink : c.field, color: active ? c.ink : done ? c.inkText : c.subtle }}
-                      >
-                        {done ? <Check size={9} weight={3.4} /> : index + 1}
-                      </span>
-                      <span className={active ? '' : 'hidden sm:inline'}>{item.label}</span>
+                      {item.label}
                     </span>
-                    {index < steps.length - 1 ? <span className="w-3 h-px" style={{ background: c.border }} /> : null}
+                    {index < steps.length - 1 ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.subtle} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="m9 6 6 6-6 6" />
+                      </svg>
+                    ) : null}
                   </li>
                 );
               })}
             </ol>
-          </div>
 
-          <div className="px-6 py-4 flex-1">
+            <div>
             {step === 'details' || step === 'pay' ? (
               <form key="details" className="ck-step flex flex-col" onSubmit={continueToPay} noValidate>
                 {section(
@@ -443,18 +465,8 @@ export default function CheckoutPage() {
             ) : null}
           </div>
 
-          {/* Panel footer: order line */}
-          <div className="flex items-center justify-between px-6 h-[46px] shrink-0 text-[13px]" style={{ borderTop: `1px solid ${c.border}`, background: c.field }}>
-            <span className="flex items-center gap-2.5 min-w-0">
-              <Image src="/applogo.png" alt="" width={22} height={22} className="rounded-[6px] shrink-0" />
-              <span className="font-medium truncate">{PRODUCT}</span>
-              <span style={{ color: c.subtle }}>Lifetime license</span>
-            </span>
-            <span className="font-semibold tabular-nums">₹{PRICE}.00</span>
           </div>
-        </section>
-        </div>
-      </main>
+        </main>
       </div>
 
       {/* Payment dialog */}
