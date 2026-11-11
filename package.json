@@ -10,8 +10,8 @@
   "main": "out/main/main.js",
   "homepage": "https://github.com/pradhan-not-found/Companion-",
   "scripts": {
-    "dev": "electron-vite dev",
-    "start": "electron-vite dev",
+    "dev": "electron-vite dev --watch",
+    "start": "electron-vite dev --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "build": "npm run typecheck && electron-vite build",

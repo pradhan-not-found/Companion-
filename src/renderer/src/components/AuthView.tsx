@@ -54,7 +54,7 @@ export function AuthView({ heroPet }: { heroPet: InstalledPet | undefined }): JS
         {mode === "welcome" ? (
           <div className="auth__card auth__card--welcome">
             <h1 className="auth__title">Welcome to Companion</h1>
-            <p className="auth__subtitle">Create an account to save your companion, stats and reminders on this computer.</p>
+            <p className="auth__subtitle">Create an account to keep your companion, stats and reminders.</p>
             <div className="auth__actions">
               <button type="button" className="c-btn c-btn--primary c-btn--block auth__btn" onClick={() => switchTo("create")}>
                 Create account
@@ -63,7 +63,29 @@ export function AuthView({ heroPet }: { heroPet: InstalledPet | undefined }): JS
                 Sign in
               </button>
             </div>
-            <p className="auth__fine">Your account and data stay on this device. Passwords are stored securely hashed, never in plain text.</p>
+            {!window.companion.isPackaged ? (
+              <button
+                type="button"
+                className="auth__demo"
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  setError(null);
+                  void window.companion.signInDemo().then((result) => {
+                    setBusy(false);
+                    if (!result.ok) setError(result.error);
+                  });
+                }}
+              >
+                Try the demo
+                <span>Development build · signs in as Demo User</span>
+              </button>
+            ) : null}
+            {error ? (
+              <p className="auth__error" role="alert">
+                {error}
+              </p>
+            ) : null}
           </div>
         ) : (
           <form className="auth__card" onSubmit={(event) => void submit(event)} noValidate>

@@ -4537,6 +4537,19 @@ function registerIpc(): void {
     publishSnapshot();
     return result;
   });
+  // Development only: one-click sign-in to a demo account to try the app.
+  ipcMain.handle("auth:demo", () => {
+    if (app.isPackaged) return { ok: false, error: "Demo sign-in is only available in development." };
+    const demo = { name: "Demo User", email: "demo@companion.local", password: "companion-demo" };
+    let result = signIn(demo);
+    if (!result.ok) result = createAccount(demo, STORE_NAME);
+    if (!result.ok) return result;
+    store = storeForSession();
+    if (!getSettings().userName) setSettings({ ...getSettings(), userName: result.account.name });
+    startSession();
+    publishSnapshot();
+    return result;
+  });
   ipcMain.handle("auth:sign-in", (_event, input: { email: string; password: string }) => {
     if (typeof input?.email !== "string" || typeof input?.password !== "string") {
       return { ok: false, error: "Please enter your email and password." };
