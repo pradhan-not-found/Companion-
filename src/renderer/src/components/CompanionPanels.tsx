@@ -286,7 +286,7 @@ export function TodayOverview({
               <p className="mcard__sub">{remaining > 0 ? `${remaining} to go today` : "Goal reached"}</p>
               <p className="mcard__pct mcard__pct--inline">{Math.round(ratio * 100)}% of goal</p>
             </div>
-            <WaterGlass filled={watersLogged} goal={DAILY_WATER_GOAL} size={50} />
+            <WaterGlass filled={watersLogged} goal={DAILY_WATER_GOAL} size={58} />
           </div>
         </section>
 
