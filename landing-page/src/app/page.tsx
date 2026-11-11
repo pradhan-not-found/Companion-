@@ -1,62 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import PetShowcase from '@/components/PetShowcase';
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import NavBar from '@/components/NavBar';
+import PetStrip from '@/components/PetStrip';
+
+const WINDOWS_DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
 
 export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [joined, setJoined] = useState(false);
+  const [macOpen, setMacOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [stars, setStars] = useState<number | null>(null);
-  const [isDark, setIsDark] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark') setIsDark(true);
-  }, []);
-
-  const toggleDark = () => {
-    setIsDark(v => {
-      localStorage.setItem('theme', !v ? 'dark' : 'light');
-      return !v;
-    });
-  };
-
-  useEffect(() => {
-    const fetchStars = () => {
-      fetch('https://api.github.com/repos/pradhan-not-found/Companion-')
-        .then(res => res.json())
-        .then(data => {
-          if (typeof data.stargazers_count === 'number') setStars(data.stargazers_count);
-        })
-        .catch(() => {});
-    };
-    fetchStars();
-    const interval = setInterval(fetchStars, 60_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!email.trim() || loading) return;
-
     setLoading(true);
     try {
-      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec';
-      
-      await fetch(SCRIPT_URL, {
+      await fetch('https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec', {
         method: 'POST',
-        // 'no-cors' is required for Google Apps Script Web Apps when called directly from frontend
         mode: 'no-cors',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ email: email.trim() }),
       });
-      
       setJoined(true);
-      setEmail('');
     } catch (err) {
       console.error(err);
       alert('Failed to join waitlist. Please try again.');
@@ -66,70 +35,95 @@ export default function LandingPage() {
   };
 
   return (
-    <div
-      className={`h-screen overflow-hidden relative selection:bg-black/10 flex flex-col transition-colors duration-300 ${isDark ? 'bg-[#111111] text-[#E0E0E0]' : 'bg-[#FAF9F6] text-[#2E2E2D]'}`}
-    >
-      <NavBar isDark={isDark} onToggleDark={toggleDark} stars={stars} />
+    <div className="min-h-dvh lg:h-dvh lg:overflow-hidden bg-white text-[#111] flex flex-col">
+      <NavBar />
 
-      {/* Hero */}
-      <main className="flex-1 overflow-hidden flex flex-col lg:flex-row items-center lg:items-stretch gap-0">
+      <div className="flex-1 grid grid-rows-[240px_auto] sm:grid-rows-[300px_auto] lg:grid-rows-1 lg:grid-cols-2 lg:min-h-0">
+      <PetStrip />
 
-        {/* ── Left: Copy & CTA ── */}
-        <div className={`w-full lg:w-[42%] shrink-0 flex flex-col justify-center px-10 lg:px-14 py-8 border-r transition-colors duration-300 ${isDark ? 'border-white/[0.08]' : 'border-black/[0.05]'}`}>
-          <h1 className={`text-[36px] lg:text-[44px] font-semibold tracking-[-0.03em] leading-[1.08] mb-4 transition-colors duration-300 ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`}>
-            Welcome to Companion.
+      <section className="min-h-0 flex flex-col justify-between px-5 sm:px-12 lg:px-16 py-7 sm:py-9">
+        <div className="flex flex-col justify-center lg:flex-1">
+          <div className="flex items-center gap-2.5 mb-6">
+            <Image src="/applogo.png" alt="" width={36} height={36} className="rounded-[9px]" priority />
+            <span className="text-[18px] font-semibold tracking-[-0.04em] leading-none">Companion</span>
+          </div>
+          <h1 className="font-semibold tracking-[-0.05em] leading-[0.92] text-[clamp(40px,10vw,78px)]">
+            Never work
+            <br />
+            alone.
           </h1>
-
-          <p className={`text-[15px] font-normal mb-7 leading-[1.75] max-w-sm transition-colors duration-300 ${isDark ? 'text-[#C0C0C0]' : 'text-[#4E4E4D]'}`}>
-            A beautifully crafted desktop pet that lives on your screen.
-            Stay hydrated, stay focused, never work alone.
+          <p className="mt-4 text-[15px] leading-[1.55] text-[#6d6d6d]">
+            A desktop pet that lives on your screen. Stay hydrated,
+            <br className="hidden sm:block" /> stay focused, and keep company while you work.
           </p>
 
-          {!joined ? (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 max-w-[380px] w-full">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
-                className={`w-full h-[46px] px-4 rounded-[8px] border text-[14.5px] focus:outline-none transition-colors ${isDark ? 'bg-[#1C1C1C] border-white/10 text-white placeholder-[#777] focus:border-white/30' : 'bg-white border-[rgba(0,0,0,0.14)] text-[#2E2E2D] placeholder-[#AEADA8] focus:border-[rgba(46,46,45,0.4)]'}`}
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full flex items-center justify-center gap-2 px-4 h-[46px] rounded-[8px] text-[15px] font-medium border-2 shadow-[inset_0_0_2px_2px_rgba(255,255,255,0.07)] transition-all duration-200 group ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-[1px] cursor-pointer'} ${isDark ? 'bg-[#EDEDEC] text-black border-[#EDEDEC] hover:bg-white hover:border-white' : 'bg-[#2E2E2D] text-white border-[#2E2E2D] hover:bg-black hover:border-black'}`}
-              >
-                {loading ? 'Joining...' : 'Join Waitlist'}
-                {!loading && (
-                  <svg viewBox="0 0 24 24" fill="none" className="w-[15px] h-[15px] transition-transform duration-200 group-hover:translate-x-1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
-                  </svg>
-                )}
+        <div className="mt-8">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-start gap-x-4 gap-y-3">
+            <div className="flex flex-col items-center gap-1.5">
+              <button type="button" onClick={() => setMacOpen(open => !open)} aria-expanded={macOpen} className="gel gel--blue">
+                <span className="gel__shine" aria-hidden="true" />
+                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="relative z-10 text-[#111]">
+                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="currentColor" />
+                </svg>
+                <span className="relative z-10 text-[#111]">download for mac</span>
               </button>
-            </form>
-          ) : (
-            <div className={`flex items-center gap-2.5 max-w-[380px] h-[46px] px-4 rounded-[8px] border transition-colors ${isDark ? 'border-white/10 bg-white/5' : 'border-[rgba(0,0,0,0.14)] bg-[rgba(0,0,0,0.02)]'}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`w-[15px] h-[15px] ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <span className={`text-[14.5px] font-medium ${isDark ? 'text-white' : 'text-[#2E2E2D]'}`}>
-                Added <span className="opacity-60">{email}</span> to the waitlist
-              </span>
+              <span className="text-[11.5px] leading-none text-center text-[#111]">coming soon · mac</span>
             </div>
-          )}
+            <div className="flex flex-col items-center gap-1.5">
+              <a href={WINDOWS_DOWNLOAD} className="gel gel--white">
+                <span className="gel__shine" aria-hidden="true" />
+                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" className="relative z-10">
+                  <rect x="2" y="2" width="9.5" height="9.5" fill="#F25022" />
+                  <rect x="12.5" y="2" width="9.5" height="9.5" fill="#7FBA00" />
+                  <rect x="2" y="12.5" width="9.5" height="9.5" fill="#00A4EF" />
+                  <rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#FFB900" />
+                </svg>
+                <span className="relative z-10">download for windows</span>
+              </a>
+              <span className="text-[11.5px] leading-none text-center text-[#111]">free download · windows 10 or higher</span>
+            </div>
+          </div>
 
-          <p className={`text-[12px] mt-3 font-normal tracking-[-0.01em] transition-colors duration-300 ${isDark ? 'text-[#666]' : 'text-[#9E9D9A]'}`}>
-            No spam, ever. Unsubscribe at any time. You will be notified about the launch.
-          </p>
+          <div className="h-11 mt-3">
+            {macOpen ? (
+              <div className="mac-wait max-w-[380px]">
+                {!joined ? (
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={event => setEmail(event.target.value)}
+                      placeholder="Email for the Mac launch"
+                      autoFocus
+                      className="flex-1 min-w-0 h-10 px-4 rounded-full border border-black/15 text-[14px] focus:outline-none"
+                    />
+                    <button type="submit" disabled={loading} className="gel gel--white gel--sm">
+                      <span className="gel__shine" aria-hidden="true" />
+                      <span className="relative z-10">{loading ? 'Adding…' : 'Notify me'}</span>
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-[14px]">You&apos;re on the list. We&apos;ll email {email} when Mac launches.</p>
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          </div>
         </div>
 
-        {/* ── Right: Animated Pets ── */}
-        <div className="flex-1 overflow-hidden flex items-start lg:items-center justify-center px-5 sm:px-8 py-6 lg:py-4">
-          <PetShowcase isDark={isDark} />
+        <div>
+          <footer className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[12px] text-[#8a8a8a]">
+            <span>© 2026 Companion. All rights reserved.</span>
+            <span className="flex items-center gap-4 shrink-0">
+              <Link href="/pricing" className="no-underline text-inherit">Pricing</Link>
+              <Link href="/changelog" className="no-underline text-inherit">Changelog</Link>
+            </span>
+          </footer>
         </div>
-
-      </main>
+      </section>
+      </div>
     </div>
   );
 }

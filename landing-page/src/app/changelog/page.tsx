@@ -97,11 +97,6 @@ export default function ChangelogPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark') setIsDark(true);
-  }, []);
-
-  useEffect(() => {
     fetch('https://api.github.com/repos/pradhan-not-found/Companion-/releases')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setReleases(data); })
@@ -112,7 +107,7 @@ export default function ChangelogPage() {
     setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
   };
 
-  const bg = isDark ? '#111111' : '#FAF9F6';
+  const bg = isDark ? '#111111' : '#FFFFFF';
   const title = isDark ? '#FFFFFF' : '#2E2E2D';
   const sub = isDark ? '#A0A0A0' : '#6E6D6A';
   const body = isDark ? '#666' : '#A8A7A4';
@@ -139,7 +134,7 @@ Where it all started. A virtual pet that lives as a buddy on your desktop. It ca
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-300 relative" style={{ backgroundColor: bg }}>
       <div className="relative z-10 flex flex-col min-h-screen">
-      <NavBar isDark={isDark} onToggleDark={toggleDark} />
+      <NavBar />
 
       <main className="flex-1 flex flex-col items-center px-6 py-16">
         <div className="w-full max-w-4xl">

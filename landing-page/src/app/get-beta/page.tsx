@@ -18,11 +18,6 @@ export default function GetBetaPage() {
   const [state, setState] = useState<State>('idle');
   const [downloadUrl, setDownloadUrl] = useState('');
 
-  useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark') setIsDark(true);
-  }, []);
-
   const toggleDark = () => {
     setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
   };
@@ -39,7 +34,7 @@ export default function GetBetaPage() {
     }
   };
 
-  const bg = isDark ? '#111111' : '#FAF9F6';
+  const bg = isDark ? '#111111' : '#FFFFFF';
   const title = isDark ? '#FFFFFF' : '#2E2E2D';
   const sub = isDark ? '#A0A0A0' : '#6E6D6A';
   const inputBg = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
@@ -50,7 +45,7 @@ export default function GetBetaPage() {
 
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-500 ease-in-out" style={{ backgroundColor: bg, color: title }}>
-      <NavBar isDark={isDark} onToggleDark={toggleDark} />
+      <NavBar />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden">
         

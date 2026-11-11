@@ -10,7 +10,7 @@ const switzer = localFont({
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://companion.app";
 
 export const viewport: Viewport = {
-  themeColor: "#FAF9F6",
+  themeColor: "#FFFFFF",
   width: "device-width",
   initialScale: 1,
 };

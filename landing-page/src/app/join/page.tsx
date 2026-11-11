@@ -11,11 +11,6 @@ export default function JoinPage() {
   const [formData, setFormData] = useState({ name: '', email: '', role: '', url: '' });
   const [state, setState] = useState<State>('idle');
 
-  useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark') setIsDark(true);
-  }, []);
-
   const toggleDark = () => {
     setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
   };
@@ -35,7 +30,7 @@ export default function JoinPage() {
     }, 800);
   };
 
-  const bg = isDark ? '#111111' : '#FAF9F6';
+  const bg = isDark ? '#111111' : '#FFFFFF';
   const title = isDark ? '#FFFFFF' : '#2E2E2D';
   const sub = isDark ? '#A0A0A0' : '#6E6D6A';
   const inputBg = isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)';
@@ -66,7 +61,7 @@ export default function JoinPage() {
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-500 ease-in-out relative" style={{ backgroundColor: bg, color: title }}>
       <div className="relative z-10 flex flex-col min-h-screen">
-        <NavBar isDark={isDark} onToggleDark={toggleDark} />
+        <NavBar />
 
         <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
           

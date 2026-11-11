@@ -10,22 +10,17 @@ import CreatorPet from '@/components/CreatorPet';
 export default function CreatorPage() {
   const [isDark, setIsDark] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark') setIsDark(true);
-  }, []);
-
   const toggleDark = () => {
     setIsDark(v => { localStorage.setItem('theme', !v ? 'dark' : 'light'); return !v; });
   };
 
-  const bg = isDark ? '#111111' : '#FAF9F6';
+  const bg = isDark ? '#111111' : '#FFFFFF';
   const title = isDark ? '#FFFFFF' : '#2E2E2D';
   const divider = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
 
   return (
     <div className="min-h-screen flex flex-col transition-colors duration-300" style={{ backgroundColor: bg }}>
-      <NavBar isDark={isDark} onToggleDark={toggleDark} />
+      <NavBar />
       <CreatorPet />
 
       <main className="flex-1 flex flex-col max-w-[800px] mx-auto px-6 lg:px-8 py-16 lg:py-24 w-full">
