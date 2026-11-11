@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { PETS, Sprite } from '@/components/PetStrip';
 import CheckoutArt from '@/components/CheckoutArt';
 import { UPI_APPS } from '@/lib/upiApps';
 import { UPI_ID, newOrderId, qrSvg, upiLink } from '@/lib/upiQr';
@@ -62,26 +61,6 @@ function Check({ size = 10, color = 'currentColor', weight = 3.2 }: { size?: num
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>
-  );
-}
-
-const PARADE = ['angry-cat', 'capy-puff', 'pupu', 'jokebear-codexpet'];
-
-/** The companions lined up along the bottom of the brand panel, idling. */
-function PetParade() {
-  const [frame, setFrame] = useState(0);
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => setFrame(value => value + 1), 180);
-    return () => window.clearInterval(id);
-  }, []);
-  return (
-    <div className="relative z-10 hidden lg:flex items-end gap-1 mb-6 -ml-2" aria-hidden="true">
-      {PARADE.map(id => {
-        const pet = PETS.find(item => item.id === id);
-        return pet ? <Sprite key={id} pet={pet} frame={frame} scale={0.36} /> : null;
-      })}
-    </div>
   );
 }
 
@@ -292,8 +271,6 @@ export default function CheckoutPage() {
               ))}
             </ul>
           </section>
-
-          <PetParade />
 
           <footer className="relative z-10 hidden lg:flex items-center justify-between text-[12px] text-white/70">
             <span>© 2026 Companion</span>
