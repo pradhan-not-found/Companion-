@@ -15,7 +15,6 @@ const NAV_LINKS = [
   { href: '/pricing', label: 'Pricing' },
   { href: '/changelog', label: 'Changelog' },
   { href: '/get-beta', label: 'Beta' },
-  { href: '/join', label: 'Careers' },
 ];
 
 export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
@@ -51,7 +50,6 @@ export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
               }}
             >
               {link.label}
-              {active ? <span className="absolute left-0 right-0 bottom-0 h-px" style={{ background: text }} /> : null}
             </Link>
           );
         })}

@@ -166,3 +166,8 @@ body {
     animation: none;
   }
 }
+
+.creator-link:hover {
+  background-color: rgba(0, 0, 0, 0.035);
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}

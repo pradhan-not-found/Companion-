@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
+import { PETS, Sprite } from '@/components/PetStrip';
+
+const PUPU = PETS.find(pet => pet.id === 'pupu')!;
 
 const WINDOWS_DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
 
@@ -22,6 +25,20 @@ function Check({ color }: { color: string }) {
     <svg className="mt-[3px] shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>
+  );
+}
+
+/** Pupu idling on top of the Pro card. */
+function PupuPerch() {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setFrame(value => value + 1), 180);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <div className="absolute right-8 bottom-full -mb-[3px] pointer-events-none select-none" aria-hidden="true">
+      <Sprite pet={PUPU} frame={frame} scale={0.5} />
+    </div>
   );
 }
 
@@ -102,9 +119,10 @@ export default function PricingPage() {
 
           {/* Pro */}
           <section
-            className="rounded-2xl px-6 py-5 flex flex-col relative min-h-0"
+            className="rounded-2xl px-6 py-5 flex flex-col relative min-h-0 mt-20 md:mt-0"
             style={{ background: c.proCard, color: c.proText, boxShadow: '0 24px 60px -24px rgba(0,0,0,0.45)' }}
           >
+            <PupuPerch />
             <span
               className="absolute top-7 right-7 text-[11px] font-semibold px-2.5 py-1 rounded-full"
               style={{ background: isDark ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)', color: c.proText }}

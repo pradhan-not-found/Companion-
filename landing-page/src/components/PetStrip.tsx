@@ -13,7 +13,7 @@ interface PetConfig {
   framesPerRow: number;
 }
 
-const PETS: PetConfig[] = [
+export const PETS: PetConfig[] = [
   { id: 'angry-cat', name: 'Angry Cat', src: '/pets/angry-cat/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'capy-puff', name: 'Capy Puff', src: '/pets/capy-puff/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'jokebear-codexpet', name: 'JokeBear', src: '/pets/jokebear-codexpet/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
@@ -35,7 +35,7 @@ const TILES: { pet: number; color: string; column: string; row: string }[] = [
   { pet: 7, color: '#C6F24E', column: '3 / 5', row: '3 / 4' },
 ];
 
-function Sprite({ pet, frame, scale }: { pet: PetConfig; frame: number; scale: number }) {
+export function Sprite({ pet, frame, scale }: { pet: PetConfig; frame: number; scale: number }) {
   const displayW = Math.round(pet.frameW * scale);
   const displayH = Math.round(pet.frameH * scale);
   return (
@@ -63,9 +63,20 @@ export default function PetStrip() {
   const [phone, setPhone] = useState(false);
   const [height, setHeight] = useState(0);
   const [active, setActive] = useState<number | null>(null);
-  const [pinned, setPinned] = useState(false);
+  const [last, setLast] = useState<number | null>(null);
   const [origin, setOrigin] = useState({ x: 50, y: 50 });
   const box = useRef<HTMLDivElement>(null);
+  const intent = useRef<number | undefined>(undefined);
+
+  // Hover intent: a short rest before opening, a longer one before switching pets,
+  // so sweeping the cursor across the grid does not flash colours.
+  const OPEN_DELAY = 140;
+  const SWITCH_DELAY = 320;
+  const schedule = (run: () => void, ms: number) => {
+    window.clearTimeout(intent.current);
+    intent.current = window.setTimeout(run, ms);
+  };
+  useEffect(() => () => window.clearTimeout(intent.current), []);
 
   useEffect(() => {
     const id = window.setInterval(() => setFrame(value => value + 1), 180);
@@ -99,18 +110,24 @@ export default function PetStrip() {
       });
     }
     setActive(index);
+    setLast(index);
   }
 
-  const shown = active === null ? null : TILES[active];
+  function close() {
+    window.clearTimeout(intent.current);
+    setActive(null);
+  }
+
+  const open = active !== null;
+  // Keep the last pet's colour while the flood shrinks back.
+  const shown = last === null ? null : TILES[last];
   const shownPet = shown ? PETS[shown.pet] : null;
 
   return (
     <div
       ref={box}
       className="relative h-full w-full overflow-hidden"
-      onMouseLeave={() => {
-        if (!pinned) setActive(null);
-      }}
+      onMouseLeave={close}
     >
       <div
         className={`h-full w-full grid ${phone ? 'grid-cols-2 grid-rows-4' : ''}`}
@@ -119,27 +136,22 @@ export default function PetStrip() {
         {TILES.map((tile, index) => {
           const pet = PETS[tile.pet];
           return (
-            <button
-              type="button"
+            <div
               key={pet.id}
-              className="flex items-center justify-center overflow-hidden cursor-pointer border-0 p-0"
+              className="flex items-center justify-center overflow-hidden"
               style={{ background: tile.color, ...(phone ? {} : { gridColumn: tile.column, gridRow: tile.row }) }}
-              aria-label={pet.name}
+              title={pet.name}
               onMouseEnter={event => {
-                if (!pinned) focus(index, event.currentTarget);
-              }}
-              onClick={event => {
-                if (pinned && active === index) {
-                  setPinned(false);
-                  setActive(null);
+                const target = event.currentTarget;
+                if (active === index) {
+                  window.clearTimeout(intent.current);
                   return;
                 }
-                setPinned(true);
-                focus(index, event.currentTarget);
+                schedule(() => focus(index, target), open ? SWITCH_DELAY : OPEN_DELAY);
               }}
             >
               <Sprite pet={pet} frame={frame} scale={scale} />
-            </button>
+            </div>
           );
         })}
       </div>
@@ -149,16 +161,13 @@ export default function PetStrip() {
         className="absolute inset-0 flex flex-col items-center justify-center gap-5"
         style={{
           background: shown?.color ?? 'transparent',
-          clipPath: `circle(${shown ? 150 : 0}% at ${origin.x}% ${origin.y}%)`,
-          transition: 'clip-path 620ms cubic-bezier(0.16, 1, 0.3, 1), background-color 240ms ease',
-          pointerEvents: pinned ? 'auto' : 'none',
-          cursor: pinned ? 'pointer' : undefined
+          clipPath: `circle(${open ? 150 : 0}% at ${origin.x}% ${origin.y}%)`,
+          transition: open
+            ? 'clip-path 680ms cubic-bezier(0.22, 1, 0.36, 1), background-color 420ms ease'
+            : 'clip-path 460ms cubic-bezier(0.65, 0, 0.35, 1)',
+          pointerEvents: 'none'
         }}
-        onClick={() => {
-          setPinned(false);
-          setActive(null);
-        }}
-        aria-hidden={!shown}
+        aria-hidden="true"
       >
         {shownPet ? (
           <div key={shownPet.id} className="pet-pop flex flex-col items-center gap-5">

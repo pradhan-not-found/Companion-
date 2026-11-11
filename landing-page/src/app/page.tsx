@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import PetStrip from '@/components/PetStrip';
+import CodexHacker from '@/components/CodexHacker';
 
 const WINDOWS_DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
 
@@ -50,7 +51,10 @@ export default function LandingPage() {
           <h1 className="font-semibold tracking-[-0.05em] leading-[0.92] text-[clamp(40px,10vw,78px)]">
             Never work
             <br />
-            alone.
+            <span className="relative inline-block">
+              alone.
+              <CodexHacker width={0.8} className="absolute left-full bottom-[0.02em] ml-[0.14em]" />
+            </span>
           </h1>
           <p className="mt-4 text-[15px] leading-[1.55] text-[#6d6d6d]">
             A desktop pet that lives on your screen. Stay hydrated,
