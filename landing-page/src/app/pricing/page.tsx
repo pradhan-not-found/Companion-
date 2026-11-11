@@ -120,7 +120,7 @@ export default function PricingPage() {
           {/* Pro */}
           <section
             className="rounded-2xl px-6 py-5 flex flex-col relative min-h-0 mt-20 md:mt-0"
-            style={{ background: c.proCard, color: c.proText, boxShadow: '0 24px 60px -24px rgba(0,0,0,0.45)' }}
+            style={{ background: c.proCard, color: c.proText, boxShadow: '0 28px 50px -28px rgba(0,0,0,0.5)' }}
           >
             <PupuPerch />
             <span

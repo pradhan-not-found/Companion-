@@ -11,12 +11,14 @@ interface PetConfig {
   gridCols: number;
   gridRows: number;
   framesPerRow: number;
+  /** Spritesheet row to loop (defaults to 0, idle). */
+  row?: number;
 }
 
 export const PETS: PetConfig[] = [
   { id: 'angry-cat', name: 'Angry Cat', src: '/pets/angry-cat/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'capy-puff', name: 'Capy Puff', src: '/pets/capy-puff/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'jokebear-codexpet', name: 'JokeBear', src: '/pets/jokebear-codexpet/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
+  { id: 'jokebear-codexpet', name: 'JokeBear', src: '/pets/jokebear-codexpet/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 8, row: 1 },
   { id: 'pupu', name: 'Pupu', src: '/pets/pupu/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'droid', name: 'Droid', src: '/pets/droid/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
   { id: 'boba', name: 'Boba', src: '/pets/boba/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
@@ -45,7 +47,7 @@ export function Sprite({ pet, frame, scale }: { pet: PetConfig; frame: number; s
           width: displayW,
           height: displayH,
           backgroundImage: `url('${pet.src}')`,
-          backgroundPosition: `${-(frame % pet.framesPerRow) * displayW}px 0px`,
+          backgroundPosition: `${-(frame % pet.framesPerRow) * displayW}px ${-(pet.row ?? 0) * displayH}px`,
           backgroundSize: `${displayW * pet.gridCols}px ${displayH * pet.gridRows}px`,
           backgroundRepeat: 'no-repeat',
           imageRendering: 'pixelated',
