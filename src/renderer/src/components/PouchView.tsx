@@ -56,6 +56,8 @@ export function PouchView(): JSX.Element {
   const [filter, setFilter] = useState<Filter>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => window.companion.onPouchClosing(() => setClosing(true)), []);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export function PouchView(): JSX.Element {
   }
 
   return (
-    <main className="pouch">
+    <main className={`pouch${closing ? " is-closing" : ""}`}>
       <header className="hb__head">
         <div className="hb__titles">
           <h1 className="hb__title">Compboard</h1>

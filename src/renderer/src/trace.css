@@ -4665,3 +4665,113 @@ textarea,
   font-size: 11.5px;
   top: 42%;
 }
+
+/* ── Compboard: rises from the pet, settles, fades out on close ── */
+.pouch {
+  animation: board-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 50% 100%;
+}
+
+.pouch.is-closing {
+  animation: board-out 140ms ease-in both;
+}
+
+@keyframes board-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes board-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* content follows a beat later for a layered, smooth entrance */
+.pouch .hb__actions,
+.pouch .hb__section-head,
+.pouch .pouch__body {
+  animation: board-content 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pouch .hb__section-head,
+.pouch .pouch__body {
+  animation-delay: 50ms;
+}
+
+@keyframes board-content {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Smooth, tactile clicks on every button ───────────────── */
+button,
+.c-btn,
+.mcard__btn,
+.hb__tile,
+.pouch__thumb-btn,
+.pouch__row-btn,
+.sidebar__item,
+.account__item,
+.pet-card,
+.segmented-control button {
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active:not(:disabled),
+.c-btn:active:not(:disabled),
+.mcard__btn:active,
+.hb__tile:active,
+.pouch__row-btn:active,
+.account__item:active,
+.segmented-control button:active {
+  transform: scale(0.965);
+  transition-duration: 90ms;
+  transition-timing-function: ease-out;
+}
+
+.sidebar__item:active {
+  transform: scale(0.98);
+}
+
+/* the pet itself must never shrink when clicked */
+.pet-button,
+.pet-button:active {
+  transform: none !important;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pouch,
+  .pouch.is-closing,
+  .pouch .hb__actions,
+  .pouch .hb__section-head,
+  .pouch .pouch__body {
+    animation: none;
+  }
+
+  button:active:not(:disabled),
+  .c-btn:active:not(:disabled) {
+    transform: none;
+  }
+}

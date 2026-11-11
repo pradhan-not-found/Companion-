@@ -1085,9 +1085,33 @@ function sendPouch(): void {
   if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.webContents.send("pouch:updated", listPouch());
 }
 
+/** Fades a window's opacity between two values over `ms`, then calls `done`. */
+function fadeWindow(win: Electron.BrowserWindow, from: number, to: number, ms: number, done?: () => void): void {
+  const started = Date.now();
+  win.setOpacity(from);
+  const tick = setInterval(() => {
+    if (win.isDestroyed()) {
+      clearInterval(tick);
+      return;
+    }
+    const t = Math.min(1, (Date.now() - started) / ms);
+    const eased = 1 - (1 - t) ** 3;
+    win.setOpacity(from + (to - from) * eased);
+    if (t >= 1) {
+      clearInterval(tick);
+      done?.();
+    }
+  }, 8);
+}
+
 function closePouchWindow(): void {
-  if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.close();
+  const closing = pouchWindow;
   pouchWindow = null;
+  if (!closing || closing.isDestroyed()) return;
+  closing.webContents.send("pouch:closing");
+  fadeWindow(closing, closing.getOpacity(), 0, 140, () => {
+    if (!closing.isDestroyed()) closing.close();
+  });
 }
 
 /** Where the Compboard sits: just above the pet, or beside it near the top edge. */
@@ -1154,9 +1178,13 @@ function togglePouchWindow(): void {
   pouchWindow.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "pop-up-menu");
   loadRenderer(pouchWindow, "pouch");
   pouchWindow.once("ready-to-show", () => {
-    pouchWindow?.show();
-    pouchWindow?.focus();
+    const opening = pouchWindow;
+    if (!opening || opening.isDestroyed()) return;
+    opening.setOpacity(0);
+    opening.show();
+    opening.focus();
     sendPouch();
+    fadeWindow(opening, 0, 1, 180);
   });
   pouchWindow.on("blur", () => {
     // Stay open while you drag the pet (focus moves to the pet window);
@@ -1166,8 +1194,9 @@ function togglePouchWindow(): void {
       closePouchWindow();
     }, 0);
   });
-  pouchWindow.on("closed", () => {
-    pouchWindow = null;
+  const created = pouchWindow;
+  created.on("closed", () => {
+    if (pouchWindow === created) pouchWindow = null;
   });
 }
 
