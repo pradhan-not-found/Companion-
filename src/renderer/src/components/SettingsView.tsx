@@ -439,6 +439,14 @@ function buildTrendPoints(
   });
 }
 
+function niceCeiling(value: number): number {
+  if (value <= 1) return 1;
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const step = [1, 2, 2.5, 5, 10].find((candidate) => candidate * magnitude >= value) ?? 10;
+  return step * magnitude;
+}
+
+/** Daily totals as columns: hairline grid, clean ticks, today emphasised, hover readout. */
 function StatsLineChart({
   title,
   unit,
@@ -450,68 +458,82 @@ function StatsLineChart({
   metric: StatsMetric;
   points: StatsTrendPoint[];
 }): JSX.Element {
-  const width = 320;
-  const height = 132;
-  const paddingX = 24;
-  const paddingTop = 16;
-  const paddingBottom = 24;
-  const chartWidth = width - paddingX * 2;
-  const chartHeight = height - paddingTop - paddingBottom;
+  const [hover, setHover] = useState<number | null>(null);
   const values = points.map((point) => point[metric]);
-  const maxValue = Math.max(1, ...values);
-  const stepX = points.length > 1 ? chartWidth / (points.length - 1) : 0;
-  const coordinates = values.map((value, index) => {
-    const x = paddingX + stepX * index;
-    const y = paddingTop + chartHeight - (value / maxValue) * chartHeight;
-    return { x, y, value };
-  });
-  const line = coordinates.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
-  const latest = values.at(-1) ?? 0;
-  const firstLabel = points[0]?.label ?? "";
-  const lastLabel = points.at(-1)?.label ?? "";
+  const total = values.reduce((sum, value) => sum + value, 0);
+  const top = niceCeiling(Math.max(...values, 0));
+  const empty = total === 0;
+  const dense = points.length > 10;
+  const todayIndex = points.length - 1;
+  const formatDay = (point: StatsTrendPoint, style: "short" | "long"): string => {
+    const date = dateFromKey(point.date);
+    return style === "short"
+      ? date.toLocaleDateString(undefined, { weekday: "short" })
+      : date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  };
+  const xLabel = (point: StatsTrendPoint, index: number): string => {
+    if (!dense) return formatDay(point, "short");
+    if (index === 0 || index === todayIndex || index % 7 === 0) return point.label;
+    return "";
+  };
+  const unitText = unit ? ` ${unit}` : "";
+  const active = hover ?? null;
 
   return (
-    <article className="trend-card">
+    <article className="trend-card tc-card">
       <div className="trend-card__head">
         <span>{title}</span>
         <strong>
-          {latest}
+          {total}
           {unit ? <small>{unit}</small> : null}
         </strong>
       </div>
-      <svg className="trend-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
-        <line className="trend-chart__grid" x1={paddingX} x2={width - paddingX} y1={paddingTop} y2={paddingTop} />
-        <line
-          className="trend-chart__grid"
-          x1={paddingX}
-          x2={width - paddingX}
-          y1={paddingTop + chartHeight / 2}
-          y2={paddingTop + chartHeight / 2}
-        />
-        <line
-          className="trend-chart__grid"
-          x1={paddingX}
-          x2={width - paddingX}
-          y1={paddingTop + chartHeight}
-          y2={paddingTop + chartHeight}
-        />
-        <polyline className="trend-chart__line" points={line} />
-        {coordinates.map((point, index) => (
-          <circle
-            className="trend-chart__dot"
-            key={`${points[index]?.date}-${metric}`}
-            cx={point.x}
-            cy={point.y}
-            r={point.value === latest && index === coordinates.length - 1 ? 3.2 : 2.2}
-          />
-        ))}
-        <text className="trend-chart__axis" x={paddingX} y={height - 6}>
-          {firstLabel}
-        </text>
-        <text className="trend-chart__axis trend-chart__axis--end" x={width - paddingX} y={height - 6}>
-          {lastLabel}
-        </text>
-      </svg>
+      <div className="tc" onPointerLeave={() => setHover(null)}>
+        <div className="tc__plot">
+          <div className={`tc__grid${empty ? " is-empty" : ""}`} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className="tc__bars" role="list" aria-label={`${title} by day`}>
+            {points.map((point, index) => {
+              const value = values[index];
+              const height = (value / top) * 100;
+              return (
+                <button
+                  key={point.date}
+                  type="button"
+                  role="listitem"
+                  className={`tc__col${index === todayIndex && !dense ? " is-today" : ""}${active === index ? " is-active" : ""}`}
+                  aria-label={`${formatDay(point, "long")}: ${value}${unitText}`}
+                  onPointerEnter={() => setHover(index)}
+                  onFocus={() => setHover(index)}
+                  onBlur={() => setHover(null)}
+                >
+                  <span className={`tc__bar${value === 0 ? " is-zero" : ""}`} style={{ height: value === 0 ? undefined : `${height}%` }} />
+                  {active === index && !empty ? (
+                    <span className="tc__tip" role="tooltip">
+                      <strong>
+                        {value}
+                        {unitText}
+                      </strong>
+                      <span>{formatDay(point, "long")}</span>
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          {empty ? <p className="tc__empty">No data yet</p> : null}
+        </div>
+        <div className="tc__x" aria-hidden="true">
+          {points.map((point, index) => (
+            <span key={point.date} className={index === todayIndex ? "is-today" : undefined}>
+              {xLabel(point, index)}
+            </span>
+          ))}
+        </div>
+      </div>
     </article>
   );
 }
@@ -775,12 +797,29 @@ export function SettingsView(): JSX.Element {
   useEffect(() => {
     const pane = prefsRef.current;
     if (!pane) return;
+    let idle: number | undefined;
+    const measure = (): void => {
+      const head = pane.querySelector<HTMLElement>(".page-head, .ov-head");
+      pane.style.setProperty("--head-h", `${head ? head.offsetHeight : 0}px`);
+    };
     const update = (): void => {
       pane.classList.toggle("is-scrolled", pane.scrollTop > 4);
+      // Overlay scrollbar: visible while scrolling, fades out shortly after.
+      pane.classList.add("is-scrolling");
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => pane.classList.remove("is-scrolling"), 900);
     };
-    update();
+    measure();
+    pane.classList.toggle("is-scrolled", pane.scrollTop > 4);
+    const observer = new ResizeObserver(measure);
+    const head = pane.querySelector<HTMLElement>(".page-head, .ov-head");
+    if (head) observer.observe(head);
     pane.addEventListener("scroll", update, { passive: true });
-    return () => pane.removeEventListener("scroll", update);
+    return () => {
+      window.clearTimeout(idle);
+      observer.disconnect();
+      pane.removeEventListener("scroll", update);
+    };
   });
 
   function selectPage(nextPage: PrefsPage): void {

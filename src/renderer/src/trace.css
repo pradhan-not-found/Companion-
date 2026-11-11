@@ -4350,3 +4350,318 @@ textarea,
   margin-right: calc(var(--pad-r) * -1);
   max-width: none;
 }
+
+/* ============================================================
+   TREND CHARTS — daily columns (replaces the polyline charts)
+   ============================================================ */
+.tc-card {
+  padding: 16px 18px 12px;
+}
+
+.tc-card .trend-card__head {
+  margin-bottom: 14px;
+}
+
+.tc-card .trend-card__head span {
+  color: var(--t-muted);
+  font-size: 12.5px;
+}
+
+.tc-card .trend-card__head strong {
+  font-size: 20px;
+}
+
+.tc {
+  --tc-axis: 26px;
+  position: relative;
+}
+
+.tc__plot {
+  height: 116px;
+  position: relative;
+}
+
+.tc__grid {
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  justify-content: space-between;
+  pointer-events: none;
+  position: absolute;
+}
+
+.tc__grid span {
+  border-top: 1px solid color-mix(in srgb, var(--t-ink) 7%, transparent);
+  height: 0;
+  margin-left: var(--tc-axis);
+  position: relative;
+}
+
+.tc__grid span:last-child {
+  border-top-color: color-mix(in srgb, var(--t-ink) 16%, transparent);
+}
+
+.tc__grid span::before {
+  color: var(--t-subtle);
+  content: attr(data-tick);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  left: calc(var(--tc-axis) * -1);
+  position: absolute;
+  text-align: right;
+  top: -6px;
+  width: calc(var(--tc-axis) - 8px);
+}
+
+.tc__bars {
+  align-items: stretch;
+  bottom: 0;
+  display: flex;
+  left: var(--tc-axis);
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.tc__col {
+  align-items: flex-end;
+  background: transparent;
+  border: 0;
+  cursor: default;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+  position: relative;
+}
+
+.tc__col:focus-visible {
+  outline: 2px solid var(--t-ink);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.tc__bar {
+  background: color-mix(in srgb, var(--t-ink) 32%, transparent);
+  border-radius: 4px 4px 0 0;
+  display: block;
+  max-width: 24px;
+  min-height: 3px;
+  transition:
+    background 160ms ease,
+    height 500ms var(--ease-out);
+  width: 58%;
+}
+
+.tc__bar.is-zero {
+  background: color-mix(in srgb, var(--t-ink) 10%, transparent);
+  border-radius: 2px;
+  height: 2px;
+  min-height: 2px;
+}
+
+.tc__col.is-today .tc__bar:not(.is-zero) {
+  background: var(--t-ink);
+}
+
+.tc__col.is-active .tc__bar:not(.is-zero) {
+  background: color-mix(in srgb, var(--t-ink) 78%, transparent);
+}
+
+.tc__col.is-active::before {
+  background: color-mix(in srgb, var(--t-ink) 4%, transparent);
+  border-radius: 6px;
+  content: "";
+  inset: 0 6% 0;
+  position: absolute;
+}
+
+.tc__tip {
+  background: var(--t-card);
+  border: 1px solid var(--t-edge);
+  border-radius: 9px;
+  bottom: calc(100% + 6px);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  left: 50%;
+  padding: 6px 9px;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.tc__col:first-child .tc__tip {
+  left: 0;
+  transform: none;
+}
+
+.tc__col:last-child .tc__tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.tc__tip strong {
+  color: var(--t-ink);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.tc__tip span {
+  color: var(--t-muted);
+  font-size: 11px;
+}
+
+.tc__empty {
+  color: var(--t-subtle);
+  font-size: 12px;
+  left: var(--tc-axis);
+  margin: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  top: 38%;
+}
+
+.tc__x {
+  display: flex;
+  margin-left: var(--tc-axis);
+  margin-top: 7px;
+}
+
+.tc__x span {
+  color: var(--t-subtle);
+  flex: 1;
+  font-size: 10.5px;
+  min-width: 0;
+  overflow: visible;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tc__x span.is-today {
+  color: var(--t-ink);
+  font-weight: 600;
+}
+
+.hb__bin:hover {
+  color: #ef4444;
+}
+
+/* ── Frosted header, refined ──────────────────────────────── */
+.app-shell .prefs > .page-head,
+.app-shell .prefs > .ov-head {
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
+  background: color-mix(in srgb, var(--t-canvas) 80%, transparent);
+  border-bottom: 0;
+  transition: box-shadow 220ms ease, background 220ms ease;
+}
+
+.app-shell .prefs.is-scrolled > .page-head,
+.app-shell .prefs.is-scrolled > .ov-head {
+  background: color-mix(in srgb, var(--t-canvas) 72%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--t-ink) 6%, transparent),
+    0 10px 24px -14px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Overlay scrollbar: appears on hover / while scrolling ── */
+.app-shell .prefs::-webkit-scrollbar {
+  width: 12px;
+}
+
+.app-shell .prefs::-webkit-scrollbar-track {
+  background: transparent;
+  margin-bottom: 14px;
+  margin-top: calc(var(--head-h, 96px) + 6px);
+}
+
+.app-shell .prefs::-webkit-scrollbar-thumb {
+  background-clip: padding-box;
+  background-color: transparent;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  min-height: 40px;
+  transition: background-color 200ms ease;
+}
+
+.app-shell .prefs:hover::-webkit-scrollbar-thumb,
+.app-shell .prefs.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: var(--sb-thumb);
+}
+
+.app-shell .prefs::-webkit-scrollbar-thumb:hover,
+.app-shell .prefs::-webkit-scrollbar-thumb:active {
+  background-color: var(--sb-thumb-hover);
+  border-width: 2px;
+}
+
+/* ── Trend charts, calmer ─────────────────────────────────── */
+.tc {
+  --tc-axis: 0px;
+}
+
+.tc__grid span::before {
+  display: none;
+}
+
+.tc__grid span:first-child {
+  border-top-color: transparent;
+}
+
+.tc__grid.is-empty span:not(:last-child) {
+  border-top-color: transparent;
+}
+
+.tc__col.is-active::before {
+  display: none;
+}
+
+.tc__bar {
+  background: color-mix(in srgb, var(--t-ink) 26%, transparent);
+  width: 46%;
+}
+
+.tc__col.is-today .tc__bar:not(.is-zero) {
+  background: color-mix(in srgb, var(--t-ink) 86%, transparent);
+}
+
+.tc__col.is-active .tc__bar:not(.is-zero) {
+  background: color-mix(in srgb, var(--t-ink) 60%, transparent);
+}
+
+.tc__col.is-today.is-active .tc__bar:not(.is-zero) {
+  background: var(--t-ink);
+}
+
+/* compact readout that stays inside the plot */
+.tc__tip {
+  align-items: baseline;
+  border-radius: 8px;
+  bottom: auto;
+  flex-direction: row;
+  gap: 6px;
+  padding: 4px 8px;
+  top: 0;
+}
+
+.tc__tip strong {
+  font-size: 12px;
+}
+
+.tc__tip span {
+  font-size: 10.5px;
+}
+
+.tc__empty {
+  color: var(--t-subtle);
+  font-size: 11.5px;
+  top: 42%;
+}
