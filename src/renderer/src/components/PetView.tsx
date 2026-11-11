@@ -13,8 +13,12 @@ type DragRef = {
   pointerId: number;
   startX: number;
   startY: number;
+  startedAt: number;
   dragging: boolean;
 };
+
+// A click is a quick press-and-release without moving; anything else is not.
+const CLICK_MAX_MS = 550;
 
 const DRAG_START_DISTANCE_PX = 10;
 
@@ -95,7 +99,7 @@ export function PetView(): JSX.Element {
       window.companion.petDragStop();
       return;
     }
-    if (clicked) window.companion.petClicked();
+    if (clicked && Date.now() - drag.startedAt <= CLICK_MAX_MS) window.companion.petClicked();
   }
 
   // Click-through: the window ignores the mouse except over the pet, its
@@ -146,6 +150,7 @@ export function PetView(): JSX.Element {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
+      startedAt: Date.now(),
       dragging: false
     };
   }
@@ -226,13 +231,15 @@ export function PetView(): JSX.Element {
             type="button"
           >
             {bubble.agent ? <AgentBubbleHeader activity={bubble.agent} /> : null}
-            <p>{bubble.message}</p>
+            {bubble.note ? <p className="note__title">{bubble.note.title}</p> : null}
+            <p className={bubble.note ? "note__body" : undefined}>{bubble.message}</p>
           </button>
         ) : (
           <section
             className={`speech-bubble${bubble.agent ? " is-agent" : ""}${bubble.newPet ? " is-new-pet" : ""}`}
           >
             {bubble.agent ? <AgentBubbleHeader activity={bubble.agent} /> : null}
+            {bubble.note ? <p className="note__title">{bubble.note.title}</p> : null}
             {bubble.newPet ? (
               <div className="new-pet-card__head">
                 <span className="new-pet-card__preview">

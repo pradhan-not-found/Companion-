@@ -29,12 +29,12 @@ import {
 } from "./CompanionPanels";
 import { AuthView } from "./AuthView";
 import { isAvatarArt } from "./AvatarArt";
-import { ProfilePage } from "./ProfilePage";
+import { ProfilePage, SoftwareUpdate } from "./ProfilePage";
 import type { NavItem } from "./CompanionPanels";
 
 type SettingsCopy = ReturnType<typeof i18n>["settings"];
 type StatsRange = "day" | "month" | "all";
-type PrefsPage = "stats" | "pets" | "reminders" | "profile" | "settings";
+type PrefsPage = "stats" | "pets" | "reminders" | "profile" | "updates" | "settings";
 type StatsMetric = "breaksTaken" | "watersLogged" | "focusMinutes" | "focusWarnings";
 type StatsTrendPoint = TodayStats & {
   label: string;
@@ -42,6 +42,8 @@ type StatsTrendPoint = TodayStats & {
 type FocusHeatmapDay = {
   date: string;
   tooltip: string;
+  minutes: number;
+  future: boolean;
   level: number;
 };
 
@@ -552,10 +554,13 @@ function buildFocusHeatmap(
         const key = dateKey(date);
         const focusMinutes = statsByDate[key]?.focusMinutes ?? 0;
         const dateLabel = formatHeatmapDate(date, language);
+        const future = key > currentDate;
         return {
           date: key,
-          tooltip: labels.focusHeatmapTooltip(focusMinutes, dateLabel),
-          level: focusLevel(focusMinutes)
+          tooltip: future ? dateLabel : labels.focusHeatmapTooltip(focusMinutes, dateLabel),
+          level: focusLevel(focusMinutes),
+          minutes: focusMinutes,
+          future
         };
       })
     };
@@ -595,6 +600,16 @@ function StatsCompanionship({
     { day: 5, label: formatWeekdayLabel(5, language) }
   ];
   const heatmapStyle = { "--week-count": weeks.length } as CSSProperties;
+  const trackedDays = weeks.flatMap((week) => week.days).filter((day) => !day.future);
+  const totalMinutes = trackedDays.reduce((total, day) => total + day.minutes, 0);
+  let streak = 0;
+  for (let index = trackedDays.length - 1; index >= 0; index -= 1) {
+    if (trackedDays[index].minutes > 0) streak += 1;
+    else if (index === trackedDays.length - 1) continue; // today may not have started yet
+    else break;
+  }
+  const totalLabel =
+    totalMinutes >= 60 ? `${(totalMinutes / 60).toFixed(totalMinutes >= 600 ? 0 : 1)} h focused this year` : `${totalMinutes} min focused this year`;
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const tooltipTimer = useRef<number | null>(null);
 
@@ -631,7 +646,13 @@ function StatsCompanionship({
       </div>
       <div className="focus-heatmap" aria-label={labels.focusHeatmap}>
         <div className="focus-heatmap__head">
-          <span>{labels.focusHeatmap}</span>
+          <div className="focus-heatmap__titles">
+            <span>{labels.focusHeatmap}</span>
+            <small>
+              {totalLabel}
+              {streak > 0 ? ` · ${streak}-day streak` : ""}
+            </small>
+          </div>
           <div className="focus-heatmap__legend" aria-hidden="true">
             <span>{labels.heatmapLess}</span>
             {[0, 1, 2, 3, 4].map((level) => (
@@ -662,7 +683,7 @@ function StatsCompanionship({
                   week.days.map((day) => (
                     <span
                       key={day.date}
-                      className={`focus-heatmap__day heat-${day.level}`}
+                      className={`focus-heatmap__day heat-${day.level}${day.future ? " is-future" : ""}`}
                       aria-label={day.tooltip}
                       onMouseEnter={(event) => scheduleTooltip(day.tooltip, event.currentTarget)}
                       onMouseLeave={hideTooltip}
@@ -749,6 +770,18 @@ export function SettingsView(): JSX.Element {
     setDraft((current) => ({ ...current, ...partial }));
     setSettingsDirty(true);
   }
+
+  // Frosted header: show its divider only once content scrolls beneath it.
+  useEffect(() => {
+    const pane = prefsRef.current;
+    if (!pane) return;
+    const update = (): void => {
+      pane.classList.toggle("is-scrolled", pane.scrollTop > 4);
+    };
+    update();
+    pane.addEventListener("scroll", update, { passive: true });
+    return () => pane.removeEventListener("scroll", update);
+  });
 
   function selectPage(nextPage: PrefsPage): void {
     setPage(nextPage);
@@ -857,7 +890,8 @@ export function SettingsView(): JSX.Element {
       badge: newPets.length ? "New" : undefined
     },
     { id: "reminders", label: labels.reminderPageTitle, icon: NavIcons.reminders },
-    { id: "profile", label: english ? "Profile" : "Profile", icon: NavIcons.profile, dot: updateReady },
+    { id: "profile", label: english ? "Profile" : "Profile", icon: NavIcons.profile },
+    { id: "updates", label: "Updates", icon: NavIcons.updates, dot: updateReady },
     { id: "settings", label: labels.title, icon: NavIcons.settings }
   ];
   const pageMeta: Record<PrefsPage, { title: string; subtitle: string }> = {
@@ -867,7 +901,8 @@ export function SettingsView(): JSX.Element {
       subtitle: "Pick who keeps you company on your desktop."
     },
     reminders: { title: labels.reminderPageTitle, subtitle: "Daily nudges that count down on your pet." },
-    profile: { title: "Profile", subtitle: "Your name, your progress, and app updates." },
+    profile: { title: "Profile", subtitle: "Your account and avatar." },
+    updates: { title: "Updates", subtitle: "Keep Companion up to date." },
     settings: { title: labels.title, subtitle: "Fine-tune breaks, hydration, focus, and your companion." }
   };
   const focusMinutesLeft = snapshot.timers.focusEndsAt
@@ -923,7 +958,7 @@ export function SettingsView(): JSX.Element {
             email={snapshot.account.email}
             onSignOut={() => void window.companion.signOut()}
             onCheckUpdates={() => {
-              selectPage("profile");
+              selectPage("updates");
               if (!updateReady) window.companion.checkForUpdates();
             }}
           />
@@ -1069,6 +1104,14 @@ export function SettingsView(): JSX.Element {
         />
       ) : null}
 
+      {page === "updates" ? (
+        <SoftwareUpdate
+          status={snapshot.update}
+          onCheck={window.companion.checkForUpdates}
+          onInstall={window.companion.installUpdate}
+        />
+      ) : null}
+
       {page === "reminders" ? (
         <section className="prefs__group prefs__group--first reminder-page">
           <div className="reminder-composer">
@@ -1127,8 +1170,33 @@ export function SettingsView(): JSX.Element {
           <section className="prefs__group prefs__group--first">
             <h2 className="prefs__group-title">General</h2>
             <Row
-              label="Clipboard pouch"
-              hint="Click your pet to see recent copies and screenshots. Kept in memory only, never saved."
+              label="Check-ins"
+              hint="Your companion checks on you now and then, and pokes you when it feels ignored."
+              control={
+                <ToggleControl
+                  checked={draft.petCheckInsEnabled}
+                  onChange={(petCheckInsEnabled) => updateDraft({ petCheckInsEnabled })}
+                  ariaLabel="Check-ins"
+                />
+              }
+            />
+            {draft.petCheckInsEnabled ? (
+              <Row
+                label="Check in every"
+                control={
+                  <NumberControl
+                    value={draft.petCheckInMinutes}
+                    min={2}
+                    max={60}
+                    unit="min"
+                    onChange={(petCheckInMinutes) => updateDraft({ petCheckInMinutes })}
+                  />
+                }
+              />
+            ) : null}
+            <Row
+              label="Helpboard"
+              hint="Click your pet for quick actions and recent copies. Clipboard items stay in memory only."
               control={
                 <ToggleControl
                   checked={draft.clipboardPouchEnabled}

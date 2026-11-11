@@ -38,6 +38,8 @@ export const DEFAULT_SETTINGS: Settings = {
   avatarColor: "#E9E3D8",
   launchAtLogin: true,
   clipboardPouchEnabled: true,
+  petCheckInsEnabled: true,
+  petCheckInMinutes: 5,
   // Pets bundled with this build count as already introduced on a fresh install;
   // pets added by later updates are then announced as new.
   seenPetIds: BUNDLED_PETS.map((pet) => pet.slug),
@@ -78,6 +80,12 @@ export const DEFAULT_SETTINGS: Settings = {
     "reddit",
     "tiktok",
     "netflix",
+    "prime video",
+    "hotstar",
+    "vimeo",
+    "hulu",
+    "disney+",
+    "crunchyroll",
     "twitch",
     "facebook",
     "bilibili",

@@ -3733,3 +3733,620 @@ textarea,
   cursor: default;
   opacity: 1;
 }
+
+/* Metric cards: number + one short caption, nothing more */
+.mcard {
+  min-height: 146px;
+}
+
+.mcard__value {
+  font-size: 34px;
+  letter-spacing: -0.035em;
+}
+
+.mcard__value span {
+  color: var(--t-subtle);
+  font-size: 18px;
+  font-weight: 500;
+  margin-left: 1px;
+}
+
+.mcard__value--timer {
+  font-variant-numeric: tabular-nums;
+}
+
+.mcard__sub {
+  color: var(--t-subtle);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.mcard__split {
+  align-items: flex-end;
+  margin-top: auto;
+}
+
+.mcard__head + .mcard__value {
+  margin-top: auto;
+}
+
+.mcard__progress {
+  margin-top: 12px;
+  padding-top: 0;
+}
+
+/* ── Content panel scrollbar: slim, inset, quiet until hovered ── */
+:root {
+  --sb-thumb: rgba(0, 0, 0, 0.16);
+  --sb-thumb-hover: rgba(0, 0, 0, 0.32);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sb-thumb: rgba(255, 255, 255, 0.14);
+    --sb-thumb-hover: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* The standard scrollbar-* properties would disable the custom styles below. */
+.app-shell .prefs,
+.ob__body,
+.pouch__body,
+.su__notes-body {
+  scrollbar-color: auto;
+  scrollbar-width: auto;
+}
+
+.app-shell .prefs::-webkit-scrollbar,
+.ob__body::-webkit-scrollbar,
+.pouch__body::-webkit-scrollbar,
+.su__notes-body::-webkit-scrollbar {
+  display: block;
+  width: 14px;
+}
+
+.app-shell .prefs::-webkit-scrollbar-track,
+.ob__body::-webkit-scrollbar-track,
+.pouch__body::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 18px 0;
+}
+
+.app-shell .prefs::-webkit-scrollbar-thumb,
+.ob__body::-webkit-scrollbar-thumb,
+.pouch__body::-webkit-scrollbar-thumb,
+.su__notes-body::-webkit-scrollbar-thumb {
+  background-clip: padding-box;
+  background-color: var(--sb-thumb);
+  border: 4px solid transparent;
+  border-radius: 999px;
+  min-height: 48px;
+}
+
+.app-shell .prefs::-webkit-scrollbar-thumb:hover,
+.ob__body::-webkit-scrollbar-thumb:hover,
+.pouch__body::-webkit-scrollbar-thumb:hover,
+.su__notes-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sb-thumb-hover);
+  border-width: 3px;
+}
+
+.app-shell .prefs::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* keep content off the scrollbar */
+.app-shell .prefs {
+  padding-right: 30px;
+}
+
+/* Pouch thumbnails: whole screenshot, fitted, with a quiet caption */
+.pouch__grid {
+  gap: 10px 8px;
+}
+
+.pouch__thumb-btn {
+  aspect-ratio: 16 / 10;
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--t-ink) 4%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, var(--t-ink) 4%, transparent) 75%),
+    linear-gradient(45deg, color-mix(in srgb, var(--t-ink) 4%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, var(--t-ink) 4%, transparent) 75%),
+    var(--t-row);
+  background-position: 0 0, 6px 6px;
+  background-size: 12px 12px;
+}
+
+.pouch__thumb-btn img {
+  object-fit: contain;
+  padding: 4px;
+}
+
+.pouch__hover {
+  align-items: center;
+  background: rgba(20, 20, 22, 0.5);
+  color: #ffffff;
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  inset: 0;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 140ms ease;
+}
+
+.pouch__thumb-btn:hover .pouch__hover {
+  opacity: 1;
+}
+
+.pouch__thumb-meta {
+  align-items: center;
+  color: var(--t-muted);
+  display: flex;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  justify-content: space-between;
+  margin: 5px 2px 0;
+}
+
+.pouch__thumb-meta span {
+  color: var(--t-subtle);
+}
+
+/* ── Profile stat tiles: label + number, nothing else ─────── */
+.pf-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.pf-tile__icon {
+  display: none;
+}
+
+.pf-tile__label {
+  color: var(--t-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.pf-tile__value {
+  font-size: 26px;
+  margin-top: 0;
+}
+
+.pf-tile__value small {
+  color: var(--t-subtle);
+  font-size: 12.5px;
+  margin-left: 2px;
+}
+
+/* ── Locked email ─────────────────────────────────────────── */
+.pf-locked {
+  align-items: center;
+  background: transparent;
+  border: 1px dashed var(--t-edge);
+  border-radius: 10px;
+  color: var(--t-muted);
+  display: flex;
+  gap: 10px;
+  height: 46px;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+
+.pf-locked__value {
+  color: var(--t-ink);
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-locked svg {
+  color: var(--t-subtle);
+  flex: 0 0 auto;
+}
+
+/* ── Pinned page heading; only the content scrolls under it ── */
+.app-shell .prefs {
+  padding-top: 0;
+}
+
+.page-head,
+.ov-head {
+  background: var(--t-canvas);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  padding-top: 34px;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+}
+
+.page-head::after,
+.ov-head::after {
+  background: linear-gradient(var(--t-canvas), transparent);
+  bottom: -18px;
+  content: "";
+  height: 18px;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
+.ov-head {
+  margin-bottom: 8px;
+}
+
+/* the scrollbar starts below the pinned heading */
+.app-shell .prefs::-webkit-scrollbar-track {
+  margin-bottom: 18px;
+  margin-top: 112px;
+}
+
+/* ============================================================
+   HELPBOARD (pet click): quick actions + clipboard
+   ============================================================ */
+.hb__head {
+  align-items: center;
+  display: flex;
+  gap: 11px;
+  padding: 14px 14px 12px 16px;
+}
+
+.hb__titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.hb__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.hb__sub {
+  color: var(--t-muted);
+  font-size: 12px;
+  margin: 1px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hb__actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 12px 12px;
+}
+
+.hb__tile {
+  align-items: flex-start;
+  background: var(--blend-bg);
+  border: 1px solid var(--blend-edge);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 var(--blend-highlight);
+  color: var(--t-ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 11px;
+  text-align: left;
+  transition:
+    background 140ms ease,
+    transform 120ms var(--ease-out);
+}
+
+.hb__tile:hover {
+  background: var(--blend-bg-hover);
+}
+
+.hb__tile:active {
+  transform: scale(0.98);
+}
+
+.hb__tile.is-on {
+  border-color: color-mix(in srgb, var(--t-ink) 28%, transparent);
+}
+
+.hb__tile-icon {
+  align-items: center;
+  color: var(--t-ink);
+  display: inline-flex;
+  height: 22px;
+  margin-bottom: 4px;
+}
+
+.hb__tile-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hb__tile-meta {
+  color: var(--t-subtle);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hb__section-head {
+  align-items: center;
+  border-top: 1px solid var(--t-hairline);
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px 8px 16px;
+}
+
+.hb__section-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hb__section-count {
+  color: var(--t-subtle);
+  flex: 1;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hb__section-head .pouch__tabs {
+  margin: 0;
+}
+
+.hb__section-head .pouch__tab {
+  font-size: 11.5px;
+  padding: 3px 8px;
+}
+
+.pouch__empty {
+  padding: 26px 18px;
+}
+
+.pf-tile {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Pet notifications: a titled bubble */
+.speech-bubble .note__title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+  margin: 0 0 3px !important;
+  text-align: left !important;
+}
+
+.speech-bubble .note__body {
+  color: var(--t-muted);
+  font-size: 12.5px !important;
+  text-align: left !important;
+}
+
+/* ── Frosted pinned heading ───────────────────────────────── */
+.page-head,
+.ov-head {
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  background: color-mix(in srgb, var(--t-canvas) 74%, transparent);
+  border-bottom: 1px solid transparent;
+  margin-left: -44px;
+  margin-right: -30px;
+  max-width: none !important;
+  padding-left: 44px;
+  padding-right: 30px;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.page-head::after,
+.ov-head::after {
+  display: none;
+}
+
+.app-shell .prefs.is-scrolled .page-head,
+.app-shell .prefs.is-scrolled .ov-head {
+  border-bottom-color: var(--t-hairline);
+}
+
+/* keep the heading content aligned with the page content */
+.page-head > *,
+.ov-head > * {
+  max-width: 1120px;
+}
+
+/* Panel padding as variables so the full-bleed heading always aligns */
+.app-shell .prefs {
+  --pad-l: 44px;
+  --pad-r: 30px;
+  padding-left: var(--pad-l);
+  padding-right: var(--pad-r);
+}
+
+@media (max-width: 900px) {
+  .app-shell .prefs {
+    --pad-l: 26px;
+    --pad-r: 22px;
+  }
+}
+
+.page-head,
+.ov-head {
+  margin-left: calc(var(--pad-l) * -1);
+  margin-right: calc(var(--pad-r) * -1);
+  /* % here is the panel's content width: re-centre on the 1120px column */
+  padding-left: calc(var(--pad-l) + max(0px, (100% - 1120px) / 2));
+  padding-right: calc(var(--pad-r) + max(0px, (100% - 1120px) / 2));
+}
+
+/* Helpboard: clear confirmation */
+.hb__confirm {
+  animation: c-menu-in 0.16s var(--ease-out) both;
+  background: var(--blend-bg);
+  border: 1px solid var(--blend-edge);
+  border-radius: 12px;
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+}
+
+.hb__confirm p {
+  color: var(--t-ink);
+  font-size: 12.5px;
+  margin: 0 0 9px;
+}
+
+.hb__confirm-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.hb__confirm-btn {
+  background: var(--blend-bg);
+  border: 1px solid var(--blend-edge);
+  border-radius: 8px;
+  color: var(--t-ink);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  height: 28px;
+  padding: 0 12px;
+}
+
+.hb__confirm-btn:hover {
+  background: var(--blend-bg-hover);
+}
+
+.hb__confirm-btn.is-danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.hb__confirm-btn.is-danger:hover {
+  background: #e23b3b;
+}
+
+.hb__head {
+  padding-top: 16px;
+}
+
+/* Software update footer: just the action, no divider */
+.su__footer {
+  border-top: 0;
+  justify-content: flex-end;
+  padding-top: 0;
+}
+
+/* ── Focus heatmap: fluid, full width, no scrollbar ───────── */
+.focus-heatmap {
+  padding: 16px 18px 14px;
+}
+
+.focus-heatmap__head {
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+
+.focus-heatmap__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.focus-heatmap__titles > span {
+  color: var(--t-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-transform: none;
+}
+
+.focus-heatmap__titles small {
+  color: var(--t-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-heatmap__scroller {
+  overflow: visible;
+}
+
+.focus-heatmap__canvas {
+  min-width: 0;
+  width: 100%;
+}
+
+.focus-heatmap__months {
+  gap: 3px;
+  grid-template-columns: repeat(var(--week-count), minmax(0, 1fr));
+  margin-left: 30px;
+  min-height: 16px;
+}
+
+.focus-heatmap__months span {
+  color: var(--t-subtle);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.focus-heatmap__body {
+  gap: 6px;
+}
+
+.focus-heatmap__weekdays {
+  flex: 0 0 24px;
+  gap: 3px;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+}
+
+.focus-heatmap__weekdays span {
+  font-size: 10px;
+}
+
+.focus-heatmap__grid {
+  flex: 1;
+  gap: 3px;
+  grid-template-columns: repeat(var(--week-count), minmax(0, 1fr));
+  grid-template-rows: none;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, auto);
+  min-width: 0;
+}
+
+.focus-heatmap__day {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 2.5px;
+  height: auto;
+  width: 100%;
+}
+
+.focus-heatmap__day.is-future {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t-ink) 5%, transparent);
+}
+
+.focus-heatmap__legend-cell {
+  border: 0;
+  border-radius: 2.5px;
+  height: 10px;
+  width: 10px;
+}
+
+/* The page-content centring rule (.app-shell .prefs > *) must not override
+   the full-bleed heading's offsets. */
+.app-shell .prefs > .page-head,
+.app-shell .prefs > .ov-head {
+  margin-left: calc(var(--pad-l) * -1);
+  margin-right: calc(var(--pad-r) * -1);
+  max-width: none;
+}

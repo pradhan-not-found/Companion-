@@ -60,7 +60,7 @@ const api = {
   signIn: (input: { email: string; password: string }): Promise<AccountResult> => ipcRenderer.invoke("auth:sign-in", input),
   signOut: (): Promise<{ ok: boolean }> => ipcRenderer.invoke("auth:sign-out"),
   signInDemo: (): Promise<AccountResult> => ipcRenderer.invoke("auth:demo"),
-  updateProfile: (changes: { name?: string; email?: string }): Promise<AccountResult> =>
+  updateProfile: (changes: { name?: string }): Promise<AccountResult> =>
     ipcRenderer.invoke("auth:update-profile", changes),
   changePassword: (input: { current: string; next: string }): Promise<AccountResult> =>
     ipcRenderer.invoke("auth:change-password", input),
@@ -69,6 +69,8 @@ const api = {
   removePouchItem: (id: string): void => ipcRenderer.send("pouch:remove", id),
   clearPouch: (): void => ipcRenderer.send("pouch:clear"),
   closePouch: (): void => ipcRenderer.send("pouch:close"),
+  takeBreakNow: (): void => ipcRenderer.send("helpboard:break"),
+  openDashboard: (): void => ipcRenderer.send("helpboard:dashboard"),
   onPouchUpdated: (callback: (items: PouchItem[]) => void): Unsubscribe => onChannel("pouch:updated", callback),
   chooseAvatar: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("profile:choose-avatar"),
   onPetState: (callback: (state: PetState) => void): Unsubscribe =>

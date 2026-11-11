@@ -274,19 +274,18 @@ export function TodayOverview({
             <span className="mcard__label">Hydration</span>
             <button type="button" className="mcard__btn" onClick={onDrink}>
               <PlusIcon size={12} />
-              Log glass
+              Log
             </button>
           </div>
           <div className="mcard__split">
             <div>
               <p className="mcard__value">
                 {watersLogged}
-                <span>/ {DAILY_WATER_GOAL} glasses</span>
+                <span>/{DAILY_WATER_GOAL}</span>
               </p>
-              <p className="mcard__sub">{remaining > 0 ? `${remaining} to go today` : "Goal reached"}</p>
-              <p className="mcard__pct mcard__pct--inline">{Math.round(ratio * 100)}% of goal</p>
+              <p className="mcard__sub">{remaining > 0 ? "glasses today" : "Goal reached"}</p>
             </div>
-            <WaterGlass filled={watersLogged} goal={DAILY_WATER_GOAL} size={58} />
+            <WaterGlass filled={watersLogged} goal={DAILY_WATER_GOAL} size={52} />
           </div>
         </section>
 
@@ -295,14 +294,13 @@ export function TodayOverview({
             <span className="mcard__label">Focus</span>
             <button type="button" className="mcard__btn" onClick={onToggleFocus}>
               {focusActive ? <StopIcon size={11} /> : <PlayIcon size={11} />}
-              {focusActive ? "End session" : "Start session"}
+              {focusActive ? "End" : "Start"}
             </button>
           </div>
-          <p className="mcard__value">
-            {focusActive ? focusMinutesLeft : focusDurationMinutes}
-            <span>min</span>
+          <p className="mcard__value mcard__value--timer">
+            {String(focusActive ? focusMinutesLeft : focusDurationMinutes).padStart(2, "0")}:00
           </p>
-          <p className="mcard__sub">{focusActive ? "left in this session" : "per session · blocks distractions"}</p>
+          <p className="mcard__sub">{focusActive ? "Remaining" : "Ready"}</p>
           {focusActive ? (
             <div className="mcard__progress">
               <div className="mcard__bar" aria-hidden="true">
@@ -312,15 +310,8 @@ export function TodayOverview({
                   }}
                 />
               </div>
-              <span className="mcard__pct">
-                {Math.round(100 - (focusMinutesLeft / Math.max(1, focusDurationMinutes)) * 100)}%
-              </span>
             </div>
-          ) : (
-            <div className="mcard__progress is-idle">
-              <span className="mcard__idle">Not running</span>
-            </div>
-          )}
+          ) : null}
         </section>
 
         <section className="ov-card ov-card--pet">
@@ -407,6 +398,14 @@ export const NavIcons = {
     <>
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  updates: icon(
+    <>
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M8 16H3v5" />
     </>
   ),
   settings: icon(
@@ -639,16 +638,6 @@ export function AccountMenu({
               <p className="account__greeting">{greeting}</p>
             </div>
           </div>
-          <div className="account__chips">
-            <span className="account__chip">
-              <span className="account__dot is-water" aria-hidden="true" />
-              {watersLogged}/{DAILY_WATER_GOAL} water
-            </span>
-            <span className="account__chip">
-              <span className={`account__dot${focusActive ? " is-focus" : ""}`} aria-hidden="true" />
-              {focusActive ? `${focusMinutesLeft}m focus left` : "Focus off"}
-            </span>
-          </div>
           <div className="account__sep" />
           <button type="button" role="menuitem" className="account__item" onClick={() => run(onOpenProfile)}>
             {menuIcon(
@@ -658,35 +647,6 @@ export function AccountMenu({
               </>
             )}
             View profile
-          </button>
-          <button type="button" role="menuitem" className="account__item" onClick={() => run(onTrack)}>
-            {menuIcon(
-              <>
-                <path d="M3 3v18h18" />
-                <path d="m7 15 4-4 3 3 5-6" />
-              </>
-            )}
-            Track progress
-          </button>
-          <button type="button" role="menuitem" className="account__item" onClick={() => run(onChangePhoto)}>
-            {menuIcon(
-              <>
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                <circle cx="12" cy="13" r="3" />
-              </>
-            )}
-            Change avatar
-          </button>
-          <div className="account__sep" />
-          <button type="button" role="menuitem" className="account__item" onClick={() => run(onCheckUpdates)}>
-            {menuIcon(
-              <>
-                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-                <path d="M21 3v6h-6" />
-              </>
-            )}
-            {updateReady ? "Update available" : "Check for updates"}
-            {updateReady ? <span className="account__badge">New</span> : null}
           </button>
           <div className="account__sep" />
           <button type="button" role="menuitem" className="account__item is-danger" onClick={() => run(onSignOut)}>

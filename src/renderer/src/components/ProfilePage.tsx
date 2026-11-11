@@ -192,7 +192,7 @@ export function ProfilePage({
   onRemovePhoto: () => void;
   onPickAvatar: (value: string) => void;
   onAvatarColor: (color: string) => void;
-  onSaveProfile: (changes: { name: string; email: string }) => Promise<AccountResult>;
+  onSaveProfile: (changes: { name: string }) => Promise<AccountResult>;
   onChangePassword: (input: { current: string; next: string }) => Promise<AccountResult>;
   onNicknameChange: (nickname: string) => void;
   onSignOut: () => void;
@@ -201,7 +201,6 @@ export function ProfilePage({
 }): JSX.Element {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [name, setName] = useState(account.name);
-  const [email, setEmail] = useState(account.email);
   const [profileNotice, setProfileNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -211,15 +210,14 @@ export function ProfilePage({
 
   useEffect(() => {
     setName(account.name);
-    setEmail(account.email);
-  }, [account.id, account.name, account.email]);
+  }, [account.id, account.name]);
 
-  const dirty = name.trim() !== account.name || email.trim().toLowerCase() !== account.email;
+  const dirty = name.trim() !== account.name;
   const selectedAvatarValue = avatarValue || pet?.slug || "";
 
   async function saveProfile(): Promise<void> {
     setSaving(true);
-    const result = await onSaveProfile({ name, email });
+    const result = await onSaveProfile({ name });
     setSaving(false);
     setProfileNotice(result.ok ? { tone: "ok", text: "Profile saved." } : { tone: "error", text: result.error });
   }
@@ -295,14 +293,20 @@ export function ProfilePage({
             )}
           </span>
           <span className="pf-tile__label">Days together</span>
-          <span className="pf-tile__value">{companionDays}</span>
+          <span className="pf-tile__value">
+            {companionDays}
+            <small>{companionDays === 1 ? "day" : "days"}</small>
+          </span>
         </div>
         <div className="pf-tile">
           <span className="pf-tile__icon">
             {statIcon(<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />)}
           </span>
-          <span className="pf-tile__label">Glasses of water</span>
-          <span className="pf-tile__value">{totals.waters}</span>
+          <span className="pf-tile__label">Water</span>
+          <span className="pf-tile__value">
+            {totals.waters}
+            <small>glasses</small>
+          </span>
         </div>
         <div className="pf-tile">
           <span className="pf-tile__icon">
@@ -314,7 +318,7 @@ export function ProfilePage({
               </>
             )}
           </span>
-          <span className="pf-tile__label">Breaks taken</span>
+          <span className="pf-tile__label">Breaks</span>
           <span className="pf-tile__value">{totals.breaks}</span>
         </div>
         <div className="pf-tile">
@@ -326,7 +330,7 @@ export function ProfilePage({
               </>
             )}
           </span>
-          <span className="pf-tile__label">Focus time</span>
+          <span className="pf-tile__label">Focus</span>
           <span className="pf-tile__value">
             {focusHours ? (totals.focusMinutes / 60).toFixed(1) : totals.focusMinutes}
             <small>{focusHours ? "h" : "min"}</small>
@@ -336,7 +340,7 @@ export function ProfilePage({
 
       <Section
         title="Account"
-        description="Your name and the email you sign in with."
+        description="Your display name and sign-in email."
         aside={
           <button type="button" className="c-btn c-btn--danger" onClick={onSignOut}>
             Sign out
@@ -348,10 +352,17 @@ export function ProfilePage({
             <span>Full name</span>
             <input className="c-input" type="text" maxLength={40} value={name} onChange={(event) => setName(event.target.value)} />
           </label>
-          <label className="pf-field">
+          <div className="pf-field">
             <span>Email</span>
-            <input className="c-input" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-          </label>
+            <div className="pf-locked" title="Your sign-in email can't be changed">
+              <span className="pf-locked__value">{account.email}</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+            </div>
+            <small>Used to sign in. It can't be changed.</small>
+          </div>
           <div className="pf-account__save">
             {profileNotice ? <Notice tone={profileNotice.tone}>{profileNotice.text}</Notice> : <span />}
             <button type="button" className="c-btn c-btn--primary" disabled={!dirty || saving} onClick={() => void saveProfile()}>
@@ -425,7 +436,7 @@ export function ProfilePage({
         </div>
       </Section>
 
-      <SoftwareUpdate status={update} onCheck={onCheckUpdates} onInstall={onInstallUpdate} />
+
     </div>
   );
 }
@@ -464,16 +475,13 @@ export function SoftwareUpdate({
     message = `Version ${status.version} is downloaded. Restart Companion to finish updating.`;
   } else if (status.state === "available") {
     badge = { tone: "new", label: "Available" };
-    message = `Version ${status.version} is available. This portable copy can't update itself, so download it from GitHub.`;
+    message = `Version ${status.version} is available. Download it to update.`;
   } else if (status.state === "not-available") {
     badge = { tone: "ok", label: "Up to date" };
     message = `You have the latest version. Last checked ${relativeTime(status.checkedAt)}.`;
   } else if (status.state === "error") {
     badge = { tone: "warn", label: "Offline" };
     message = "Couldn't reach the update server. Check your connection and try again.";
-  } else if (status.state === "unsupported") {
-    badge = { tone: "muted", label: "Dev build" };
-    message = "Updates are turned off while running from source. Installed copies update automatically.";
   }
 
   return (
@@ -499,13 +507,13 @@ export function SoftwareUpdate({
         </div>
       ) : null}
       <div className="su__footer">
-        <span className="su__fine">Updates come from Companion&apos;s GitHub Releases.</span>
+        <span />
         {ready ? (
           <button type="button" className="c-btn c-btn--primary" onClick={onInstall}>
             {status.state === "downloaded" ? "Restart & update" : "Download update"}
           </button>
         ) : (
-          <button type="button" className="c-btn c-btn--ghost" onClick={onCheck} disabled={busy || status.state === "unsupported"}>
+          <button type="button" className="c-btn c-btn--ghost" onClick={onCheck} disabled={busy}>
             {busy ? "Checking…" : "Check for updates"}
           </button>
         )}

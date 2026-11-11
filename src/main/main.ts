@@ -347,6 +347,7 @@ function movePetWindowTo(x: number, y: number): void {
     return;
   }
   petWindow.setBounds(next, false);
+  followPetWithPouch();
 }
 let agentLastNotificationAt = 0;
 let agentLastProgressBubbleAt = 0;
@@ -1001,6 +1002,7 @@ function resizePetWindowForScale(scale: number, includeBubble = Boolean(currentB
   }
   sendPetLayout();
   persistPetPosition();
+  followPetWithPouch();
 }
 
 function showPetWindowInactive(): void {
@@ -1077,7 +1079,7 @@ function ensurePetWindowVisible(): void {
 }
 
 let pouchWindow: Electron.BrowserWindow | null = null;
-const POUCH_SIZE = { width: 344, height: 460 };
+const POUCH_SIZE = { width: 360, height: 560 };
 
 function sendPouch(): void {
   if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.webContents.send("pouch:updated", listPouch());
@@ -1088,24 +1090,42 @@ function closePouchWindow(): void {
   pouchWindow = null;
 }
 
-/** Opens the clipboard pouch just above (or beside) the pet. */
+/** Where the Helpboard sits: just above the pet, or beside it near the top edge. */
+function pouchPosition(): { x: number; y: number } {
+  const pet = petWindow && !petWindow.isDestroyed() ? petWindow.getBounds() : { x: 0, y: 0, width: 0, height: 0 };
+  const workArea = screen.getDisplayNearestPoint({ x: pet.x + pet.width / 2, y: pet.y + pet.height / 2 }).workArea;
+  const petCenterX = pet.x + pet.width / 2 + petLayout.petOffsetX;
+  let x = Math.round(petCenterX - POUCH_SIZE.width / 2);
+  let y = pet.y + pet.height - Math.round(visiblePetSize(currentPetDisplayScale()).height) - POUCH_SIZE.height - 6;
+  if (y < workArea.y + 8) {
+    y = Math.max(workArea.y + 8, pet.y + pet.height - POUCH_SIZE.height);
+    x =
+      petCenterX + 70 + POUCH_SIZE.width < workArea.x + workArea.width
+        ? Math.round(petCenterX + 70)
+        : Math.round(petCenterX - 70 - POUCH_SIZE.width);
+  }
+  x = Math.min(Math.max(x, workArea.x + 8), workArea.x + workArea.width - POUCH_SIZE.width - 8);
+  return { x, y };
+}
+
+/** Keeps an open Helpboard attached to the pet as it moves. */
+function followPetWithPouch(): void {
+  if (!pouchWindow || pouchWindow.isDestroyed()) return;
+  const { x, y } = pouchPosition();
+  const [cx, cy] = pouchWindow.getPosition();
+  if (cx !== x || cy !== y) pouchWindow.setBounds({ x, y, ...POUCH_SIZE }, false);
+}
+
+/** Opens the Helpboard just above (or beside) the pet. */
 function togglePouchWindow(): void {
   if (pouchWindow && !pouchWindow.isDestroyed()) {
     closePouchWindow();
     return;
   }
   if (!petWindow || petWindow.isDestroyed()) return;
-  const pet = petWindow.getBounds();
-  const workArea = screen.getDisplayNearestPoint({ x: pet.x + pet.width / 2, y: pet.y + pet.height / 2 }).workArea;
-  const petCenterX = pet.x + pet.width / 2 + petLayout.petOffsetX;
-  let x = Math.round(petCenterX - POUCH_SIZE.width / 2);
-  let y = pet.y + pet.height - Math.round(visiblePetSize(currentPetDisplayScale()).height) - POUCH_SIZE.height - 6;
-  if (y < workArea.y + 8) {
-    // Not enough room above: open beside the pet instead.
-    y = Math.max(workArea.y + 8, pet.y + pet.height - POUCH_SIZE.height);
-    x = petCenterX + 70 + POUCH_SIZE.width < workArea.x + workArea.width ? Math.round(petCenterX + 70) : Math.round(petCenterX - 70 - POUCH_SIZE.width);
-  }
-  x = Math.min(Math.max(x, workArea.x + 8), workArea.x + workArea.width - POUCH_SIZE.width - 8);
+  const { x, y } = pouchPosition();
+  stopAmbientRoam(false);
+  stopAmbientPose(true);
 
   pouchWindow = new BrowserWindow({
     ...POUCH_SIZE,
@@ -1138,7 +1158,14 @@ function togglePouchWindow(): void {
     pouchWindow?.focus();
     sendPouch();
   });
-  pouchWindow.on("blur", () => closePouchWindow());
+  pouchWindow.on("blur", () => {
+    // Stay open while you drag the pet (focus moves to the pet window);
+    // close when you move on to anything else.
+    setTimeout(() => {
+      if (petWindow && !petWindow.isDestroyed() && petWindow.isFocused()) return;
+      closePouchWindow();
+    }, 0);
+  });
   pouchWindow.on("closed", () => {
     pouchWindow = null;
   });
@@ -1344,6 +1371,7 @@ function movePetWithCursor(): void {
     return;
   }
   petWindow.setBounds(bounds);
+  followPetWithPouch();
 }
 
 function startPetDrag(offset: { offsetX: number; offsetY: number }): void {
@@ -1395,6 +1423,7 @@ function canAmbientRoam(): boolean {
       !currentBubble &&
       !dragTimer &&
       !dragSafetyTimer &&
+      !(pouchWindow && !pouchWindow.isDestroyed()) &&
       (petState === "idle" || petState === "sitting" || petState === "sleeping")
   );
 }
@@ -1915,7 +1944,7 @@ async function checkDistractionNow(): Promise<void> {
 
 async function runDistractionCheck(): Promise<void> {
   const settings = getSettings();
-  if (!settings.distractionDetectionEnabled) return;
+  if (!settings.distractionDetectionEnabled && !focusActive) return;
 
   try {
     const active = await readActiveWindow();
@@ -1979,7 +2008,9 @@ function scheduleDistractionDetection(): void {
   }
 
   const settings = getSettings();
-  if (!settings.distractionDetectionEnabled) {
+  // During a focus session distractions are always watched; otherwise only
+  // when detection is switched on.
+  if (!settings.distractionDetectionEnabled && !focusActive) {
     setDistractionStatus({
       state: "idle",
       matchedRule: null,
@@ -2304,7 +2335,7 @@ const RELEASES_URL = "https://github.com/pradhan-not-found/Companion-/releases/l
 let updateStatus: UpdateStatus = {
   state: "idle",
   currentVersion: app.getVersion(),
-  canInstall: !IS_PORTABLE
+  canInstall: app.isPackaged && !IS_PORTABLE
 };
 
 function setUpdateStatus(partial: Partial<UpdateStatus>): void {
@@ -2334,7 +2365,27 @@ function releaseNotesText(notes: unknown): string | undefined {
   return textOnly ? textOnly.slice(0, 1200) : undefined;
 }
 
+const noteActions = new Map<string, () => void>();
+
+/*
+ * Notifications come from the pet: a titled speech bubble you can click.
+ * Only when the pet can't speak (signed out, or during a screen block) does
+ * it fall back to a Windows notification, so nothing gets lost.
+ */
 function notify(title: string, body: string, onClick?: () => void): void {
+  if (sessionActive && !blockingMode) {
+    ensurePetWindowVisible();
+    const id = `note-${Date.now()}`;
+    if (onClick) noteActions.set(id, onClick);
+    stopAmbientRoam(false);
+    stopAmbientPose(true);
+    setPetState("waving");
+    showBubble({ id, message: body, note: { title }, clickActionId: onClick ? id : undefined, autoDismissMs: 9000 });
+    setTimeout(() => {
+      if (petState === "waving") setPetState(focusActive ? "focusGuard" : "idle");
+    }, 2200);
+    return;
+  }
   if (!Notification.isSupported()) return;
   const notification = new Notification({ title, body, icon: runtimeAssetPath("icon.png"), silent: false });
   if (onClick) notification.on("click", onClick);
@@ -2446,9 +2497,51 @@ function announceNewPets(): void {
   }, 3000);
 }
 
+function newerVersion(latest: string, current: string): boolean {
+  const parse = (value: string): number[] => value.replace(/^v/i, "").split(/[.-]/).slice(0, 3).map((part) => Number.parseInt(part, 10) || 0);
+  const [a, b] = [parse(latest), parse(current)];
+  for (let index = 0; index < 3; index += 1) {
+    if ((a[index] ?? 0) !== (b[index] ?? 0)) return (a[index] ?? 0) > (b[index] ?? 0);
+  }
+  return false;
+}
+
+/*
+ * Running from source, the app can't install itself, so it asks GitHub
+ * Releases directly and offers the download link when a newer build exists.
+ */
+async function checkGitHubReleases(): Promise<void> {
+  if (updateStatus.state === "checking") return;
+  setUpdateStatus({ state: "checking", error: undefined });
+  try {
+    const response = await net.fetch("https://api.github.com/repos/pradhan-not-found/Companion-/releases/latest", {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "Companion-Updater" }
+    });
+    if (!response.ok) throw new Error(`GitHub responded ${response.status}`);
+    const release = (await response.json()) as { tag_name?: string; body?: string };
+    const latest = (release.tag_name ?? "").replace(/^v/i, "");
+    if (latest && newerVersion(latest, app.getVersion())) {
+      setUpdateStatus({
+        state: "available",
+        version: latest,
+        releaseNotes: releaseNotesText(release.body),
+        checkedAt: Date.now()
+      });
+    } else {
+      setUpdateStatus({ state: "not-available", version: undefined, checkedAt: Date.now() });
+    }
+  } catch (error) {
+    setUpdateStatus({
+      state: "error",
+      checkedAt: Date.now(),
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
 async function checkForUpdates(manual = false): Promise<void> {
   if (!app.isPackaged) {
-    setUpdateStatus({ state: "unsupported", checkedAt: Date.now() });
+    await checkGitHubReleases();
     return;
   }
   if (updateStatus.state === "checking" || updateStatus.state === "downloading") return;
@@ -2487,7 +2580,8 @@ async function installPromptForDownloaded(): Promise<void> {
 
 function scheduleUpdateChecks(): void {
   if (!app.isPackaged) {
-    updateStatus = { ...updateStatus, state: "unsupported" };
+    updateCheckTimer = setTimeout(() => void checkGitHubReleases(), 8_000);
+    updateCheckInterval = setInterval(() => void checkGitHubReleases(), 6 * 60 * 60 * 1000);
     return;
   }
   autoUpdater.autoDownload = !IS_PORTABLE;
@@ -3820,16 +3914,6 @@ function pokeUser(poke: {
   const activity = setAgentActivity(poke.source, poke.status, 45_000);
   if (getSettings().agentCompletionSoundEnabled) shell.beep();
 
-  void readActiveWindow()
-    .then((active) => sourceFromAgentWindow(active.appName, active.windowTitle) !== poke.source)
-    .catch(() => true)
-    .then((elsewhere) => {
-      if (!elsewhere) return;
-      notify(`${poke.source} · ${agentPokeHeadline(poke.status)}`, poke.message, () => {
-        if (poke.clickActionId) handleBubbleAction(poke.clickActionId);
-      });
-    });
-
   if (now < greetingUntil) return true;
   ensurePetWindowVisible();
   stopAmbientRoam(false);
@@ -4452,6 +4536,13 @@ function triggerDemo(trigger: DemoTrigger): void {
 }
 
 function handleBubbleAction(actionId: string): void {
+  const noteAction = noteActions.get(actionId);
+  if (noteAction) {
+    noteActions.delete(actionId);
+    hideBubble();
+    noteAction();
+    return;
+  }
   if (actionId === "pets:open") {
     hideBubble();
     createSettingsWindow();
@@ -4608,6 +4699,7 @@ function registerIpc(): void {
   ipcMain.on("break:start-screen-block", startBreakRun);
   ipcMain.on("break:end-screen-block", finishBreakRun);
   ipcMain.on("pet:clicked", () => {
+    notePetInteraction();
     if (blockingMode || getSettings().lyricsModeEnabled) return;
     if (getSettings().clipboardPouchEnabled) {
       togglePouchWindow();
@@ -4616,9 +4708,10 @@ function registerIpc(): void {
     randomPetClickReaction();
   });
   ipcMain.on("pet:context-menu", showPetContextMenu);
-  ipcMain.on("pet:drag-start", (_event, offset: { offsetX: number; offsetY: number }) =>
-    startPetDrag(offset)
-  );
+  ipcMain.on("pet:drag-start", (_event, offset: { offsetX: number; offsetY: number }) => {
+    notePetInteraction();
+    startPetDrag(offset);
+  });
   ipcMain.on("pet:drag-stop", () => {
     stopPetDrag();
     updatePetWindowMouseEvents();
@@ -4627,7 +4720,10 @@ function registerIpc(): void {
     petPointerInteractive = interactive === true;
     updatePetWindowMouseEvents();
   });
-  ipcMain.on("bubble:action", (_event, actionId: string) => handleBubbleAction(actionId));
+  ipcMain.on("bubble:action", (_event, actionId: string) => {
+    notePetInteraction();
+    handleBubbleAction(actionId);
+  });
   ipcMain.on("app:open-external", (_event, url: string) => openExternalUrl(url));
   ipcMain.on("settings:update", (_event, partial: Partial<Settings>) => {
     const before = getSettings();
@@ -4635,6 +4731,12 @@ function registerIpc(): void {
     const after = getSettings();
     if (after.launchAtLogin !== before.launchAtLogin) applyLaunchAtLogin();
     if (after.clipboardPouchEnabled !== before.clipboardPouchEnabled) applyPouchSetting();
+    if (
+      after.petCheckInsEnabled !== before.petCheckInsEnabled ||
+      after.petCheckInMinutes !== before.petCheckInMinutes
+    ) {
+      scheduleCheckIn();
+    }
     // First run: say hello as soon as onboarding is finished.
     if (!before.onboardingDismissed && after.onboardingDismissed) setTimeout(() => greetOnStartup(), 600);
   });
@@ -4711,12 +4813,12 @@ function registerIpc(): void {
     publishSnapshot();
     return { ok: true };
   });
-  ipcMain.handle("auth:update-profile", (_event, changes: { name?: string; email?: string }) => {
+  ipcMain.handle("auth:update-profile", (_event, changes: { name?: string }) => {
     const account = currentAccount();
     if (!account) return { ok: false, error: "You're signed out." };
+    // The sign-in email is fixed once the account exists; only the name changes.
     const result = updateProfile(account.id, {
-      name: typeof changes?.name === "string" ? changes.name : undefined,
-      email: typeof changes?.email === "string" ? changes.email : undefined
+      name: typeof changes?.name === "string" ? changes.name : undefined
     });
     if (result.ok) setSettings({ ...getSettings(), userName: result.account.name });
     publishSnapshot();
@@ -4737,6 +4839,14 @@ function registerIpc(): void {
   });
   ipcMain.on("pouch:clear", () => clearPouch());
   ipcMain.on("pouch:close", () => closePouchWindow());
+  ipcMain.on("helpboard:break", () => {
+    closePouchWindow();
+    if (!blockingMode) triggerBreakReminder(true);
+  });
+  ipcMain.on("helpboard:dashboard", () => {
+    closePouchWindow();
+    createSettingsWindow();
+  });
   ipcMain.on("update:check", () => void checkForUpdates(false));
   ipcMain.on("update:install", installDownloadedUpdate);
   ipcMain.on("pets:mark-seen", (_event, petIds: unknown) => {
@@ -4820,6 +4930,93 @@ function applyPouchSetting(): void {
   }
 }
 
+// ── Check-ins: the pet keeps you company ─────────────────────
+const CHECK_IN_LINES = [
+  "Hey, you doing okay?",
+  "Quick check-in: how's the vibe?",
+  "You're doing great. No cap.",
+  "Shoulders down, jaw unclenched. Better?",
+  "Proud of you for showing up today.",
+  "Remember to blink. Lowkey important.",
+  "You've got this, fr fr.",
+  "Just checking in. That's it, that's the message.",
+  "Sip some water? Hydration is the main character.",
+  "Stretch for a sec? Your back will thank you.",
+  "Main character energy today. Keep going.",
+  "Breathe in... and out. Nice.",
+  "Little reminder: you're doing better than you think.",
+  "Still here, still rooting for you."
+];
+const MISS_YOU_LINES = [
+  "I miss you. Come say hi?",
+  "Hellooo? Your little buddy is right here.",
+  "Not me waiting for you to click me...",
+  "It's giving... ignored. Pat me?",
+  "Psst. Over here.",
+  "I've been so patient. One click?",
+  "Did you forget about me? Rude, but I still like you.",
+  "Come back, I saved you a spot on the desktop."
+];
+const MISS_YOU_AFTER_MS = 20 * 60 * 1000;
+let lastPetInteractionAt = Date.now();
+let checkInTimer: NodeJS.Timeout | null = null;
+let lastCheckInLine = "";
+
+function notePetInteraction(): void {
+  lastPetInteractionAt = Date.now();
+}
+
+function pickFresh(lines: string[]): string {
+  const options = lines.filter((line) => line !== lastCheckInLine);
+  lastCheckInLine = pick(options.length ? options : lines);
+  return lastCheckInLine;
+}
+
+function scheduleCheckIn(): void {
+  if (checkInTimer) clearTimeout(checkInTimer);
+  checkInTimer = null;
+  const settings = getSettings();
+  if (!sessionActive || !settings.petCheckInsEnabled) return;
+  const base = Math.max(2, Math.min(60, settings.petCheckInMinutes)) * 60 * 1000;
+  const jitter = Math.round(base * (Math.random() * 0.3 - 0.15));
+  checkInTimer = setTimeout(runCheckIn, base + jitter);
+}
+
+function runCheckIn(): void {
+  checkInTimer = null;
+  const quiet =
+    !sessionActive ||
+    blockingMode ||
+    focusActive ||
+    currentBubble ||
+    dragTimer ||
+    (pouchWindow && !pouchWindow.isDestroyed()) ||
+    !petWindow?.isVisible();
+  if (!quiet) {
+    const missing = Date.now() - lastPetInteractionAt > MISS_YOU_AFTER_MS;
+    stopAmbientPose(true);
+    if (missing) {
+      // Get your attention: a hop, then a little scurry.
+      stopAmbientRoam(false);
+      setPetState("jumping");
+      setTimeout(() => {
+        if (petState === "jumping" && !blockingMode) startClickRunReaction(Math.random() < 0.5 ? "left" : "right");
+      }, 900);
+      showBubble({ id: `check-in-${Date.now()}`, message: pickFresh(MISS_YOU_LINES), autoDismissMs: 7000 });
+    } else {
+      stopAmbientRoam(false);
+      setPetState("waving");
+      showBubble({ id: `check-in-${Date.now()}`, message: pickFresh(CHECK_IN_LINES), autoDismissMs: 6000 });
+      setTimeout(() => {
+        if (petState === "waving") setPetState("idle");
+        scheduleAmbientRoam();
+        scheduleAmbientPose();
+      }, 2600);
+    }
+  }
+  scheduleCheckIn();
+}
+
 /** Starts the pet, reminders and monitors for the signed-in account. */
 function startSession(): void {
   if (sessionActive) return;
@@ -4835,6 +5032,8 @@ function startSession(): void {
   scheduleAmbientRoam();
   scheduleAmbientPose();
   applyPouchSetting();
+  lastPetInteractionAt = Date.now();
+  scheduleCheckIn();
   updateTrayMenu();
   if (IS_DEV || !getSettings().onboardingDismissed) createSettingsWindow();
   setTimeout(() => greetOnStartup(), 1500);
@@ -4849,6 +5048,8 @@ function endSession(): void {
   stopPouch();
   clearPouch();
   closePouchWindow();
+  if (checkInTimer) clearTimeout(checkInTimer);
+  checkInTimer = null;
   clearSessionTimers();
   if (distractionTimer) clearInterval(distractionTimer);
   if (agentActivityTimer) clearInterval(agentActivityTimer);

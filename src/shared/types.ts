@@ -115,6 +115,8 @@ export type SpeechBubble = {
   message: string;
   /** When set, the bubble is rendered as a branded agent status card. */
   agent?: AgentActivity;
+  /** When set, the bubble is a titled notification from the pet. */
+  note?: { title: string };
   /** When set, the bubble is the animated startup greeting. */
   greeting?: { salutation: string; name: string };
   /** When set, the bubble introduces a newly added companion. */
@@ -168,6 +170,9 @@ export type Settings = {
   avatarColor: string;
   /** The name the user gave their companion. */
   petNickname: string;
+  /** The pet checks in with caring messages, and pokes when it's been ignored. */
+  petCheckInsEnabled: boolean;
+  petCheckInMinutes: number;
   /** Keep a short in-memory clipboard history, opened by clicking the pet. */
   clipboardPouchEnabled: boolean;
   /** Start Companion automatically when the user signs in to Windows. */

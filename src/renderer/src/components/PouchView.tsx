@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { JSX } from "react";
+import { allPets } from "../../../shared/bundledPets";
+import { DAILY_WATER_GOAL } from "../../../shared/constants";
 import type { PouchItem } from "../../../shared/types";
-import { XIcon } from "./Icons";
+import { useNow, useSnapshot } from "../hooks";
+import { PlayIcon, PlusIcon, StopIcon, XIcon } from "./Icons";
 
 type Filter = "all" | "text" | "images";
 
@@ -35,11 +38,24 @@ const CheckGlyph = (): JSX.Element => (
   </svg>
 );
 
-/** The pet's clipboard pouch: recent copies and screenshots, one click to reuse. */
+const tileIcon = (paths: JSX.Element): JSX.Element => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {paths}
+  </svg>
+);
+
+/** Helpboard: opened by clicking the pet. Quick actions plus recent clipboard items. */
 export function PouchView(): JSX.Element {
+  const snapshot = useSnapshot();
+  const clock = useNow(15_000);
+  const settings = snapshot.settings;
+  const pet = allPets(settings.installedPets).find((entry) => entry.slug === settings.selectedPetId);
+  const petName = settings.petNickname.trim() || pet?.manifest.displayName || "Your companion";
+  const focusLeft = snapshot.timers.focusEndsAt ? Math.max(0, Math.ceil((snapshot.timers.focusEndsAt - clock) / 60000)) : 0;
   const [items, setItems] = useState<PouchItem[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -76,39 +92,109 @@ export function PouchView(): JSX.Element {
 
   return (
     <main className="pouch">
-      <header className="pouch__head">
-        <div>
-          <h1 className="pouch__title">Clipboard</h1>
-          <p className="pouch__sub">
-            {items.length ? `${items.length} recent ${items.length === 1 ? "item" : "items"}` : "Nothing copied yet"}
-          </p>
+      <header className="hb__head">
+        <div className="hb__titles">
+          <h1 className="hb__title">Helpboard</h1>
+          <p className="hb__sub">{petName} is here to help</p>
         </div>
-        <div className="pouch__head-actions">
-          {items.length ? (
-            <button type="button" className="pouch__text-btn" onClick={() => window.companion.clearPouch()}>
-              Clear
-            </button>
-          ) : null}
-          <button type="button" className="pouch__icon-btn" aria-label="Close" onClick={() => window.companion.closePouch()}>
-            <XIcon size={14} />
-          </button>
-        </div>
+        <button type="button" className="pouch__icon-btn" aria-label="Close" onClick={() => window.companion.closePouch()}>
+          <XIcon size={14} />
+        </button>
       </header>
 
-      {items.length ? (
-        <div className="pouch__tabs" role="tablist">
-          {(["all", "text", "images"] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={filter === tab}
-              className={`pouch__tab${filter === tab ? " is-active" : ""}`}
-              onClick={() => setFilter(tab)}
-            >
-              {tab === "all" ? "All" : tab === "text" ? "Text" : "Images"}
+      <div className="hb__actions">
+        <button type="button" className="hb__tile" onClick={() => window.companion.logWater()}>
+          <span className="hb__tile-icon">
+            <PlusIcon size={15} />
+          </span>
+          <span className="hb__tile-label">Log water</span>
+          <span className="hb__tile-meta">
+            {snapshot.stats.watersLogged}/{DAILY_WATER_GOAL} today
+          </span>
+        </button>
+        <button
+          type="button"
+          className={`hb__tile${snapshot.focusActive ? " is-on" : ""}`}
+          onClick={snapshot.focusActive ? window.companion.stopFocus : window.companion.startFocus}
+        >
+          <span className="hb__tile-icon">{snapshot.focusActive ? <StopIcon size={13} /> : <PlayIcon size={13} />}</span>
+          <span className="hb__tile-label">{snapshot.focusActive ? "End focus" : "Start focus"}</span>
+          <span className="hb__tile-meta">
+            {snapshot.focusActive ? `${focusLeft} min left` : `${settings.focusDurationMinutes} min session`}
+          </span>
+        </button>
+        <button type="button" className="hb__tile" onClick={() => window.companion.takeBreakNow()}>
+          <span className="hb__tile-icon">
+            {tileIcon(
+              <>
+                <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+              </>
+            )}
+          </span>
+          <span className="hb__tile-label">Take a break</span>
+          <span className="hb__tile-meta">Stretch for a minute</span>
+        </button>
+        <button type="button" className="hb__tile" onClick={() => window.companion.openDashboard()}>
+          <span className="hb__tile-icon">
+            {tileIcon(
+              <>
+                <rect x="3" y="3" width="7" height="9" rx="1.5" />
+                <rect x="14" y="3" width="7" height="5" rx="1.5" />
+                <rect x="14" y="12" width="7" height="9" rx="1.5" />
+                <rect x="3" y="16" width="7" height="5" rx="1.5" />
+              </>
+            )}
+          </span>
+          <span className="hb__tile-label">Dashboard</span>
+          <span className="hb__tile-meta">Stats and settings</span>
+        </button>
+      </div>
+
+      <div className="hb__section-head">
+        <span className="hb__section-title">Clipboard</span>
+        <span className="hb__section-count">{items.length ? items.length : ""}</span>
+        {items.length ? (
+          <>
+            <div className="pouch__tabs" role="tablist">
+              {(["all", "text", "images"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === tab}
+                  className={`pouch__tab${filter === tab ? " is-active" : ""}`}
+                  onClick={() => setFilter(tab)}
+                >
+                  {tab === "all" ? "All" : tab === "text" ? "Text" : "Images"}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="pouch__text-btn" onClick={() => setConfirmClear(true)}>
+              Clear
             </button>
-          ))}
+          </>
+        ) : null}
+      </div>
+
+      {confirmClear ? (
+        <div className="hb__confirm" role="alertdialog" aria-label="Clear clipboard">
+          <p>Clear all {items.length} {items.length === 1 ? "item" : "items"}? This can't be undone.</p>
+          <div className="hb__confirm-actions">
+            <button type="button" className="hb__confirm-btn" onClick={() => setConfirmClear(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="hb__confirm-btn is-danger"
+              onClick={() => {
+                window.companion.clearPouch();
+                setConfirmClear(false);
+              }}
+            >
+              Clear all
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -121,10 +207,9 @@ export function PouchView(): JSX.Element {
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
               </svg>
             </span>
-            <p className="pouch__empty-title">Your pouch is empty</p>
+            <p className="pouch__empty-title">Nothing copied yet</p>
             <p className="pouch__empty-text">
-              Copy some text or take a screenshot with <kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>, and it will be
-              waiting here.
+              Copies and screenshots (<kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>) appear here.
             </p>
           </div>
         ) : null}
@@ -142,8 +227,14 @@ export function PouchView(): JSX.Element {
                         <CheckGlyph />
                         Copied
                       </span>
-                    ) : null}
+                    ) : (
+                      <span className="pouch__hover">Copy</span>
+                    )}
                   </button>
+                  <p className="pouch__thumb-meta">
+                    {item.width && item.height ? `${item.width} × ${item.height}` : "Image"}
+                    <span>{timeAgo(item.createdAt, now)}</span>
+                  </p>
                   <button
                     type="button"
                     className="pouch__remove"
