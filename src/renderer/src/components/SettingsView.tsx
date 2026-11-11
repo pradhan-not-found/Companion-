@@ -22,12 +22,12 @@ import {
   NewPetSpotlight,
   Onboarding,
   PageHeader,
-  ProfileCard,
   Sidebar,
   AccountMenu,
-  TodayCard,
-  UpdatesCard
+  TodayOverview
 } from "./CompanionPanels";
+import { AuthView } from "./AuthView";
+import { ProfilePage } from "./ProfilePage";
 import type { NavItem } from "./CompanionPanels";
 
 type SettingsCopy = ReturnType<typeof i18n>["settings"];
@@ -865,16 +865,20 @@ export function SettingsView(): JSX.Element {
     ? Math.max(0, Math.ceil((snapshot.timers.focusEndsAt - now) / 60000))
     : 0;
 
+  if (!snapshot.account) {
+    return <AuthView heroPet={selectedPet} />;
+  }
+
   if (!draft.onboardingDismissed) {
     return (
       <Onboarding
-        title={labels.welcomeTitle}
+        userName={snapshot.account.name}
         pets={selectablePets}
-        initialName={draft.userName}
         initialPetId={draft.selectedPetId}
+        initialNickname={draft.petNickname}
         onPetChange={(selectedPetId) => updateDraft({ selectedPetId })}
-        onComplete={(userName, selectedPetId) =>
-          updateDraft({ userName, selectedPetId, onboardingDismissed: true })
+        onComplete={(selectedPetId, petNickname) =>
+          updateDraft({ selectedPetId, petNickname, onboardingDismissed: true })
         }
         renderPet={(pet, selected, onSelect) => (
           <PetCard
@@ -908,6 +912,8 @@ export function SettingsView(): JSX.Element {
             onOpenProfile={() => selectPage("profile")}
             onTrack={() => selectPage("stats")}
             onChangePhoto={choosePhoto}
+            email={snapshot.account.email}
+            onSignOut={() => void window.companion.signOut()}
             onCheckUpdates={() => {
               selectPage("profile");
               if (!updateReady) window.companion.checkForUpdates();
@@ -916,19 +922,25 @@ export function SettingsView(): JSX.Element {
         }
       />
       <main ref={prefsRef} className="prefs">
-      <PageHeader title={pageMeta[page].title} subtitle={pageMeta[page].subtitle} />
+      {page !== "stats" ? <PageHeader title={pageMeta[page].title} subtitle={pageMeta[page].subtitle} /> : null}
 
       {page === "stats" ? (
         <section className="prefs__stats-panel" aria-label={labels.statsHeading}>
-          <TodayCard
-            userName={draft.userName}
+          <TodayOverview
+            userName={snapshot.account.name}
+            avatarImage={draft.avatarImage}
             watersLogged={stats.watersLogged}
             focusActive={snapshot.focusActive}
+            focusMinutesLeft={focusMinutesLeft}
+            pet={selectedPet}
+            petNickname={draft.petNickname}
+            companionDays={companionDays}
             onDrink={window.companion.logWater}
             onToggleFocus={snapshot.focusActive ? window.companion.stopFocus : window.companion.startFocus}
             focusLabel={labels.startFocus}
             stopFocusLabel={labels.stopFocus}
           />
+          <p className="ov-section-label">Activity</p>
           <div className="prefs__stats-head">
             <SegmentedControl
               value={statsRange}
@@ -1024,24 +1036,24 @@ export function SettingsView(): JSX.Element {
       ) : null}
 
       {page === "profile" ? (
-        <>
-          <ProfileCard
-            pet={selectedPet}
-            userName={draft.userName}
-            avatarImage={draft.avatarImage}
-            onNameChange={(userName) => updateDraft({ userName })}
-            onChoosePhoto={choosePhoto}
-            onRemovePhoto={() => updateDraft({ avatarImage: "" })}
-            photoError={photoError}
-            companionDays={companionDays}
-            totals={lifetime}
-          />
-          <UpdatesCard
-            status={snapshot.update}
-            onCheck={window.companion.checkForUpdates}
-            onInstall={window.companion.installUpdate}
-          />
-        </>
+        <ProfilePage
+          account={snapshot.account}
+          avatarImage={draft.avatarImage}
+          pet={selectedPet}
+          petNickname={draft.petNickname}
+          companionDays={companionDays}
+          totals={lifetime}
+          update={snapshot.update}
+          photoError={photoError}
+          onChoosePhoto={choosePhoto}
+          onRemovePhoto={() => updateDraft({ avatarImage: "" })}
+          onSaveProfile={(changes) => window.companion.updateProfile(changes)}
+          onChangePassword={(input) => window.companion.changePassword(input)}
+          onNicknameChange={(petNickname) => updateDraft({ petNickname })}
+          onSignOut={() => void window.companion.signOut()}
+          onCheckUpdates={window.companion.checkForUpdates}
+          onInstallUpdate={window.companion.installUpdate}
+        />
       ) : null}
 
       {page === "reminders" ? (

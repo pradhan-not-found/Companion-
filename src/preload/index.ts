@@ -1,5 +1,6 @@
 import electron from "electron";
 import type {
+  AccountResult,
   AppSnapshot,
   DemoTrigger,
   InstalledPet,
@@ -52,6 +53,14 @@ const api = {
   checkForUpdates: (): void => ipcRenderer.send("update:check"),
   installUpdate: (): void => ipcRenderer.send("update:install"),
   markPetsSeen: (petIds: string[]): void => ipcRenderer.send("pets:mark-seen", petIds),
+  createAccount: (input: { name: string; email: string; password: string }): Promise<AccountResult> =>
+    ipcRenderer.invoke("auth:create", input),
+  signIn: (input: { email: string; password: string }): Promise<AccountResult> => ipcRenderer.invoke("auth:sign-in", input),
+  signOut: (): Promise<{ ok: boolean }> => ipcRenderer.invoke("auth:sign-out"),
+  updateProfile: (changes: { name?: string; email?: string }): Promise<AccountResult> =>
+    ipcRenderer.invoke("auth:update-profile", changes),
+  changePassword: (input: { current: string; next: string }): Promise<AccountResult> =>
+    ipcRenderer.invoke("auth:change-password", input),
   chooseAvatar: (): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("profile:choose-avatar"),
   onPetState: (callback: (state: PetState) => void): Unsubscribe =>
     onChannel("pet:set-state", callback),

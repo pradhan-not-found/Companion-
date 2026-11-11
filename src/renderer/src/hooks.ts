@@ -39,7 +39,8 @@ export function useSnapshot(): AppSnapshot {
     screenBlockActive: false,
     screenBlockEndsAt: null,
     update: { state: "idle", currentVersion: "", canInstall: true },
-    agentActivity: null
+    agentActivity: null,
+    account: null
   });
 
   useEffect(() => {

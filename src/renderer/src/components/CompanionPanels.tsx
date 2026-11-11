@@ -25,26 +25,28 @@ const FocusIcon = (): JSX.Element => (
   </svg>
 );
 
-/** First-run welcome: pick a name and a companion. */
+/** First run after creating an account: pick a companion and give it a name. */
 export function Onboarding({
-  title,
+  userName,
   pets,
-  initialName,
   initialPetId,
+  initialNickname,
   renderPet,
   onPetChange,
   onComplete
 }: {
-  title: string;
+  userName: string;
   pets: InstalledPet[];
-  initialName: string;
   initialPetId: string;
+  initialNickname: string;
   renderPet: (pet: InstalledPet, selected: boolean, onSelect: () => void) => ReactNode;
   onPetChange: (petId: string) => void;
-  onComplete: (name: string, petId: string) => void;
+  onComplete: (petId: string, nickname: string) => void;
 }): JSX.Element {
-  const [name, setName] = useState(initialName);
   const [petId, setPetId] = useState(initialPetId);
+  const [nickname, setNickname] = useState(initialNickname);
+  const selected = pets.find((pet) => pet.slug === petId);
+  const firstName = userName.trim().split(/\s+/)[0] ?? "";
 
   function choose(nextPetId: string): void {
     setPetId(nextPetId);
@@ -52,123 +54,156 @@ export function Onboarding({
   }
 
   function submit(): void {
-    onComplete(name.trim(), petId);
+    onComplete(petId, nickname.trim());
   }
 
   return (
     <main className="onboarding">
       <div className="onboarding__content">
-        <img className="onboarding__logo" src={appLogo} alt="" />
-        <h1 className="onboarding__title">{title}</h1>
-        <p className="onboarding__subtitle">
-          Choose a name and a companion to personalize your workspace. It will keep you company,
-          remind you to drink water, and nudge you to take breaks.
-        </p>
+        <p className="onboarding__step">Step 1 of 1 · Your companion</p>
+        <h1 className="onboarding__title">{firstName ? `Welcome, ${firstName}!` : "Welcome!"}</h1>
+        <p className="onboarding__subtitle">Pick a companion to live on your desktop, then give it a name.</p>
 
-        <input
-          className="c-input"
-          type="text"
-          placeholder="What should we call you?"
-          autoComplete="off"
-          autoFocus
-          maxLength={40}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") submit();
-          }}
-        />
-
-        <p className="onboarding__label">Choose your companion</p>
         <div className="pet-picker" role="radiogroup" aria-label="Choose your companion">
           {pets.map((pet) => renderPet(pet, pet.slug === petId, () => choose(pet.slug)))}
         </div>
 
-        <button type="button" className="c-btn c-btn--primary c-btn--block c-btn--arrow" onClick={submit}>
-          Let&apos;s Go
+        <div className="onboarding__name">
+          <span className="onboarding__name-preview">{selected ? <SpriteView pet={selected} state="waving" scale={0.3} /> : null}</span>
+          <label className="onboarding__name-field">
+            <span>Name your companion</span>
+            <input
+              className="c-input"
+              type="text"
+              maxLength={24}
+              placeholder={selected?.manifest.displayName ?? "e.g. Mochi"}
+              value={nickname}
+              onChange={(event) => setNickname(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") submit();
+              }}
+            />
+          </label>
+        </div>
+
+        <button type="button" className="c-btn c-btn--primary c-btn--block c-btn--arrow onboarding__go" onClick={submit}>
+          Let&apos;s go
           <ArrowIcon />
         </button>
-        <p className="onboarding__footnote">You can change your companion any time from the Pet tab.</p>
+        <p className="onboarding__footnote">You can change your companion and its name any time.</p>
       </div>
     </main>
   );
 }
 
-/** "Hey, name!" — today's hydration ring with quick actions. */
-export function TodayCard({
+export function greetingForHour(hour: number): string {
+  if (hour < 5) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+/** Overview header + three quick cards (hydration, focus, companion). */
+export function TodayOverview({
   userName,
+  avatarImage,
   watersLogged,
   focusActive,
+  focusMinutesLeft,
+  pet,
+  petNickname,
+  companionDays,
   onDrink,
   onToggleFocus,
   focusLabel,
   stopFocusLabel
 }: {
   userName: string;
+  avatarImage: string;
   watersLogged: number;
   focusActive: boolean;
+  focusMinutesLeft: number;
+  pet: InstalledPet | undefined;
+  petNickname: string;
+  companionDays: number;
   onDrink: () => void;
   onToggleFocus: () => void;
   focusLabel: string;
   stopFocusLabel: string;
 }): JSX.Element {
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
+  const now = new Date();
+  const firstName = userName.trim().split(/\s+/)[0] ?? "";
   const ratio = Math.min(watersLogged / DAILY_WATER_GOAL, 1);
-  const filled = circumference * ratio;
   const remaining = Math.max(DAILY_WATER_GOAL - watersLogged, 0);
-  const name = userName.trim();
-  const greeting = name ? `Hey, ${name}!` : "Hey there!";
-  const status =
-    remaining > 0
-      ? `${remaining} more ${remaining === 1 ? "glass" : "glasses"} to reach today's goal`
-      : "Daily hydration goal reached — nice work!";
+  const date = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const companionName = petNickname.trim() || pet?.manifest.displayName || "Your companion";
 
   return (
-    <section className="today-card" aria-label="Today">
-      <div className="today-card__ring-wrap">
-        <svg className="today-card__ring" viewBox="0 0 84 84" aria-hidden="true">
-          <circle className="today-card__ring-track" cx="42" cy="42" r={radius} fill="none" strokeWidth="7" />
-          {watersLogged > 0 ? (
-            <circle
-              className="today-card__ring-fill"
-              cx="42"
-              cy="42"
-              r={radius}
-              fill="none"
-              strokeWidth="7"
-              strokeLinecap="round"
-              strokeDasharray={`${filled} ${circumference - filled}`}
-              strokeDashoffset={circumference * 0.25}
-            />
-          ) : null}
-        </svg>
-        <div className="today-card__ring-label" role="img" aria-label={`${watersLogged} of ${DAILY_WATER_GOAL} glasses`}>
-          <strong>{watersLogged}</strong>
-          <span>of {DAILY_WATER_GOAL}</span>
+    <>
+      <header className="ov-head">
+        <Avatar image={avatarImage} pet={pet} size={44} />
+        <div>
+          <h1 className="ov-head__title">
+            {greetingForHour(now.getHours())}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
+          <p className="ov-head__date">{date}</p>
         </div>
-      </div>
+      </header>
 
-      <div className="today-card__text">
-        <p className="today-card__eyebrow">Today</p>
-        <p className="today-card__name">{greeting}</p>
-        <p className="today-card__status">{status}</p>
-        <div className="today-card__bar" aria-hidden="true">
-          <span style={{ width: `${ratio * 100}%` }} />
-        </div>
-      </div>
+      <p className="ov-section-label">Today</p>
 
-      <div className="today-card__actions">
-        <button type="button" className="c-btn c-btn--water" onClick={onDrink}>
-          <DropIcon />
-          I drank water
-        </button>
-        <button type="button" className="c-btn c-btn--ghost" onClick={onToggleFocus}>
-          <FocusIcon />
-          {focusActive ? stopFocusLabel : focusLabel}
-        </button>
+      <div className="ov-cards">
+        <section className="ov-card">
+          <div className="ov-card__top">
+            <span className="ov-card__icon is-water" aria-hidden="true">
+              <DropIcon />
+            </span>
+            <span className="ov-card__label">Hydration</span>
+          </div>
+          <p className="ov-card__value">
+            {watersLogged}
+            <small>/ {DAILY_WATER_GOAL} glasses</small>
+          </p>
+          <div className="ov-meter" aria-hidden="true">
+            <span style={{ width: `${ratio * 100}%` }} />
+          </div>
+          <p className="ov-card__hint">{remaining > 0 ? `${remaining} to go today` : "Goal reached today"}</p>
+          <button type="button" className="ov-card__action" onClick={onDrink}>
+            + Log a glass
+          </button>
+        </section>
+
+        <section className={`ov-card${focusActive ? " is-focus" : ""}`}>
+          <div className="ov-card__top">
+            <span className="ov-card__icon is-focus" aria-hidden="true">
+              <FocusIcon />
+            </span>
+            <span className="ov-card__label">Focus</span>
+            {focusActive ? <span className="ov-live">Live</span> : null}
+          </div>
+          <p className="ov-card__value">
+            {focusActive ? focusMinutesLeft : "Off"}
+            {focusActive ? <small>min left</small> : null}
+          </p>
+          <div className="ov-meter is-focus" aria-hidden="true">
+            <span style={{ width: focusActive ? "100%" : "0%" }} />
+          </div>
+          <p className="ov-card__hint">{focusActive ? "Blocked apps and sites are closed." : "Start a session to block distractions."}</p>
+          <button type="button" className="ov-card__action" onClick={onToggleFocus}>
+            {focusActive ? stopFocusLabel : focusLabel}
+          </button>
+        </section>
+
+        <section className="ov-card ov-card--pet">
+          <span className="ov-card__pet">{pet ? <SpriteView pet={pet} scale={0.42} /> : null}</span>
+          <p className="ov-card__pet-name">{companionName}</p>
+          <p className="ov-card__hint">
+            {companionDays} {companionDays === 1 ? "day" : "days"} together
+          </p>
+        </section>
       </div>
-    </section>
+    </>
   );
 }
 
@@ -227,8 +262,8 @@ export const NavIcons = {
     <>
       <circle cx="11" cy="4" r="2" />
       <circle cx="18" cy="8" r="2" />
-      <circle cx="4" cy="8" r="2" />
-      <path d="M8 14.5C8 12 9.8 10 12 10s4 2 4 4.5c0 2-1.5 3-3 3.5-.7.2-1.3.2-2 0-1.5-.5-3-1.5-3-3.5Z" />
+      <circle cx="20" cy="16" r="2" />
+      <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" />
     </>
   ),
   reminders: icon(
@@ -356,207 +391,6 @@ export function NewPetSpotlight({
   );
 }
 
-/* ── Profile ─────────────────────────────────────────────────── */
-
-export function ProfileCard({
-  pet,
-  userName,
-  avatarImage,
-  onNameChange,
-  onChoosePhoto,
-  onRemovePhoto,
-  photoError,
-  companionDays,
-  totals
-}: {
-  pet: InstalledPet | undefined;
-  userName: string;
-  avatarImage: string;
-  onNameChange: (name: string) => void;
-  onChoosePhoto: () => void;
-  onRemovePhoto: () => void;
-  photoError?: string | null;
-  companionDays: number;
-  totals: { waters: number; breaks: number; focusMinutes: number };
-}): JSX.Element {
-  const hours = totals.focusMinutes >= 60;
-  return (
-    <section className="profile-card">
-      <div className="profile-card__banner" aria-hidden="true" />
-      <div className="profile-card__body">
-        <div className="profile-card__identity">
-          <button type="button" className="profile-card__avatar" onClick={onChoosePhoto} aria-label="Change profile photo">
-            <Avatar image={avatarImage} pet={pet} size={96} />
-            <span className="profile-card__avatar-edit" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                <circle cx="12" cy="13" r="3" />
-              </svg>
-            </span>
-          </button>
-          <div className="profile-card__photo-actions">
-            <button type="button" className="c-btn c-btn--ghost" onClick={onChoosePhoto}>
-              {avatarImage ? "Change photo" : "Upload photo"}
-            </button>
-            {avatarImage ? (
-              <button type="button" className="c-btn c-btn--ghost" onClick={onRemovePhoto}>
-                Use {pet?.manifest.displayName ?? "companion"}
-              </button>
-            ) : null}
-          </div>
-        </div>
-        {photoError ? <p className="profile-card__error">{photoError}</p> : null}
-        <label className="profile-card__field">
-          <span>Display name</span>
-          <input
-            className="c-input"
-            type="text"
-            maxLength={40}
-            placeholder="What should we call you?"
-            value={userName}
-            onChange={(event) => onNameChange(event.target.value)}
-          />
-          <small>Your companion uses this to greet you.</small>
-        </label>
-        <dl className="profile-card__stats">
-          <div>
-            <dt>Together</dt>
-            <dd>
-              {companionDays}
-              <small>{companionDays === 1 ? "day" : "days"}</small>
-            </dd>
-          </div>
-          <div>
-            <dt>Water logged</dt>
-            <dd>
-              {totals.waters}
-              <small>glasses</small>
-            </dd>
-          </div>
-          <div>
-            <dt>Breaks taken</dt>
-            <dd>{totals.breaks}</dd>
-          </div>
-          <div>
-            <dt>Focused</dt>
-            <dd>
-              {hours ? (totals.focusMinutes / 60).toFixed(1) : totals.focusMinutes}
-              <small>{hours ? "hrs" : "min"}</small>
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-  );
-}
-
-function relativeTime(timestamp?: number): string {
-  if (!timestamp) return "";
-  const minutes = Math.round((Date.now() - timestamp) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  return hours < 24 ? `${hours} hr ago` : new Date(timestamp).toLocaleDateString();
-}
-
-export function UpdatesCard({
-  status,
-  onCheck,
-  onInstall
-}: {
-  status: UpdateStatus;
-  onCheck: () => void;
-  onInstall: () => void;
-}): JSX.Element {
-  const busy = status.state === "checking" || status.state === "downloading";
-  let tone: "ok" | "new" | "busy" | "warn" | "muted" = "muted";
-  let headline = "Automatic updates are on";
-  let detail = "Companion checks GitHub for new versions every few hours and lets you know.";
-
-  switch (status.state) {
-    case "checking":
-      tone = "busy";
-      headline = "Checking for updates…";
-      detail = "Contacting GitHub Releases.";
-      break;
-    case "downloading":
-      tone = "busy";
-      headline = `Downloading version ${status.version ?? ""}…`;
-      detail = "This happens in the background. You can keep working.";
-      break;
-    case "available":
-      tone = "new";
-      headline = `Version ${status.version} is available`;
-      detail = "This portable copy can't update itself. Download the new version from GitHub.";
-      break;
-    case "downloaded":
-      tone = "new";
-      headline = `Version ${status.version} is ready to install`;
-      detail = "Restart Companion to finish updating. It only takes a few seconds.";
-      break;
-    case "not-available":
-      tone = "ok";
-      headline = "You're up to date";
-      detail = `Last checked ${relativeTime(status.checkedAt)}.`;
-      break;
-    case "error":
-      tone = "warn";
-      headline = "Couldn't check for updates";
-      detail = "Check your internet connection and try again.";
-      break;
-    case "unsupported":
-      headline = "Updates are off in development builds";
-      detail = "Installed copies of Companion update automatically from GitHub Releases.";
-      break;
-    default:
-      break;
-  }
-
-  const showInstall = status.state === "downloaded" || status.state === "available";
-
-  return (
-    <section className={`updates-card is-${tone}`}>
-      <div className="updates-card__head">
-        <span className="updates-card__icon" aria-hidden="true">
-          {tone === "ok" ? "✓" : tone === "new" ? "↑" : tone === "warn" ? "!" : "⟳"}
-        </span>
-        <div className="updates-card__text">
-          <p className="updates-card__title">{headline}</p>
-          <p className="updates-card__detail">{detail}</p>
-        </div>
-        <div className="updates-card__actions">
-          {showInstall ? (
-            <button type="button" className="c-btn c-btn--primary" onClick={onInstall}>
-              {status.state === "downloaded" ? "Restart & update" : "Download"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="c-btn c-btn--ghost"
-              onClick={onCheck}
-              disabled={busy || status.state === "unsupported"}
-            >
-              {busy ? "Checking…" : "Check for updates"}
-            </button>
-          )}
-        </div>
-      </div>
-      {status.state === "downloading" ? (
-        <div className="updates-card__progress" role="progressbar" aria-valuenow={status.progress ?? 0} aria-valuemin={0} aria-valuemax={100}>
-          <span style={{ width: `${Math.max(4, status.progress ?? 0)}%` }} />
-        </div>
-      ) : null}
-      {status.releaseNotes && showInstall ? (
-        <div className="updates-card__notes">
-          <p className="updates-card__notes-title">What&apos;s new</p>
-          <p className="updates-card__notes-body">{status.releaseNotes}</p>
-        </div>
-      ) : null}
-      <p className="updates-card__meta">Version {status.currentVersion || "—"} · Updates from GitHub Releases</p>
-    </section>
-  );
-}
-
 /* ── Avatar & sidebar profile ───────────────────────────────── */
 
 /** Round avatar: the user's photo, or their companion when no photo is set. */
@@ -587,12 +421,6 @@ export function Avatar({
   );
 }
 
-function greetingForHour(hour: number): string {
-  if (hour < 5) return "Up late";
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 const menuIcon = (paths: ReactNode): JSX.Element => (
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -612,7 +440,9 @@ export function AccountMenu({
   onOpenProfile,
   onTrack,
   onChangePhoto,
-  onCheckUpdates
+  onCheckUpdates,
+  onSignOut,
+  email
 }: {
   image: string;
   pet: InstalledPet | undefined;
@@ -625,6 +455,8 @@ export function AccountMenu({
   onTrack: () => void;
   onChangePhoto: () => void;
   onCheckUpdates: () => void;
+  onSignOut: () => void;
+  email: string;
 }): JSX.Element {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -659,8 +491,8 @@ export function AccountMenu({
           <div className="account__header">
             <Avatar image={image} pet={pet} size={40} />
             <div className="account__header-text">
-              <p className="account__greeting">{greeting}</p>
               <p className="account__header-name">{name}</p>
+              <p className="account__greeting">{email || greeting}</p>
             </div>
           </div>
           <div className="account__chips">
@@ -712,6 +544,17 @@ export function AccountMenu({
             {updateReady ? "Update available" : "Check for updates"}
             {updateReady ? <span className="account__badge">New</span> : null}
           </button>
+          <div className="account__sep" />
+          <button type="button" role="menuitem" className="account__item is-danger" onClick={() => run(onSignOut)}>
+            {menuIcon(
+              <>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="m16 17 5-5-5-5" />
+                <path d="M21 12H9" />
+              </>
+            )}
+            Sign out
+          </button>
         </div>
       ) : null}
 
@@ -722,12 +565,17 @@ export function AccountMenu({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <Avatar image={image} pet={pet} size={30} />
-        <span className="account__name">{name}</span>
-        {updateReady ? <span className="account__trigger-dot" aria-label="Update available" /> : null}
-        <svg className="account__chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="m7 15 5-5 5 5" />
-        </svg>
+        <span className="account__trigger-inner">
+          <Avatar image={image} pet={pet} size={36} />
+          <span className="account__who">
+            <span className="account__name">{name}</span>
+            <span className="account__email">{email}</span>
+          </span>
+          {updateReady ? <span className="account__trigger-dot" aria-label="Update available" /> : null}
+          <svg className="account__chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m7 15 5-5 5 5" />
+          </svg>
+        </span>
       </button>
     </div>
   );

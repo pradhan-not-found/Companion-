@@ -69,6 +69,17 @@ export type BubbleAction = {
   kind?: "primary" | "secondary" | "danger";
 };
 
+export type AccountProfile = {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: number;
+};
+
+export type AccountResult =
+  | { ok: true; account: AccountProfile; created: boolean }
+  | { ok: false; error: string };
+
 export type AgentSource = "Codex" | "Claude Code" | "OpenCode" | "DeepSeek TUI" | "Hermes";
 
 export type AgentStatus =
@@ -139,6 +150,8 @@ export type Settings = {
   userName: string;
   /** Profile photo as a data URL; empty means "show my companion". */
   avatarImage: string;
+  /** The name the user gave their companion. */
+  petNickname: string;
   /** Start Companion automatically when the user signs in to Windows. */
   launchAtLogin: boolean;
   /** Pet ids the user has already been introduced to. */
@@ -228,6 +241,7 @@ export type AppSnapshot = {
   screenBlockEndsAt: number | null;
   update: UpdateStatus;
   agentActivity: AgentActivity | null;
+  account: AccountProfile | null;
 };
 
 export type PetImportResult =

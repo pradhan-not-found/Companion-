@@ -14,7 +14,7 @@ import {
 } from "../shared/constants";
 import { allPets, BUNDLED_PETS } from "../shared/bundledPets";
 import { i18n, pick, resolveLanguage } from "../shared/i18n";
-import { PETDEX_SPRITE_SIZE } from "../shared/spriteStates";
+import { mapPetStateToPetdexState, PETDEX_SPRITE_SIZE, PETDEX_STATES } from "../shared/spriteStates";
 import type {
   AppSnapshot,
   BlockingMode,
@@ -57,6 +57,15 @@ import {
   readActiveWindow
 } from "./distraction";
 import { closeActiveTab, closeWindow, killProcess, shutdownWindowsFocusHelper } from "./windowsFocus";
+import {
+  accountStoreName,
+  changePassword,
+  createAccount,
+  currentAccount,
+  signIn,
+  signOut,
+  updateProfile
+} from "./accounts";
 import type { ActiveWindowInfo } from "./distraction";
 import { parseClaudeLogRecord } from "./claudeEvents";
 import {
@@ -192,18 +201,30 @@ if (!hasSingleInstanceLock) {
   app.exit(0);
 }
 app.on("second-instance", () => {
-  ensurePetWindowVisible();
+  if (sessionActive) ensurePetWindowVisible();
   createSettingsWindow();
 });
 
-const store = new Store<StoreSchema>({
-  name: STORE_NAME,
-  defaults: {
-    settings: DEFAULT_SETTINGS,
-    stats: createEmptyStats(),
-    statsHistory: {}
-  }
-});
+function openDataStore(name: string): Store<StoreSchema> {
+  return new Store<StoreSchema>({
+    name,
+    defaults: {
+      settings: DEFAULT_SETTINGS,
+      stats: createEmptyStats(),
+      statsHistory: {}
+    }
+  });
+}
+
+// Each account has its own settings and stats; the signed-in account's store
+// is swapped in on sign-in.
+function storeForSession(): Store<StoreSchema> {
+  const account = currentAccount();
+  return openDataStore((account && accountStoreName(account.id)) || STORE_NAME);
+}
+
+let store = storeForSession();
+let sessionActive = false;
 
 let petWindow: Electron.BrowserWindow | null = null;
 let settingsWindow: Electron.BrowserWindow | null = null;
@@ -579,7 +600,7 @@ function setSettings(next: Settings): void {
   updatePetWindowMouseEvents(normalized.lyricsModeEnabled);
   resizePetWindowForScale(currentPetDisplayScale(normalized), Boolean(currentBubble));
   sendToAll("settings:updated", normalized);
-  settingsWindow?.setTitle(`${APP_NAME} ${text().menu.settings}`);
+  settingsWindow?.setTitle(APP_NAME);
   scheduleReminderTimers();
   scheduleDistractionDetection();
   scheduleAgentActivityMonitor();
@@ -718,7 +739,8 @@ function snapshot(): AppSnapshot {
     screenBlockActive: blockingMode === "breakRun" || blockingMode === "focusWarning",
     screenBlockEndsAt,
     update: updateStatus,
-    agentActivity
+    agentActivity,
+    account: currentAccount()
   };
 }
 
@@ -1010,6 +1032,7 @@ function createPetWindow(): void {
 }
 
 function ensurePetWindowVisible(): void {
+  if (!sessionActive) return;
   if (!petWindow || petWindow.isDestroyed()) createPetWindow();
   showPetWindowInactive();
 }
@@ -1023,7 +1046,7 @@ function createSettingsWindow(): void {
   settingsWindow = new BrowserWindow({
     width: SETTINGS_WINDOW.width,
     height: SETTINGS_WINDOW.height,
-    title: `${APP_NAME} ${text().menu.settings}`,
+    title: APP_NAME,
     resizable: true,
     minWidth: 820,
     minHeight: 560,
@@ -1127,6 +1150,18 @@ function updateApplicationMenu(): void {
 function updateTrayMenu(): void {
   updateApplicationMenu();
   if (!tray) return;
+  if (!sessionActive) {
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        { label: APP_NAME, enabled: false },
+        { type: "separator" },
+        { label: "Sign in…", click: () => createSettingsWindow() },
+        { type: "separator" },
+        { label: "Quit Companion", click: () => app.quit() }
+      ])
+    );
+    return;
+  }
   const labels = text().menu;
   const template: Electron.MenuItemConstructorOptions[] = [
     { label: APP_NAME, enabled: false },
@@ -1302,14 +1337,18 @@ function startAmbientPose(): void {
     return;
   }
 
-  const next = pick<PetState>(["waiting", "reviewing", "waving", "thinking"]);
+  // Calm idle moments only, and always whole animation cycles, so the pet
+  // never snaps out of a pose mid-frame (the "review" row is too busy to loop).
+  const next = pick<PetState>(["waving", "waiting", "waiting"]);
+  const cycleMs = PETDEX_STATES[mapPetStateToPetdexState(next)].durationMs;
+  const cycles = next === "waving" ? 2 : 2 + Math.floor(Math.random() * 2);
   ambientPoseActiveState = next;
   setPetState(next);
   ambientPoseStopTimer = setTimeout(() => {
     if (ambientPoseActiveState && petState === ambientPoseActiveState) setPetState("idle");
     ambientPoseActiveState = null;
     scheduleAmbientPose();
-  }, 1600 + Math.round(Math.random() * 1200));
+  }, cycleMs * cycles);
 }
 
 function scheduleAmbientRoam(delayMs?: number): void {
@@ -1384,12 +1423,12 @@ function startAmbientRoam(): void {
   if (ambientRoamStopTimer) clearTimeout(ambientRoamStopTimer);
   ambientMotion = null;
   ambientRoamMoveTimer = setInterval(movePetForAmbientRoam, AMBIENT_ROAM_TICK_MS);
+  // Walk for a whole number of stride cycles so the pet stops on a natural frame.
+  const strideMs = PETDEX_STATES["running-right"].durationMs;
+  const walkMs = Math.max(2, Math.round((settings.petRoamDurationSeconds * 1000) / strideMs)) * strideMs;
   ambientRoamStartedAt = Date.now();
-  ambientRoamEndsAt = ambientRoamStartedAt + settings.petRoamDurationSeconds * 1000;
-  ambientRoamStopTimer = setTimeout(
-    () => stopAmbientRoam(true),
-    settings.petRoamDurationSeconds * 1000
-  );
+  ambientRoamEndsAt = ambientRoamStartedAt + walkMs;
+  ambientRoamStopTimer = setTimeout(() => stopAmbientRoam(true), walkMs);
 }
 
 function movePetForAmbientRoam(): void {
@@ -1484,7 +1523,7 @@ function startClickRunReaction(direction: "left" | "right"): void {
   if (ambientRoamStopTimer) clearTimeout(ambientRoamStopTimer);
   ambientMotion = null;
   ambientRoamMoveTimer = setInterval(movePetForAmbientRoam, AMBIENT_ROAM_TICK_MS);
-  const clickRunMs = 1100 + Math.round(Math.random() * 700);
+  const clickRunMs = PETDEX_STATES["running-right"].durationMs * (1 + Math.round(Math.random()));
   ambientRoamStartedAt = Date.now();
   ambientRoamEndsAt = ambientRoamStartedAt + clickRunMs;
   ambientRoamStopTimer = setTimeout(() => stopAmbientRoam(true), clickRunMs);
@@ -4485,6 +4524,57 @@ function registerIpc(): void {
     setSettings({ ...getSettings(), avatarImage });
     return { ok: true };
   });
+  ipcMain.handle("auth:create", (_event, input: { name: string; email: string; password: string }) => {
+    if (typeof input?.email !== "string" || typeof input?.password !== "string" || typeof input?.name !== "string") {
+      return { ok: false, error: "Please fill in every field." };
+    }
+    const result = createAccount(input, STORE_NAME);
+    if (!result.ok) return result;
+    store = storeForSession();
+    // A new account always starts with onboarding (pick and name a companion).
+    setSettings({ ...getSettings(), userName: result.account.name, onboardingDismissed: false });
+    startSession();
+    publishSnapshot();
+    return result;
+  });
+  ipcMain.handle("auth:sign-in", (_event, input: { email: string; password: string }) => {
+    if (typeof input?.email !== "string" || typeof input?.password !== "string") {
+      return { ok: false, error: "Please enter your email and password." };
+    }
+    const result = signIn(input);
+    if (!result.ok) return result;
+    store = storeForSession();
+    if (!getSettings().userName) setSettings({ ...getSettings(), userName: result.account.name });
+    startSession();
+    publishSnapshot();
+    return result;
+  });
+  ipcMain.handle("auth:sign-out", () => {
+    endSession();
+    signOut();
+    store = storeForSession();
+    publishSnapshot();
+    return { ok: true };
+  });
+  ipcMain.handle("auth:update-profile", (_event, changes: { name?: string; email?: string }) => {
+    const account = currentAccount();
+    if (!account) return { ok: false, error: "You're signed out." };
+    const result = updateProfile(account.id, {
+      name: typeof changes?.name === "string" ? changes.name : undefined,
+      email: typeof changes?.email === "string" ? changes.email : undefined
+    });
+    if (result.ok) setSettings({ ...getSettings(), userName: result.account.name });
+    publishSnapshot();
+    return result;
+  });
+  ipcMain.handle("auth:change-password", (_event, input: { current: string; next: string }) => {
+    const account = currentAccount();
+    if (!account) return { ok: false, error: "You're signed out." };
+    if (typeof input?.current !== "string" || typeof input?.next !== "string") {
+      return { ok: false, error: "Please fill in both password fields." };
+    }
+    return changePassword(account.id, input.current, input.next);
+  });
   ipcMain.on("update:check", () => void checkForUpdates(false));
   ipcMain.on("update:install", installDownloadedUpdate);
   ipcMain.on("pets:mark-seen", (_event, petIds: unknown) => {
@@ -4541,33 +4631,68 @@ app.whenReady().then(() => {
 
   protocol.handle("companion-asset", handleAssetRequest);
 
+  registerIpc();
+  createTray();
+  scheduleUpdateChecks();
+  applyLaunchAtLogin();
+  if (currentAccount()) {
+    startSession();
+  } else {
+    // Signed out: only the welcome / sign-in window.
+    createSettingsWindow();
+  }
+
+  app.on("activate", () => {
+    if (sessionActive && !petWindow) createPetWindow();
+    if (!sessionActive) createSettingsWindow();
+  });
+});
+
+/** Starts the pet, reminders and monitors for the signed-in account. */
+function startSession(): void {
+  if (sessionActive) return;
+  sessionActive = true;
   getStats();
   restoreFocusSession();
-  registerIpc();
   createPetWindow();
-  createTray();
   scheduleReminderTimers();
   scheduleDistractionDetection();
   scheduleAgentActivityMonitor();
   scheduleBatteryMonitor();
-  scheduleUpdateChecks();
   schedulePetLibraryMonitor();
   scheduleAmbientRoam();
   scheduleAmbientPose();
-  if (IS_DEV || !getSettings().onboardingDismissed) {
-    createSettingsWindow();
-  }
-  applyLaunchAtLogin();
+  updateTrayMenu();
+  if (IS_DEV || !getSettings().onboardingDismissed) createSettingsWindow();
   setTimeout(() => greetOnStartup(), 1500);
   setTimeout(announceNewPets, 9000);
+  publishSnapshot();
+}
 
-  app.on("activate", () => {
-    if (!petWindow) createPetWindow();
-  });
-});
+/** Stops everything that belongs to the signed-in account (used on sign-out). */
+function endSession(): void {
+  if (!sessionActive) return;
+  sessionActive = false;
+  clearSessionTimers();
+  if (distractionTimer) clearInterval(distractionTimer);
+  if (agentActivityTimer) clearInterval(agentActivityTimer);
+  if (batteryMonitorTimer) clearInterval(batteryMonitorTimer);
+  if (petLibraryTimer) clearInterval(petLibraryTimer);
+  distractionTimer = null;
+  agentActivityTimer = null;
+  batteryMonitorTimer = null;
+  petLibraryTimer = null;
+  focusActive = false;
+  focusEndsAt = null;
+  blockingMode = null;
+  currentBubble = null;
+  agentActivity = null;
+  if (petWindow && !petWindow.isDestroyed()) petWindow.destroy();
+  petWindow = null;
+  updateTrayMenu();
+}
 
-app.on("before-quit", () => {
-  shutdownWindowsFocusHelper();
+function clearSessionTimers(): void {
   clearCustomReminderTimers();
   for (const timer of [
     breakRunTimer,
@@ -4594,10 +4719,15 @@ app.on("before-quit", () => {
     ambientPoseTimer,
     ambientPoseStopTimer,
     agentPoseTimer,
-    updateCheckTimer
   ]) {
     if (timer) clearTimeout(timer);
   }
+}
+
+app.on("before-quit", () => {
+  shutdownWindowsFocusHelper();
+  clearSessionTimers();
+  if (updateCheckTimer) clearTimeout(updateCheckTimer);
   if (updateCheckInterval) clearInterval(updateCheckInterval);
 });
 
