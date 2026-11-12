@@ -1348,3 +1348,68 @@ html {
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* ── Hero announcement pill ───────────────────────────────── */
+.hero-pill {
+  align-items: center;
+  align-self: flex-start;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: #27272a;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px 0 4px;
+  text-decoration: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.hero-pill:hover {
+  border-color: #d4d4d8;
+  box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.3);
+}
+
+.hero-pill__tag {
+  background: linear-gradient(180deg, #4a4a50 0%, #18181b 55%, #26262a 100%);
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 22px;
+  padding: 0 9px;
+}
+
+.hero-pill svg {
+  color: #8a8a8a;
+  transition: transform 180ms ease;
+}
+
+.hero-pill:hover svg {
+  transform: translateX(2px);
+}
+
+/* ── Wandering pets ───────────────────────────────────────── */
+.wanderers {
+  display: none;
+  inset: 56px 0 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+@media (min-width: 1180px) {
+  .wanderers {
+    display: block;
+  }
+}
+
+.wander {
+  position: absolute;
+  transform: translateX(-50%);
+}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import UpiPayDialog from '@/components/UpiPayDialog';
 import CodexHacker from '@/components/CodexHacker';
+import Wanderers from '@/components/Wanderers';
 import { PETS, Sprite } from '@/components/PetStrip';
 import { SPONSORS } from '@/lib/sponsors';
 import { sendToSheet } from '@/lib/sheets';
@@ -189,10 +190,17 @@ export default function SponsorPage() {
   const input = (error?: string) => `ck-input${error ? ' is-invalid' : ''}`;
 
   return (
-    <div className="min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-white text-[#18181B]">
+    <div className="relative min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-white text-[#18181B]">
+      <Wanderers
+        lanes={[
+          { pet: 'capy-puff', top: 'calc(100% - 96px)', from: 4, to: 34 },
+          { pet: 'droid', top: 'calc(100% - 96px)', from: 62, to: 90, delay: 2500 },
+          { pet: 'boba', top: '84px', from: 68, to: 92, scale: 0.32, delay: 5000 }
+        ]}
+      />
       <NavBar />
 
-      <main className="flex-1 min-h-0 flex items-center justify-center px-5 py-8">
+      <main className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-5 py-8">
         <section className="sp-card relative w-full max-w-[600px]" aria-labelledby="sp-title">
           <span className="sp-side sp-side--left" aria-hidden="true">
             <CodexHacker pet="hacker" width={1.5} />
