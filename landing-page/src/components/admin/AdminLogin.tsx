@@ -36,8 +36,13 @@ export default function AdminLogin({ configured }: { configured: boolean }) {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-[#FAFAFA] px-5">
       <div className="w-full max-w-[360px]">
-        <Image src="/icon-192.png" alt="" width={44} height={44} className="rounded-[11px] shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]" />
-        <h1 className="mt-6 text-[24px] font-semibold tracking-[-0.03em] text-[#18181B]">Sign in to admin</h1>
+        <div className="flex items-center gap-3">
+          <Image src="/icon-192.png" alt="" width={44} height={44} className="rounded-[11px] shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]" />
+          <span className="text-[20px] font-semibold tracking-[-0.03em] text-[#18181B]">Companion</span>
+          <span className="ad-tag">Admin</span>
+        </div>
+        <h1 className="mt-8 text-[24px] font-semibold tracking-[-0.03em] text-[#18181B]">Sign in to admin</h1>
+        <p className="mt-1.5 text-[14px] text-[#6B6B6B]">Orders, sponsors and the Mac waitlist.</p>
         {configured ? (
           <form onSubmit={submit} className="mt-6 flex flex-col gap-3" noValidate>
             <label className="flex flex-col gap-1.5">
