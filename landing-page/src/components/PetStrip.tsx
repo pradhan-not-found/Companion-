@@ -144,7 +144,7 @@ export default function PetStrip() {
                 }
               }}
             >
-              <Sprite pet={pet} frame={frame} scale={scale} />
+              <Sprite pet={pet} frame={frame + index * 2} scale={scale} />
             </div>
           );
         })}
