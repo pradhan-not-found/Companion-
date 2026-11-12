@@ -5,6 +5,8 @@
  *   1. Open the Google Sheet > Extensions > Apps Script. Replace the editor contents with this file and save.
  *   2. Project Settings (gear icon) > Script properties > Add property:
  *        ADMIN_KEY = the same value as SHEETS_ADMIN_KEY in your Vercel environment variables.
+ *        SENDER    = (optional) a Companion address such as trycompanion@gmail.com, added first in Gmail >
+ *                    Settings > Accounts > "Send mail as". Emails then come from Companion <that address>.
  *   3. Deploy > Manage deployments > edit the existing web app > Version: New version > Deploy.
  *      Keep "Execute as: Me" and "Who has access: Anyone". Editing the existing deployment keeps the
  *      same /exec URL the website already uses. Google asks you to allow Sheets, Drive and Gmail access.
@@ -164,7 +166,7 @@ function handleAdmin(data) {
 // ── Emails ───────────────────────────────────────────────────
 
 function sendLicense(order) {
-  MailApp.sendEmail({
+  send({
     to: order.email,
     name: 'Companion',
     subject: 'Your Companion license',
@@ -180,7 +182,7 @@ function sendLicense(order) {
 }
 
 function sendSponsorThanks(sponsor) {
-  MailApp.sendEmail({
+  send({
     to: sponsor.email,
     name: 'Companion',
     subject: 'Thank you for sponsoring Companion',
@@ -194,7 +196,7 @@ function sendSponsorThanks(sponsor) {
 }
 
 function sendRejection(record, type) {
-  MailApp.sendEmail({
+  send({
     to: record.email,
     name: 'Companion',
     subject: 'About your Companion ' + (type === 'order' ? 'order' : 'sponsorship') + ' ' + record.reference,
@@ -212,12 +214,24 @@ function notifyOwner(subject, record) {
   var lines = Object.keys(record).map(function (field) {
     return '<tr><td style="color:#6B6B6B;padding:3px 14px 3px 0">' + esc(field) + '</td><td>' + esc(String(record[field]).replace(/^'/, '')) + '</td></tr>';
   });
-  MailApp.sendEmail({
+  send({
     to: owner,
     name: 'Companion',
     subject: subject,
     htmlBody: layout(subject, '<p>Check the payment in your UPI app, then verify it in your admin panel.</p><table style="font-size:14px">' + lines.join('') + '</table>')
   });
+}
+
+// Sends as "Companion". If the SENDER script property is set (for example trycompanion@gmail.com)
+// and that address is a verified "Send mail as" alias in this Gmail account, mail goes from it.
+function send(message) {
+  var sender = PropertiesService.getScriptProperties().getProperty('SENDER');
+  var options = { htmlBody: message.htmlBody, name: message.name || 'Companion' };
+  if (sender && GmailApp.getAliases().indexOf(sender) !== -1) {
+    options.from = sender;
+    options.replyTo = sender;
+  }
+  GmailApp.sendEmail(message.to, message.subject, '', options);
 }
 
 function layout(title, body) {
