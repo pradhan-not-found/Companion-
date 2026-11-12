@@ -84,6 +84,8 @@ export default function MacWaitlist() {
               if (event.key === 'Escape') setMode('button');
             }}
             placeholder="Email for the Mac launch"
+            // Long addresses shrink a little so the whole email stays visible.
+            style={{ fontSize: email.length > 30 ? 11.5 : email.length > 24 ? 12.5 : 13 }}
             aria-label="Email for the Mac launch"
             aria-invalid={invalid}
             disabled={mode === 'sending'}

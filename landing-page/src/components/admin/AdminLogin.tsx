@@ -38,13 +38,10 @@ export default function AdminLogin({ configured }: { configured: boolean }) {
       <div className="w-full max-w-[360px]">
         <div className="flex items-center gap-3">
           <Image src="/icon-192.png" alt="" width={44} height={44} className="rounded-[11px] shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]" />
-          <span className="text-[20px] font-semibold tracking-[-0.03em] text-[#18181B]">Companion</span>
-          <span className="ad-tag">Admin</span>
+          <span className="text-[22px] font-semibold tracking-[-0.03em] text-[#18181B]">Companion</span>
         </div>
-        <h1 className="mt-8 text-[24px] font-semibold tracking-[-0.03em] text-[#18181B]">Sign in to admin</h1>
-        <p className="mt-1.5 text-[14px] text-[#6B6B6B]">Orders, sponsors and the Mac waitlist.</p>
         {configured ? (
-          <form onSubmit={submit} className="mt-6 flex flex-col gap-3" noValidate>
+          <form onSubmit={submit} className="mt-10 flex flex-col gap-3" noValidate>
             <label className="flex flex-col gap-1.5">
               <span className="text-[12.5px] font-medium text-[#6B6B6B]">Password</span>
               <input
@@ -57,8 +54,9 @@ export default function AdminLogin({ configured }: { configured: boolean }) {
               />
             </label>
             {error ? <p className="text-[13px] text-[#DC2626]">{error}</p> : null}
-            <button type="submit" disabled={busy || !password} className="pay-primary mt-1">
-              {busy ? 'Signing in…' : 'Sign in'}
+            <button type="submit" disabled={busy || !password} className="gel gel--black pr-cta mt-2 disabled:opacity-50">
+              <span className="gel__shine" aria-hidden="true" />
+              <span className="relative z-10">{busy ? 'signing in…' : 'sign in'}</span>
             </button>
           </form>
         ) : (

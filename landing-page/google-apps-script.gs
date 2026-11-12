@@ -133,6 +133,7 @@ function handleAdmin(data) {
   }
 
   if (data.action === 'activate') return activate(data);
+  if (data.action === 'mail') return sendMail(data);
 
   var type = data.type === 'sponsor' ? 'sponsor' : 'order';
   var table = open(type);
@@ -198,6 +199,27 @@ function activate(data) {
   }
   write(table, found.row, { licensedTo: email, devices: devices.join(',') });
   return json({ ok: true, status: 'activated', email: email, devices: devices });
+}
+
+// ── Mail written in the admin panel ─────────────────────────
+
+// Sends one message to up to 50 people, as Companion, using the same template as license emails.
+function sendMail(data) {
+  var recipients = String(data.to || '').split(',')
+    .map(function (address) { return address.trim().toLowerCase(); })
+    .filter(function (address) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(address); })
+    .filter(function (address, index, list) { return list.indexOf(address) === index; })
+    .slice(0, 50);
+  var subject = clean(data.subject).slice(0, 150);
+  var body = String(data.body || '').trim().slice(0, 5000);
+  if (!recipients.length || !subject || !body) return json({ ok: false, error: 'bad request' });
+  if (recipients.length > MailApp.getRemainingDailyQuota()) return json({ ok: false, error: 'quota' });
+
+  var html = layout(subject, '<p>' + esc(body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>');
+  recipients.forEach(function (address) {
+    send({ to: address, name: 'Companion', subject: subject, htmlBody: html });
+  });
+  return json({ ok: true, status: 'sent', sent: recipients.length, remaining: MailApp.getRemainingDailyQuota() });
 }
 
 // ── Emails ───────────────────────────────────────────────────
