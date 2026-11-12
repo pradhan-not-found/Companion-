@@ -43,11 +43,11 @@ function domainOf(url: string) {
 }
 
 /** A pet playing its idle loop, sized to match the typing pets beside it. */
-function IdlePet({ id }: { id: string }) {
-  const [frame, setFrame] = useState(0);
+function IdlePet({ id, offset = 0 }: { id: string; offset?: number }) {
+  const [frame, setFrame] = useState(offset);
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = window.setInterval(() => setFrame(value => value + 1), 180);
+    const timer = window.setInterval(() => setFrame(value => value + 1), 260);
     return () => window.clearInterval(timer);
   }, []);
   const pet = PETS.find(item => item.id === id);
@@ -58,7 +58,7 @@ function Mascot() {
   const [frame, setFrame] = useState(0);
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => setFrame(value => value + 1), 200);
+    const id = window.setInterval(() => setFrame(value => value + 1), 260);
     return () => window.clearInterval(id);
   }, []);
   return <Sprite pet={MASCOT} frame={frame} scale={0.2} />;
@@ -216,7 +216,7 @@ export default function SponsorPage() {
             <IdlePet id="capy-puff" />
           </span>
           <span className="sp-side sp-side--right-bottom" aria-hidden="true">
-            <IdlePet id="droid" />
+            <IdlePet id="droid" offset={3} />
           </span>
           <h1 id="sp-title" className="flex items-center gap-1.5 text-[28px] font-semibold tracking-[-0.035em]">
             Sponsors.

@@ -73,7 +73,7 @@ export default function PetStrip() {
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const id = window.setInterval(() => setFrame(value => value + 1), 180);
+    const id = window.setInterval(() => setFrame(value => value + 1), 230);
     return () => window.clearInterval(id);
   }, []);
 

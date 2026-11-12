@@ -29,9 +29,9 @@ export default function CodexHacker({
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => setFrame(value => (value + 1) % worker.frames), 150);
+    const id = window.setInterval(() => setFrame(value => (value + 1) % worker.frames), pet === 'hacker' ? 220 : 240);
     return () => window.clearInterval(id);
-  }, [worker.frames]);
+  }, [worker.frames, pet]);
 
   const height = (width * FRAME_H) / FRAME_W;
   return (
