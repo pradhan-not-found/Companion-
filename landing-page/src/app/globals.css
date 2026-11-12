@@ -859,3 +859,28 @@ body {
     animation: none;
   }
 }
+
+/* ── Changelog ─────────────────────────────────────────────── */
+.cl-cover {
+  background: #f4f6ff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cl-soon {
+  align-items: center;
+  animation: macSwap 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: linear-gradient(180deg, #f6f8ff 0%, #ffffff 100%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  padding: 56px 24px 52px;
+  text-align: center;
+}
+
+.cl-fade {
+  animation: macSwap 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top center;
+}
