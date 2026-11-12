@@ -280,7 +280,7 @@ export default function CheckoutPage() {
               <form key="details" className="ck-step flex flex-col" onSubmit={continueToPay} noValidate>
                 {section(
                   'Contact',
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <label className="flex flex-col gap-1.5">
                       {labelText('Email', errors.email)}
                       <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass(errors.email)} aria-invalid={Boolean(errors.email)} />

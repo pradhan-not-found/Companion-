@@ -81,7 +81,7 @@ body {
 }
 
 .gel--black .gel__shine {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.08) 55%, rgba(255, 255, 255, 0) 100%);
 }
 
 .gel--blue {
@@ -99,19 +99,20 @@ body {
   color: #111111;
 }
 
+/* The gloss spans the whole pill and fades out softly, like a single sweep of light. */
 .gel__shine {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.15) 100%);
-  border-radius: 999px 999px 40% 40% / 999px 999px 60% 60%;
-  height: 46%;
-  left: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.32) 55%, rgba(255, 255, 255, 0) 100%);
+  border-radius: 999px 999px 50% 50% / 999px 999px 40% 40%;
+  height: 52%;
+  left: 2px;
   pointer-events: none;
   position: absolute;
-  right: 8px;
+  right: 2px;
   top: 1px;
 }
 
 .gel--blue .gel__shine {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.1) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.28) 55%, rgba(255, 255, 255, 0) 100%);
 }
 
 .mac-wait {
@@ -1243,9 +1244,11 @@ body {
 
 .pr-steps__num {
   align-items: center;
-  background: #ffffff;
-  border: 1.5px solid #18181b;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 44%, #ebebeb 54%, #f1f1f1 80%, #fcfcfc 100%);
+  border: 1px solid #9c9c9c;
   border-radius: 9999px;
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -2px 4px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.12);
+  color: #111111;
   display: inline-flex;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
@@ -1256,20 +1259,19 @@ body {
 }
 
 .pr-feature {
-  border: 1px solid #ececef;
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 18px;
   padding: 22px;
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+  transition: box-shadow 180ms ease;
 }
 
 .pr-feature:hover {
-  border-color: #dcdce0;
-  box-shadow: 0 12px 28px -20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 30px -20px rgba(0, 0, 0, 0.3);
 }
 
 .pr-feature__icon {
   align-items: center;
-  background: #f4f4f5;
+  background: rgba(255, 255, 255, 0.7);
   border-radius: 10px;
   color: #18181b;
   display: inline-flex;
@@ -1329,6 +1331,314 @@ body {
   padding: 32px;
 }
 
+/* ── Admin panel ───────────────────────────────────────────── */
+.ad-top {
+  align-items: center;
+  background: rgba(250, 250, 250, 0.85);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #ececef;
+  display: flex;
+  height: 56px;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ad-tag {
+  background: #18181b;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+
+.ad-ghost {
+  align-items: center;
+  border-radius: 8px;
+  color: #52525b;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.ad-ghost:hover {
+  background: #f0f0f2;
+  color: #18181b;
+}
+
+.ad-spin {
+  animation: macSpin 800ms linear infinite;
+}
+
+.ad-stat {
+  background: #ffffff;
+  border: 1px solid #ececef;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.ad-count {
+  background: #f59e0b;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+  text-align: center;
+}
+
+.ad-seg {
+  background: #f0f0f2;
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+}
+
+.ad-seg button {
+  border-radius: 8px;
+  color: #71717a;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  height: 30px;
+  padding: 0 12px;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.ad-seg button.is-on {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  color: #18181b;
+}
+
+.ad-list {
+  background: #ffffff;
+  border: 1px solid #ececef;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ad-row {
+  align-items: center;
+  border-bottom: 1px solid #f2f2f4;
+  display: grid;
+  font-size: 14px;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr) auto auto;
+  padding: 14px 18px;
+}
+
+.ad-row:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .ad-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ad-row__who {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ad-row__utr {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.ad-row__actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ad-logo {
+  align-items: center;
+  background: #f4f4f5;
+  border-radius: 10px;
+  color: #52525b;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  height: 40px;
+  justify-content: center;
+  text-decoration: none;
+  width: 40px;
+}
+
+.ad-logo.is-empty {
+  color: #a1a1aa;
+  font-size: 9.5px;
+  text-align: center;
+}
+
+.ad-copy {
+  align-items: center;
+  background: #f4f4f5;
+  border-radius: 7px;
+  color: #3f3f46;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  transition: background-color 150ms ease;
+}
+
+.ad-copy:hover {
+  background: #ececef;
+}
+
+.ad-pill {
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+}
+
+.ad-pill.is-pending {
+  background: #fff7e6;
+  color: #b45309;
+}
+
+.ad-pill.is-verified {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.ad-pill.is-rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.ad-btn {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 9px;
+  color: #27272a;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  height: 32px;
+  padding: 0 12px;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
+  white-space: nowrap;
+}
+
+.ad-btn:hover {
+  border-color: #d4d4d8;
+}
+
+.ad-btn:active {
+  transform: scale(0.97);
+}
+
+.ad-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.ad-btn.is-primary {
+  background: #18181b;
+  border-color: #18181b;
+  color: #ffffff;
+}
+
+.ad-btn.is-confirm {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+.ad-btn.is-danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.ad-empty {
+  font-size: 14px;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.ad-toast {
+  animation: payIn 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  background: #18181b;
+  border-radius: 12px;
+  bottom: 24px;
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  font-size: 13.5px;
+  left: 50%;
+  padding: 12px 16px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 60;
+}
+
+/* Sponsor amounts: matching pills with a soft gloss */
+.sp-amounts .gel {
+  font-size: 13.5px;
+  font-weight: 600;
+  height: 38px;
+  padding: 0;
+}
+
+.sp-amounts .gel--white {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f6f7 100%);
+  border: 1px solid #dcdce0;
+  box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: #18181b;
+}
+
+.sp-amounts .gel--black {
+  background: linear-gradient(180deg, #3a3a3f 0%, #1c1c1f 55%, #111113 100%);
+  border: 1px solid #000000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 6px -2px rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+}
+
+.sp-amounts .gel__shine {
+  opacity: 0.45;
+}
+
+.sp-amounts__custom {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  border: 1px solid #dcdce0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  height: 38px;
+}
+
+.sp-amounts__custom input {
+  font-weight: 600;
+}
+
+.sp-amounts__custom input::placeholder {
+  color: #a1a1aa;
+  font-weight: 500;
+}
+
 /* ── Scrollbar: slim and quiet ─────────────────────────────── */
 html {
   scrollbar-color: rgba(24, 24, 27, 0.22) transparent;
@@ -1359,46 +1669,26 @@ html {
   background: transparent;
 }
 
-/* ── Hero announcement pill ───────────────────────────────── */
-.hero-pill {
+/* ── Hero: link to sponsors (same rhythm as the logo row it replaced) ── */
+.hero-sponsor {
   align-items: center;
   align-self: flex-start;
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  border-radius: 9999px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  color: #27272a;
+  color: #111111;
   display: inline-flex;
-  font-size: 13px;
-  font-weight: 500;
   gap: 8px;
-  height: 32px;
-  padding: 0 12px 0 4px;
   text-decoration: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.hero-pill:hover {
-  border-color: #d4d4d8;
-  box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.3);
+.hero-sponsor__text {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1.5px;
+  padding-bottom: 3px;
+  transition: background-size 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.hero-pill__tag {
-  background: linear-gradient(180deg, #4a4a50 0%, #18181b 55%, #26262a 100%);
-  border-radius: 9999px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 22px;
-  padding: 0 9px;
+.hero-sponsor:hover .hero-sponsor__text {
+  background-size: 100% 1.5px;
 }
 
-.hero-pill svg {
-  color: #8a8a8a;
-  transition: transform 180ms ease;
-}
-
-.hero-pill:hover svg {
-  transform: translateX(2px);
-}

@@ -45,7 +45,7 @@ export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
               className="relative inline-flex items-center h-full text-[13px] leading-none no-underline whitespace-nowrap"
               style={{
                 color: active ? text : quiet,
-                fontWeight: active ? 600 : 400,
+                fontWeight: active ? 500 : 400,
                 letterSpacing: '0.01em',
               }}
             >

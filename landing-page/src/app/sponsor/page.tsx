@@ -7,7 +7,7 @@ import NavBar from '@/components/NavBar';
 import UpiPayDialog from '@/components/UpiPayDialog';
 import CodexHacker from '@/components/CodexHacker';
 import { PETS, Sprite } from '@/components/PetStrip';
-import { SPONSORS } from '@/lib/sponsors';
+import { SPONSORS, type Sponsor } from '@/lib/sponsors';
 import { sendToSheet } from '@/lib/sheets';
 import { newOrderId } from '@/lib/upiQr';
 
@@ -88,6 +88,22 @@ export default function SponsorPage() {
   const [reference, setReference] = useState('');
   const [sending, setSending] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [live, setLive] = useState<Sponsor[]>([]);
+
+  // Sponsors you verify in the admin panel appear here automatically.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/sponsors')
+      .then(response => response.json())
+      .then((body: { sponsors?: Sponsor[] }) => {
+        if (!cancelled && Array.isArray(body.sponsors)) setLive(body.sponsors);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const sponsors = [...SPONSORS, ...live];
 
   const total = custom ? Number(custom) : amount;
   const sponsor = mode === 'sponsor';
@@ -230,7 +246,7 @@ export default function SponsorPage() {
 
           <ul className="sp-grid mt-8">
             {Array.from({ length: SLOTS }, (_, index) => {
-              const filled = SPONSORS[index];
+              const filled = sponsors[index];
               if (filled) {
                 return (
                   <li key={index}>
@@ -369,25 +385,25 @@ export default function SponsorPage() {
                   </p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3">
-                    <label className="flex flex-col gap-1.5">
+                    <label className={`flex flex-col gap-1.5${sponsor ? '' : ' col-span-2'}`}>
                       {label('Full name', errors.name)}
                       <input autoComplete="name" value={name} onChange={event => setName(event.target.value)} className={input(errors.name)} aria-invalid={Boolean(errors.name)} />
                     </label>
-                    <label className="flex flex-col gap-1.5">
+                    {sponsor ? (
+                      <label className="flex flex-col gap-1.5">
+                        {label('Company', errors.company)}
+                        <input autoComplete="organization" value={company} onChange={event => setCompany(event.target.value)} className={input(errors.company)} aria-invalid={Boolean(errors.company)} />
+                      </label>
+                    ) : null}
+                    <label className="col-span-2 flex flex-col gap-1.5">
                       {label('Email', errors.email)}
                       <input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} className={input(errors.email)} aria-invalid={Boolean(errors.email)} />
                     </label>
                     {sponsor ? (
-                      <>
-                        <label className="flex flex-col gap-1.5">
-                          {label('Company', errors.company)}
-                          <input autoComplete="organization" value={company} onChange={event => setCompany(event.target.value)} className={input(errors.company)} aria-invalid={Boolean(errors.company)} />
-                        </label>
-                        <label className="flex flex-col gap-1.5">
-                          {label('Website', errors.website, '(optional)')}
-                          <input type="url" autoComplete="url" value={website} onChange={event => setWebsite(event.target.value)} className={input(errors.website)} aria-invalid={Boolean(errors.website)} />
-                        </label>
-                      </>
+                      <label className="col-span-2 flex flex-col gap-1.5">
+                        {label('Website', errors.website, '(optional)')}
+                        <input type="url" autoComplete="url" value={website} onChange={event => setWebsite(event.target.value)} className={input(errors.website)} aria-invalid={Boolean(errors.website)} />
+                      </label>
                     ) : null}
                   </div>
 

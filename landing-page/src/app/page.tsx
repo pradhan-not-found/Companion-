@@ -6,6 +6,7 @@ import PetStrip from '@/components/PetStrip';
 import CodexHacker from '@/components/CodexHacker';
 import AskAI from '@/components/AskAI';
 import MacWaitlist from '@/components/MacWaitlist';
+import WavingPupu from '@/components/WavingPupu';
 
 
 export default function LandingPage() {
@@ -20,12 +21,9 @@ export default function LandingPage() {
 
       <section className="min-h-0 flex flex-col justify-between px-5 sm:px-12 lg:px-16 py-7 sm:py-9">
         <div className="flex flex-col justify-center lg:flex-1">
-          <Link href="/sponsor" className="hero-pill mb-6">
-            <span className="hero-pill__tag">New</span>
-            <span>See our sponsors</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="m9 6 6 6-6 6" />
-            </svg>
+          <Link href="/sponsor" className="hero-sponsor mb-6">
+            <WavingPupu />
+            <span className="hero-sponsor__text text-[18px] font-semibold tracking-[-0.04em] leading-none">See our sponsors</span>
           </Link>
           <h1 className="font-semibold tracking-[-0.05em] leading-[0.92] text-[clamp(38px,9.4vw,78px)] lg:text-[clamp(52px,6.1vw,78px)]">
             <span className="relative inline-block">

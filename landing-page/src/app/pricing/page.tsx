@@ -26,9 +26,10 @@ const STEPS: { title: string; detail: string }[] = [
   { title: 'Keep every update', detail: 'New companions and features install from inside the app at no extra cost, for as long as Companion exists.' }
 ];
 
-const FEATURES: { title: string; detail: string; icon: ReactNode }[] = [
+const FEATURES: { title: string; tint: string; detail: string; icon: ReactNode }[] = [
   {
     title: 'Every companion',
+    tint: '#FFEDC7',
     detail: 'The full cast of pixel pets, plus every new one we release.',
     icon: (
       <>
@@ -41,6 +42,7 @@ const FEATURES: { title: string; detail: string; icon: ReactNode }[] = [
   },
   {
     title: 'Focus mode',
+    tint: '#D6E4FF',
     detail: 'Distracting tabs and games close automatically while a focus session runs.',
     icon: (
       <>
@@ -52,6 +54,7 @@ const FEATURES: { title: string; detail: string; icon: ReactNode }[] = [
   },
   {
     title: 'Compboard',
+    tint: '#FFC9DE',
     detail: 'Click your pet for quick actions and your recent clipboard history.',
     icon: (
       <>
@@ -62,6 +65,7 @@ const FEATURES: { title: string; detail: string; icon: ReactNode }[] = [
   },
   {
     title: 'Coding agent alerts',
+    tint: '#D7F2E1',
     detail: 'Your pet pokes you when Claude Code or Codex needs your input.',
     icon: (
       <>
@@ -72,11 +76,13 @@ const FEATURES: { title: string; detail: string; icon: ReactNode }[] = [
   },
   {
     title: 'Hydration and breaks',
+    tint: '#E6DCFF',
     detail: 'Gentle reminders to drink water, stretch and rest your eyes.',
     icon: <path d="M12 2.7s6 6.3 6 11.3a6 6 0 0 1-12 0c0-5 6-11.3 6-11.3Z" />
   },
   {
     title: 'Lifetime updates',
+    tint: '#FFDCC8',
     detail: 'Pay once and keep every improvement and fix that ships after.',
     icon: (
       <>
@@ -172,14 +178,14 @@ export default function PricingPage() {
           <p className="mt-2 text-[15.5px] leading-[1.6] text-[#6D6D6D]">No tiers and no add-ons. Every license unlocks all of it.</p>
           <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map(feature => (
-              <li key={feature.title} className="pr-feature">
+              <li key={feature.title} className="pr-feature" style={{ background: feature.tint }}>
                 <span className="pr-feature__icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     {feature.icon}
                   </svg>
                 </span>
                 <p className="mt-4 text-[15px] font-semibold">{feature.title}</p>
-                <p className="mt-1 text-[14px] leading-[1.6] text-[#6D6D6D]">{feature.detail}</p>
+                <p className="mt-1 text-[14px] leading-[1.6] text-[#3F3F46]">{feature.detail}</p>
               </li>
             ))}
           </ul>
