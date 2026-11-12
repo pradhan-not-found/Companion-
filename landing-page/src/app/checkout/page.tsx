@@ -14,6 +14,31 @@ const PRICE = 250;
 const PRODUCT = 'Companion license';
 const QR_MINUTES = 10;
 
+// Remembers a submitted order in this browser, so coming back shows it instead of a new checkout.
+const ORDER_COOKIE = 'cmp_order';
+const ORDER_COOKIE_DAYS = 30;
+
+type SavedOrder = { id: string; email: string; at: number };
+
+function readSavedOrder(): SavedOrder | null {
+  const raw = document.cookie.split('; ').find(part => part.startsWith(`${ORDER_COOKIE}=`));
+  if (!raw) return null;
+  try {
+    const order = JSON.parse(decodeURIComponent(raw.slice(ORDER_COOKIE.length + 1))) as Partial<SavedOrder>;
+    if (typeof order.id !== 'string' || typeof order.email !== 'string') return null;
+    return { id: order.id.slice(0, 40), email: order.email.slice(0, 200), at: Number(order.at) || Date.now() };
+  } catch {
+    return null;
+  }
+}
+
+function writeSavedOrder(order: SavedOrder | null) {
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = order
+    ? `${ORDER_COOKIE}=${encodeURIComponent(JSON.stringify(order))}; Max-Age=${ORDER_COOKIE_DAYS * 86400}; Path=/; SameSite=Lax${secure}`
+    : `${ORDER_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
+}
+
 const INDIAN_STATES = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh',
   'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir',
@@ -44,14 +69,6 @@ function AppMarks({ size = 18 }: { size?: number }) {
   );
 }
 
-function Check({ size = 10, color = 'currentColor', weight = 3.2 }: { size?: number; color?: string; weight?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
 export default function CheckoutPage() {
   const [isDark] = useState(false);
   const [step, setStep] = useState<Step>('details');
@@ -70,11 +87,20 @@ export default function CheckoutPage() {
   const [touch, setTouch] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [returning, setReturning] = useState(false);
 
   useEffect(() => {
     // Browser-only values, applied after the first paint to keep hydration stable.
     const frame = requestAnimationFrame(() => {
-      setOrderId(newOrderId());
+      const saved = readSavedOrder();
+      if (saved) {
+        setOrderId(saved.id);
+        setEmail(saved.email);
+        setReturning(true);
+        setStep('done');
+      } else {
+        setOrderId(newOrderId());
+      }
       setTouch(window.matchMedia('(pointer: coarse)').matches);
     });
     return () => cancelAnimationFrame(frame);
@@ -161,9 +187,19 @@ export default function CheckoutPage() {
     } catch {
       // Still show confirmation; the buyer has their order reference.
     }
+    writeSavedOrder({ id: orderId, email: email.trim(), at: Date.now() });
     setSending(false);
     setNoticeOpen(true);
     setStep('done');
+  }
+
+  function startNewOrder() {
+    writeSavedOrder(null);
+    setReturning(false);
+    setEmail('');
+    setOrderId(newOrderId());
+    setRevealed(false);
+    setStep('details');
   }
 
   function revealQr() {
@@ -301,7 +337,7 @@ export default function CheckoutPage() {
                       {labelText('Street address', errors.line1)}
                       <input type="text" autoComplete="address-line1" value={line1} onChange={e => setLine1(e.target.value)} className={inputClass(errors.line1)} aria-invalid={Boolean(errors.line1)} />
                     </label>
-                    <div className="grid grid-cols-[1fr_1fr_96px] gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1.5 min-w-0">
                         {labelText('City', errors.city)}
                         <input type="text" autoComplete="address-level2" value={city} onChange={e => setCity(e.target.value)} className={inputClass(errors.city)} aria-invalid={Boolean(errors.city)} />
@@ -310,9 +346,15 @@ export default function CheckoutPage() {
                         {labelText('State', errors.state)}
                         <StateSelect label="State" value={region} options={INDIAN_STATES} onChange={setRegion} invalid={Boolean(errors.state)} />
                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
                       <label className="flex flex-col gap-1.5 min-w-0">
-                        {labelText('PIN', errors.pin)}
+                        {labelText('PIN code', errors.pin)}
                         <input inputMode="numeric" autoComplete="postal-code" value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} className={`${inputClass(errors.pin)} tabular-nums`} aria-invalid={Boolean(errors.pin)} />
+                      </label>
+                      <label className="flex flex-col gap-1.5 min-w-0">
+                        {labelText('Country')}
+                        <input type="text" autoComplete="country-name" value="India" readOnly className="ck-input is-locked" />
                       </label>
                     </div>
                   </>,
@@ -323,11 +365,13 @@ export default function CheckoutPage() {
                   'Payment method',
                   <div className="grid grid-cols-2 gap-2.5">
                     <div className="ck-method is-selected">
+                      <span className="ck-method__shine" aria-hidden="true" />
                       <span className="ck-method__radio" aria-hidden="true" />
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src="/upi.svg" alt="UPI" height={16} className="h-[16px] w-auto" />
                     </div>
                     <div className="ck-method is-disabled" aria-disabled="true">
+                      <span className="ck-method__shine" aria-hidden="true" />
                       <span className="ck-method__radio" aria-hidden="true" />
                       <span className="text-[13.5px] font-semibold">Card</span>
                       <span className="text-[11px] ml-auto" style={{ color: c.muted }}>
@@ -338,25 +382,37 @@ export default function CheckoutPage() {
                   'mt-5'
                 )}
 
-                <button type="submit" className={`${primary} mt-6`} style={{ background: c.ink, color: c.inkText }}>
-                  Pay ₹{PRICE}.00
+                <button type="submit" className="gel gel--black ck-pay mt-6">
+                  <span className="gel__shine" aria-hidden="true" />
+                  <span className="relative z-10">Pay ₹{PRICE}.00</span>
                 </button>
               </form>
             ) : null}
 
             {step === 'done' ? (
               <div key="done" className="ck-step flex flex-col items-center text-center py-6" role="status">
-                <span className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: c.ink, color: c.inkText }}>
-                  <Check size={22} weight={2.6} />
-                </span>
-                <h2 className="text-[19px] font-semibold tracking-[-0.025em] mt-4">Payment under verification</h2>
-                <p className="text-[13.5px] mt-2 leading-relaxed max-w-[340px]" style={{ color: c.muted }}>
-                  We&apos;re confirming order <span style={{ color: c.text }}>{orderId}</span>. This usually takes about 10 minutes. Your license key and
-                  download link will be emailed to <span style={{ color: c.text }}>{email.trim()}</span>.
+                <VerifyIndicator />
+                <h2 className="text-[20px] font-semibold tracking-[-0.025em] mt-5">{returning ? 'We already have your order' : 'Payment under verification'}</h2>
+                <p className="mt-2.5">
+                  <span className="verify-status">Verifying payment</span>
                 </p>
-                <Link href="/" className="mt-6 h-[44px] px-6 rounded-[10px] inline-flex items-center justify-center text-[14px] font-semibold no-underline" style={{ border: `1px solid ${c.border}`, color: c.text }}>
-                  Back to Companion
-                </Link>
+                <p className="text-[13.5px] mt-3 leading-relaxed max-w-[350px]" style={{ color: c.muted }}>
+                  {returning ? 'We received order ' : 'We’re confirming order '}
+                  <span style={{ color: c.text }}>{orderId}</span>. Verification usually takes about 10 minutes. Your license key and download link will be
+                  emailed to <span style={{ color: c.text }}>{email.trim()}</span>.
+                </p>
+                <div className="mt-7 flex items-center gap-2.5">
+                  <Link href="/" className="gel gel--black gel--sm no-underline">
+                    <span className="gel__shine" aria-hidden="true" />
+                    <span className="relative z-10">back to Companion</span>
+                  </Link>
+                  {returning ? (
+                    <button type="button" onClick={startNewOrder} className="gel gel--white gel--sm">
+                      <span className="gel__shine" aria-hidden="true" />
+                      <span className="relative z-10">new order</span>
+                    </button>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>
@@ -370,26 +426,21 @@ export default function CheckoutPage() {
       {step === 'done' && noticeOpen ? (
         <div className="pay-backdrop" onClick={() => setNoticeOpen(false)}>
           <div role="dialog" aria-modal="true" aria-labelledby="verify-title" className="pay-dialog" onClick={event => event.stopPropagation()}>
-            <span className="verify-ring" aria-hidden="true">
-              <svg width="56" height="56" viewBox="0 0 56 56">
-                <circle cx="28" cy="28" r="25" fill="none" stroke="#E4E4E7" strokeWidth="3" />
-                <circle className="verify-ring__arc" cx="28" cy="28" r="25" fill="none" stroke="#18181B" strokeWidth="3" strokeLinecap="round" pathLength="100" />
-              </svg>
-              <svg className="verify-ring__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </span>
+            <VerifyIndicator />
             <h2 id="verify-title" className="mt-5 text-[20px] font-semibold tracking-[-0.02em]">
               Payment received
             </h2>
-            <p className="mt-2 text-[14px] leading-relaxed max-w-[330px] text-[#6B6B6B]">
-              Your payment is being verified. This usually takes about 10 minutes, and your license key arrives by email at{' '}
+            <p className="mt-2.5">
+              <span className="verify-status">Verifying payment</span>
+            </p>
+            <p className="mt-3 text-[14px] leading-relaxed max-w-[330px] text-[#6B6B6B]">
+              This usually takes about 10 minutes. Your license key arrives by email at{' '}
               <span className="text-[#18181B]">{email.trim()}</span>.
             </p>
             <p className="mt-4 text-[12px] text-[#9A9A9A]">Order {orderId}</p>
-            <button type="button" onClick={() => setNoticeOpen(false)} className="pay-primary mt-6">
-              Got it
+            <button type="button" onClick={() => setNoticeOpen(false)} className="gel gel--black ck-pay mt-6">
+              <span className="gel__shine" aria-hidden="true" />
+              <span className="relative z-10">Got it</span>
             </button>
           </div>
         </div>
@@ -484,5 +535,32 @@ export default function CheckoutPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** A glassy disc with a clock whose hands sweep, ringed by a soft comet arc: "we're on it". */
+function VerifyIndicator() {
+  return (
+    <span className="verify-orb" aria-hidden="true">
+      <svg className="verify-orb__arc" viewBox="0 0 64 64" width="64" height="64">
+        <defs>
+          <linearGradient id="verify-comet" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#18181B" stopOpacity="0" />
+            <stop offset="1" stopColor="#18181B" />
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="29" fill="none" stroke="#EDEDEF" strokeWidth="2" />
+        <circle cx="32" cy="32" r="29" fill="none" stroke="url(#verify-comet)" strokeWidth="2.4" strokeLinecap="round" pathLength="100" strokeDasharray="34 100" />
+      </svg>
+      <span className="verify-orb__disc">
+        <span className="verify-orb__shine" />
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#18181B" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="9" />
+          <line className="verify-orb__hour" x1="12" y1="12" x2="12" y2="8.2" />
+          <line className="verify-orb__minute" x1="12" y1="12" x2="12" y2="5.6" />
+          <circle cx="12" cy="12" r="0.9" fill="#18181B" stroke="none" />
+        </svg>
+      </span>
+    </span>
   );
 }
