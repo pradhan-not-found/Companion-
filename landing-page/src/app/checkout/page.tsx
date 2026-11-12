@@ -9,6 +9,7 @@ import StateSelect from '@/components/StateSelect';
 import { UPI_APPS } from '@/lib/upiApps';
 import { UPI_ID, newOrderId, qrSvg, upiLink } from '@/lib/upiQr';
 import { sendToSheet } from '@/lib/sheets';
+import { readConsent } from '@/lib/consent';
 
 const PRICE = 250;
 const PRODUCT = 'Companion license';
@@ -33,6 +34,8 @@ function readSavedOrder(): SavedOrder | null {
 }
 
 function writeSavedOrder(order: SavedOrder | null) {
+  // Only remember an order when cookies were accepted; forgetting is always allowed.
+  if (order && readConsent() !== 'yes') return;
   const secure = location.protocol === 'https:' ? '; Secure' : '';
   document.cookie = order
     ? `${ORDER_COOKIE}=${encodeURIComponent(JSON.stringify(order))}; Max-Age=${ORDER_COOKIE_DAYS * 86400}; Path=/; SameSite=Lax${secure}`
@@ -153,22 +156,38 @@ export default function CheckoutPage() {
     if (!/^[1-9]\d{5}$/.test(pin)) next.pin = 'Invalid';
     setErrors(next);
     if (Object.keys(next).length) return;
-    // One license per email: stop before payment if this email already owns one.
+    // One license per email: stop before payment if this email already owns one or has paid.
+    if ((await checkEmail(email)) !== 'new') return;
+    setStep('pay');
+  }
+
+  /** Looks the email up: an existing license blocks checkout, an order awaiting verification shows its status. */
+  async function checkEmail(value: string): Promise<'new' | 'owned' | 'pending'> {
+    const address = value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(address)) return 'new';
     try {
       const response = await fetch('/api/license/owned', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() })
+        body: JSON.stringify({ email: address })
       });
-      const body = (await response.json()) as { owned?: boolean };
+      const body = (await response.json()) as { owned?: boolean; pending?: boolean };
       if (body.owned) {
-        setErrors({ email: 'Already licensed' });
-        return;
+        setErrors(current => ({ ...current, email: 'Already licensed' }));
+        return 'owned';
+      }
+      if (body.pending) {
+        writeSavedOrder({ id: '', email: address, at: Date.now() });
+        setEmail(address);
+        setOrderId('');
+        setReturning(true);
+        setStep('done');
+        return 'pending';
       }
     } catch {
-      // If the check can't run, the server still refuses duplicates.
+      // If the check can't run, the server still refuses duplicate licenses.
     }
-    setStep('pay');
+    return 'new';
   }
 
   async function submitOrder() {
@@ -321,7 +340,7 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 gap-3">
                     <label className="flex flex-col gap-1.5">
                       {labelText('Email', errors.email)}
-                      <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass(errors.email)} aria-invalid={Boolean(errors.email)} />
+                      <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} onBlur={e => void checkEmail(e.target.value)} className={inputClass(errors.email)} aria-invalid={Boolean(errors.email)} />
                     </label>
                     <label className="flex flex-col gap-1.5">
                       {labelText('Full name', errors.name)}
@@ -397,8 +416,15 @@ export default function CheckoutPage() {
                   <span className="verify-status">Verifying payment</span>
                 </p>
                 <p className="text-[13.5px] mt-3 leading-relaxed max-w-[350px]" style={{ color: c.muted }}>
-                  {returning ? 'We received order ' : 'We’re confirming order '}
-                  <span style={{ color: c.text }}>{orderId}</span>. Verification usually takes about 10 minutes. Your license key and download link will be
+                  {orderId ? (
+                    <>
+                      {returning ? 'We received order ' : 'We’re confirming order '}
+                      <span style={{ color: c.text }}>{orderId}</span>.{' '}
+                    </>
+                  ) : (
+                    'We received your payment. '
+                  )}
+                  Verification usually takes about 10 minutes. Your license key and download link will be
                   emailed to <span style={{ color: c.text }}>{email.trim()}</span>.
                 </p>
                 <div className="mt-7 flex items-center gap-2.5">

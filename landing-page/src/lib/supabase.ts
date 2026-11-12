@@ -110,6 +110,12 @@ export async function supabaseFind(table: string, match: Record<string, string>,
   }
 }
 
+/** True when this email has an order waiting for payment verification. */
+export async function emailHasPendingOrder(email: string): Promise<boolean> {
+  const rows = await supabaseFind('orders', { email: email.toLowerCase(), status: 'Pending verification' }, 1);
+  return Boolean(rows && rows.length);
+}
+
 /** True when this email already owns a verified Companion license. */
 export async function emailHasLicense(email: string): Promise<boolean> {
   const rows = await supabaseFind('orders', { email: email.toLowerCase(), status: 'Verified' }, 1);

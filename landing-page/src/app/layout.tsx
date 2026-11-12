@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import CookieNotice from "@/components/CookieNotice";
 
 const switzer = localFont({
   src: "../../public/fonts/Switzer-Variable.ttf",
@@ -128,7 +129,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`h-full ${switzer.className}`}>{children}</body>
+      <body className={`h-full ${switzer.className}`}>
+        {children}
+        <CookieNotice />
+      </body>
     </html>
   );
 }

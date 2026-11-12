@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
-import { emailHasLicense } from '@/lib/supabase';
+import { emailHasLicense, emailHasPendingOrder } from '@/lib/supabase';
 
-/** Lets checkout stop a second purchase for an email that already owns a license. */
+/**
+ * Lets checkout recognise an email that already owns a license, or already has an
+ * order waiting for verification, so nobody pays twice.
+ */
 export async function POST(request: Request) {
   let email = '';
   try {
@@ -10,6 +13,7 @@ export async function POST(request: Request) {
   } catch {
     // fall through
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return NextResponse.json({ owned: false });
-  return NextResponse.json({ owned: await emailHasLicense(email) });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return NextResponse.json({ owned: false, pending: false });
+  const [owned, pending] = await Promise.all([emailHasLicense(email), emailHasPendingOrder(email)]);
+  return NextResponse.json({ owned, pending: !owned && pending });
 }
