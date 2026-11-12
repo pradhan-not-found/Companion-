@@ -58,16 +58,18 @@ function StatusPill({ row }: { row: Row }) {
 export default function AdminDashboard() {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('orders');
   const [filter, setFilter] = useState<Filter>('pending');
   const [confirming, setConfirming] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [query, setQuery] = useState('');
+  const [updatedAt, setUpdatedAt] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const response = await fetch('/api/adminpanel/data', { cache: 'no-store' });
       if (response.status === 401) {
@@ -77,11 +79,30 @@ export default function AdminDashboard() {
       const body = (await response.json()) as { ok?: boolean; error?: string } & Partial<Data>;
       if (!body.ok) throw new Error(body.error ?? 'Could not load data');
       setData({ orders: body.orders ?? [], sponsors: body.sponsors ?? [], waitlist: body.waitlist ?? [] });
+      setError('');
+      setUpdatedAt(Date.now());
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not load data');
+      if (!silent) setError(cause instanceof Error ? cause.message : 'Could not load data');
     }
     setLoading(false);
   }, []);
+
+  // Live: refresh every few seconds while the tab is open and visible, and right away on focus.
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === 'visible') void load(true);
+    };
+    const id = window.setInterval(tick, 6000);
+    const clock = window.setInterval(() => setNow(Date.now()), 1000);
+    window.addEventListener('focus', tick);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      window.clearInterval(id);
+      window.clearInterval(clock);
+      window.removeEventListener('focus', tick);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [load]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => void load());
@@ -159,10 +180,37 @@ export default function AdminDashboard() {
 
   const rows = useMemo(() => {
     if (!data) return [];
-    if (tab === 'waitlist') return data.waitlist;
-    const list = tab === 'orders' ? data.orders : data.sponsors;
-    return filter === 'all' ? list : list.filter(row => statusOf(row) === filter);
-  }, [data, tab, filter]);
+    const list = tab === 'waitlist' ? data.waitlist : tab === 'orders' ? data.orders : data.sponsors;
+    const byStatus = tab === 'waitlist' || filter === 'all' ? list : list.filter(row => statusOf(row) === filter);
+    const q = query.trim().toLowerCase();
+    if (!q) return byStatus;
+    return byStatus.filter(row =>
+      [row.reference, row.name, row.email, row.company, row.licenseKey, row.website].some(value => String(value ?? '').toLowerCase().includes(q))
+    );
+  }, [data, tab, filter, query]);
+
+  function downloadCsv() {
+    const columns: [string, string][] =
+      tab === 'orders'
+        ? [['submittedAt', 'Submitted at'], ['reference', 'Order'], ['amount', 'Amount (INR)'], ['name', 'Name'], ['email', 'Email'], ['status', 'Status'], ['licenseKey', 'License key'], ['licensedTo', 'Licensed to'], ['devices', 'Devices'], ['line1', 'Address'], ['city', 'City'], ['state', 'State'], ['pin', 'PIN'], ['verifiedAt', 'Verified at']]
+        : tab === 'sponsors'
+          ? [['submittedAt', 'Submitted at'], ['reference', 'Reference'], ['amount', 'Amount (INR)'], ['company', 'Company'], ['name', 'Name'], ['email', 'Email'], ['website', 'Website'], ['status', 'Status'], ['logo', 'Logo'], ['message', 'Message'], ['verifiedAt', 'Verified at']]
+          : [['submittedAt', 'Submitted at'], ['email', 'Email'], ['name', 'Name'], ['mac', 'Mac'], ['page', 'Page']];
+    const cell = (value: unknown) => {
+      const text = String(value ?? '').replace(/^[=+\-@]/, "'$&");
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    };
+    const csv = [columns.map(([, label]) => cell(label)).join(','), ...rows.map(row => columns.map(([key]) => cell(row[key])).join(','))].join('\r\n');
+    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `companion-${tab}-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const seconds = updatedAt ? Math.max(0, Math.round((now - updatedAt) / 1000)) : null;
+  const liveLabel = seconds === null ? 'Connecting…' : seconds < 5 ? 'Updated just now' : `Updated ${seconds}s ago`;
 
   const pendingCount = (list: Row[]) => list.filter(row => statusOf(row) === 'pending').length;
 
@@ -174,15 +222,12 @@ export default function AdminDashboard() {
           <span className="text-[15px] font-semibold tracking-[-0.02em]">Companion</span>
           <span className="ad-tag">Admin</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={() => void load()} className="ad-ghost" disabled={loading}>
-            <svg className={loading ? 'ad-spin' : ''} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
-              <path d="M21 3v5h-5" />
-            </svg>
-            Refresh
-          </button>
-          <button type="button" onClick={() => void signOut()} className="ad-ghost">
+        <div className="flex items-center gap-3">
+          <span className={`ad-live${error ? ' is-off' : ''}`} aria-live="polite">
+            <span className="ad-live__dot" aria-hidden="true" />
+            {error ? 'Offline' : `Live · ${liveLabel}`}
+          </span>
+          <button type="button" onClick={() => void signOut()} className="ad-signout">
             Sign out
           </button>
         </div>
@@ -224,6 +269,15 @@ export default function AdminDashboard() {
               </button>
             ))}
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Search name, email or reference"
+            aria-label="Search"
+            className="ad-search"
+          />
           {tab !== 'waitlist' ? (
             <div className="ad-seg" role="radiogroup" aria-label="Status">
               {(['pending', 'verified', 'rejected', 'all'] as Filter[]).map(value => (
@@ -232,9 +286,11 @@ export default function AdminDashboard() {
                 </button>
               ))}
             </div>
-          ) : data?.waitlist.length ? (
-            <CopyButton value={data.waitlist.map(row => row.email).filter(Boolean).join(', ')} label="Copy all emails" />
           ) : null}
+          <button type="button" onClick={downloadCsv} disabled={!rows.length} className="ad-btn">
+            Download CSV
+          </button>
+          </div>
         </div>
 
         <section className="ad-list mt-4">

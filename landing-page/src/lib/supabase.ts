@@ -78,3 +78,19 @@ export async function uploadSponsorLogo(reference: string, dataUrl: string): Pro
     return null;
   }
 }
+
+/** Reads rows (newest first). Returns null when Supabase isn't configured or the request fails. */
+export async function supabaseSelect(table: string, order = 'submitted_at.desc', limit = 1000): Promise<Row[] | null> {
+  const cfg = config();
+  if (!cfg) return null;
+  try {
+    const response = await fetch(`${cfg.url}/rest/v1/${table}?select=*&order=${order}&limit=${limit}`, {
+      headers: headers(cfg.key),
+      cache: 'no-store'
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as Row[];
+  } catch {
+    return null;
+  }
+}
