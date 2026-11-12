@@ -192,20 +192,20 @@ export default function SponsorPage() {
       <NavBar />
 
       <main className="flex-1 min-h-0 flex items-center justify-center px-5 py-8">
-        <section className="sp-card relative w-full max-w-[720px]" aria-labelledby="sp-title">
+        <section className="sp-card relative w-full max-w-[600px]" aria-labelledby="sp-title">
           <span className="sp-side sp-side--left" aria-hidden="true">
             <CodexHacker pet="hacker" width={1.5} />
           </span>
           <span className="sp-side sp-side--right" aria-hidden="true">
             <CodexHacker pet="jokebear" width={1.5} />
           </span>
-          <h1 id="sp-title" className="flex items-center gap-1.5 text-[26px] font-semibold tracking-[-0.03em]">
+          <h1 id="sp-title" className="flex items-center gap-1.5 text-[28px] font-semibold tracking-[-0.035em]">
             Sponsors.
             <span className="inline-flex -mb-1" aria-hidden="true">
               <Mascot />
             </span>
           </h1>
-          <p className="mt-5 text-[19px] sm:text-[22px] leading-[1.5] font-light text-[#27272A] max-w-[600px]">
+          <p className="sp-lead mt-5 text-[19px] sm:text-[22px] leading-[1.5] max-w-[600px]">
             You just found the most important part of the website. Companion is made by one developer and sponsored by:
           </p>
 
@@ -244,7 +244,7 @@ export default function SponsorPage() {
           </ul>
 
           <div className="mt-9 flex items-end justify-between gap-6">
-            <p className="text-[19px] sm:text-[21px] leading-[1.45] font-light text-[#27272A]">
+            <p className="sp-lead text-[19px] sm:text-[21px] leading-[1.45]">
               Thank you all.
               <br />
               Souradeep.
