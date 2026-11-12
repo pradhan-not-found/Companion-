@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import CheckoutArt from '@/components/CheckoutArt';
+import CheckoutSteps from '@/components/CheckoutSteps';
+import StateSelect from '@/components/StateSelect';
 import { UPI_APPS } from '@/lib/upiApps';
 import { UPI_ID, newOrderId, qrSvg, upiLink } from '@/lib/upiQr';
 
 const PRICE = 250;
-const PRODUCT = 'Companion Pro';
+const PRODUCT = 'Companion license';
 const QR_MINUTES = 10;
 // Same Apps Script as the waitlist; it receives { type: "order", ... }.
 const ORDER_ENDPOINT =
@@ -41,17 +42,6 @@ function AppMarks({ size = 18 }: { size?: number }) {
           </svg>
         </span>
       ))}
-    </span>
-  );
-}
-
-function UpiBadge({ ink }: { ink: string }) {
-  return (
-    <span
-      className="inline-flex items-center rounded-[5px] px-1.5 h-[20px] text-[10px] font-bold italic tracking-[0.02em]"
-      style={{ border: `1px solid ${ink}`, color: ink }}
-    >
-      UPI
     </span>
   );
 }
@@ -203,8 +193,7 @@ export default function CheckoutPage() {
   ];
   const stepIndex = step === 'done' ? 3 : steps.findIndex(item => item.id === step);
 
-  const fieldClass = 'ck-field h-[40px] w-full min-w-0 rounded-[10px] px-3.5 text-[14px] outline-none transition-[border-color,box-shadow]';
-  const fieldStyle = (bad?: boolean) => ({ background: c.field, border: `1px solid ${bad ? c.error : c.border}`, color: c.text });
+  const inputClass = (error?: string) => `ck-input${error ? ' is-invalid' : ''}`;
   const primary =
     'h-[46px] w-full rounded-[10px] text-[14.5px] font-semibold cursor-pointer transition-[transform,opacity] active:scale-[0.985] hover:opacity-90 disabled:opacity-40 disabled:cursor-default';
 
@@ -226,8 +215,6 @@ export default function CheckoutPage() {
     <div className="ck min-h-dvh flex flex-col" style={{ background: c.bg, color: c.text }}>
       <style>{`
         .ck input::placeholder { color: ${c.subtle}; }
-        .ck-field:focus { border-color: ${c.ink} !important; box-shadow: 0 0 0 3px ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(24,24,27,0.07)'}; }
-        .ck select.ck-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
         .ck-reveal { animation: ckReveal 700ms cubic-bezier(0.16,1,0.3,1) both; }
         .ck-step { animation: ckStep 360ms cubic-bezier(0.16,1,0.3,1) both; }
         .ck-backdrop { animation: ckFade 240ms ease both; }
@@ -243,33 +230,51 @@ export default function CheckoutPage() {
       `}</style>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:min-h-dvh">
-        {/* Brand panel with abstract art */}
-        <aside className="ck-art relative overflow-hidden text-white lg:sticky lg:top-0 lg:h-dvh flex flex-col px-6 sm:px-10 lg:px-14 pt-6 pb-8 lg:py-10">
-          <CheckoutArt />
-
-          <header className="relative z-10 flex items-center gap-2.5">
-            <Link href="/" className="flex items-center gap-2.5 no-underline text-white">
-              <span className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0 ring-1 ring-white/15">
+        {/* Order summary */}
+        <aside className="ck-panel relative lg:sticky lg:top-0 lg:h-dvh flex flex-col px-6 sm:px-10 lg:px-14 pt-6 pb-8 lg:py-10">
+          <header className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2.5 no-underline text-[#18181B]">
+              <span className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
                 <Image src="/icon-192.png" alt="" width={32} height={32} className="object-cover w-full h-full" priority />
               </span>
               <span className="font-semibold text-[17px] tracking-tight">Companion</span>
             </Link>
           </header>
 
-          <section aria-label="Order summary" className="relative z-10 mt-10 lg:my-auto">
-            <p className="text-[14px] font-medium text-white/80">{PRODUCT}</p>
-            <p className="mt-2 text-[44px] sm:text-[52px] font-semibold tracking-[-0.04em] leading-none tabular-nums">₹{PRICE}.00</p>
-            <p className="mt-3 text-[14px] text-white/80">One-time payment · lifetime license</p>
-            <ul className="hidden sm:flex flex-col gap-3 mt-9 text-[14px] text-white">
-              {['Every companion, including new ones', 'Focus mode that closes distractions', 'Compboard with clipboard history', 'Coding agent alerts', 'Every future update'].map(item => (
-                <li key={item} className="flex items-center gap-3">
-                  <span className="w-[18px] h-[18px] rounded-full bg-white/12 ring-1 ring-white/20 inline-flex items-center justify-center shrink-0">
-                    <Check size={10} color="#FFFFFF" weight={3} />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+          <section aria-label="Order summary" className="w-full max-w-[400px] mt-10 lg:my-auto lg:mx-auto">
+            <p className="text-[14px] font-medium text-[#71717A]">Get your {PRODUCT}</p>
+            <p className="mt-1.5 text-[40px] sm:text-[44px] font-semibold tracking-[-0.035em] leading-none tabular-nums text-[#18181B]">₹{PRICE}.00</p>
+
+            <div className="mt-8 flex items-center gap-3.5">
+              <span className="w-11 h-11 rounded-[10px] overflow-hidden shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+                <Image src="/icon-192.png" alt="" width={44} height={44} className="w-full h-full object-cover" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[14px] font-semibold text-[#18181B]">{PRODUCT}</span>
+                <span className="block text-[12.5px] text-[#71717A]">Lifetime · every feature and update</span>
+              </span>
+              <span className="text-[14px] font-semibold tabular-nums text-[#18181B]">₹{PRICE}.00</span>
+            </div>
+
+            <dl className="ck-summary mt-6">
+              <div>
+                <dt>Subtotal</dt>
+                <dd>₹{PRICE}.00</dd>
+              </div>
+              <div>
+                <dt>Taxes</dt>
+                <dd className="text-[#71717A]">Included</dd>
+              </div>
+              <div className="ck-summary__total">
+                <dt>Total due today</dt>
+                <dd>₹{PRICE}.00</dd>
+              </div>
+            </dl>
+
+            <p className="mt-6 text-[12.5px] leading-relaxed text-[#71717A]">
+              Includes every companion, focus mode, Compboard, coding agent alerts and lifetime updates. Your download link and
+              license key are emailed once the payment is verified.
+            </p>
           </section>
         </aside>
 
@@ -277,29 +282,9 @@ export default function CheckoutPage() {
         <main className="flex justify-center px-6 sm:px-10 lg:px-16 py-8 lg:py-12">
           <div className="w-full max-w-[460px] my-auto">
             <h1 className="sr-only">Checkout</h1>
-            <ol className="flex items-center gap-2.5 mb-9 text-[13.5px]" aria-label="Progress">
-              {steps.map((item, index) => {
-                const active = index === stepIndex;
-                const done = index < stepIndex;
-                return (
-                  <li key={item.id} className="flex items-center gap-2.5" aria-current={active ? 'step' : undefined}>
-                    <span
-                      className="transition-colors duration-200"
-                      style={{ color: active ? c.text : done ? c.muted : c.subtle, fontWeight: active ? 600 : 500 }}
-                    >
-                      {item.label}
-                    </span>
-                    {index < steps.length - 1 ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.subtle} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="m9 6 6 6-6 6" />
-                      </svg>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ol>
+            <CheckoutSteps steps={steps.map(item => item.label)} current={stepIndex} />
 
-            <div>
+            <div className="mt-9">
             {step === 'details' || step === 'pay' ? (
               <form key="details" className="ck-step flex flex-col" onSubmit={continueToPay} noValidate>
                 {section(
@@ -307,11 +292,11 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label className="flex flex-col gap-1.5">
                       {labelText('Email', errors.email)}
-                      <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className={fieldClass} style={fieldStyle(Boolean(errors.email))} aria-invalid={Boolean(errors.email)} />
+                      <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass(errors.email)} aria-invalid={Boolean(errors.email)} />
                     </label>
                     <label className="flex flex-col gap-1.5">
                       {labelText('Full name', errors.name)}
-                      <input type="text" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Name on the license" className={fieldClass} style={fieldStyle(Boolean(errors.name))} aria-invalid={Boolean(errors.name)} />
+                      <input type="text" autoComplete="name" value={name} onChange={e => setName(e.target.value)} className={inputClass(errors.name)} aria-invalid={Boolean(errors.name)} />
                     </label>
                   </div>
                 )}
@@ -321,60 +306,46 @@ export default function CheckoutPage() {
                   <>
                     <label className="flex flex-col gap-1.5">
                       {labelText('Street address', errors.line1)}
-                      <input type="text" autoComplete="address-line1" value={line1} onChange={e => setLine1(e.target.value)} placeholder="House number, street, area" className={fieldClass} style={fieldStyle(Boolean(errors.line1))} aria-invalid={Boolean(errors.line1)} />
+                      <input type="text" autoComplete="address-line1" value={line1} onChange={e => setLine1(e.target.value)} className={inputClass(errors.line1)} aria-invalid={Boolean(errors.line1)} />
                     </label>
                     <div className="grid grid-cols-[1fr_1fr_96px] gap-3">
                       <label className="flex flex-col gap-1.5 min-w-0">
                         {labelText('City', errors.city)}
-                        <input type="text" autoComplete="address-level2" value={city} onChange={e => setCity(e.target.value)} placeholder="City" className={fieldClass} style={fieldStyle(Boolean(errors.city))} aria-invalid={Boolean(errors.city)} />
+                        <input type="text" autoComplete="address-level2" value={city} onChange={e => setCity(e.target.value)} className={inputClass(errors.city)} aria-invalid={Boolean(errors.city)} />
                       </label>
-                      <label className="flex flex-col gap-1.5 min-w-0">
+                      <div className="flex flex-col gap-1.5 min-w-0">
                         {labelText('State', errors.state)}
-                        <select autoComplete="address-level1" value={region} onChange={e => setRegion(e.target.value)} className={`${fieldClass} cursor-pointer`} style={{ ...fieldStyle(Boolean(errors.state)), color: region ? c.text : c.subtle }} aria-invalid={Boolean(errors.state)}>
-                          <option value="" disabled>
-                            Select
-                          </option>
-                          {INDIAN_STATES.map(item => (
-                            <option key={item} value={item} style={{ color: '#1A1A1A' }}>
-                              {item}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                        <StateSelect label="State" value={region} options={INDIAN_STATES} onChange={setRegion} invalid={Boolean(errors.state)} />
+                      </div>
                       <label className="flex flex-col gap-1.5 min-w-0">
                         {labelText('PIN', errors.pin)}
-                        <input inputMode="numeric" autoComplete="postal-code" value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="560001" className={`${fieldClass} tabular-nums`} style={fieldStyle(Boolean(errors.pin))} aria-invalid={Boolean(errors.pin)} />
+                        <input inputMode="numeric" autoComplete="postal-code" value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} className={`${inputClass(errors.pin)} tabular-nums`} aria-invalid={Boolean(errors.pin)} />
                       </label>
                     </div>
                   </>,
-                  'mt-4'
+                  'mt-5'
                 )}
 
                 {section(
                   'Payment method',
                   <div className="grid grid-cols-2 gap-2.5">
-                    <div className="rounded-[10px] px-3.5 h-[44px] flex items-center gap-2.5" style={{ border: `1.5px solid ${c.ink}`, background: c.rowActive }}>
-                      <span className="w-[16px] h-[16px] rounded-full flex items-center justify-center shrink-0" style={{ background: c.ink }}>
-                        <Check size={9} color={c.inkText} weight={3.4} />
-                      </span>
-                      <UpiBadge ink={c.text} />
-                      <span className="text-[13.5px] font-semibold">UPI</span>
+                    <div className="ck-method is-selected">
+                      <span className="ck-method__radio" aria-hidden="true" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/upi.svg" alt="UPI" height={16} className="h-[16px] w-auto" />
                     </div>
-                    <div className="rounded-[10px] px-3.5 h-[44px] flex items-center gap-2.5 opacity-50" style={{ border: `1px solid ${c.border}` }} aria-disabled="true">
-                      <svg width="20" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="2" y="5" width="20" height="14" rx="2.5" />
-                        <path d="M2 10h20" />
-                      </svg>
+                    <div className="ck-method is-disabled" aria-disabled="true">
+                      <span className="ck-method__radio" aria-hidden="true" />
                       <span className="text-[13.5px] font-semibold">Card</span>
                       <span className="text-[11px] ml-auto" style={{ color: c.muted }}>
                         Soon
                       </span>
                     </div>
                   </div>,
-                  'mt-4'
+                  'mt-5'
                 )}
 
-                <button type="submit" className={`${primary} mt-4`} style={{ background: c.ink, color: c.inkText }}>
+                <button type="submit" className={`${primary} mt-6`} style={{ background: c.ink, color: c.inkText }}>
                   Pay ₹{PRICE}.00
                 </button>
               </form>
@@ -401,9 +372,7 @@ export default function CheckoutPage() {
                     autoComplete="off"
                     value={utr}
                     onChange={e => setUtr(e.target.value.replace(/[^\d\s]/g, '').slice(0, 14))}
-                    placeholder="e.g. 412345678901"
-                    className={`${fieldClass} tracking-[0.06em] tabular-nums text-[15px]`}
-                    style={fieldStyle(Boolean(errors.utr))}
+                    className={`${inputClass(errors.utr)} tracking-[0.06em] tabular-nums`}
                     aria-invalid={Boolean(errors.utr)}
                     autoFocus
                   />
@@ -424,7 +393,7 @@ export default function CheckoutPage() {
                 </span>
                 <h2 className="text-[19px] font-semibold tracking-[-0.025em] mt-4">Payment submitted</h2>
                 <p className="text-[13.5px] mt-2 leading-relaxed max-w-[320px]" style={{ color: c.muted }}>
-                  We&apos;re verifying order <span style={{ color: c.text }}>{orderId}</span>. Your license key will be emailed to{' '}
+                  We&apos;re verifying order <span style={{ color: c.text }}>{orderId}</span>. Your download link and license key will be emailed to{' '}
                   <span style={{ color: c.text }}>{email.trim()}</span> once it&apos;s confirmed.
                 </p>
                 <Link href="/" className="mt-6 h-[44px] px-6 rounded-[10px] inline-flex items-center justify-center text-[14px] font-semibold no-underline" style={{ border: `1px solid ${c.border}`, color: c.text }}>

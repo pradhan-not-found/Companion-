@@ -2,7 +2,7 @@
 
 // Brand marks: Simple Icons (CC0) for Claude, OpenAI, Gemini and Perplexity; LobeHub Icons (MIT) for Grok.
 const PROMPT = (site: string) =>
-  `Tell me about Companion (${site}), the desktop pet app for Windows. What does it do, and what does the Pro license include?`;
+  `Tell me about Companion (${site}), the desktop pet app for Windows. What does it do, and what does the license include?`;
 
 type Assistant = { name: string; path: string; evenOdd?: boolean; link: (prompt: string) => string };
 

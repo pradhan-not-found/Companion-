@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Pricing',
-  description: 'Download Companion free for Windows. Unlock every companion, focus mode, Compboard and coding agent alerts with a one-time ₹250 Pro license.',
+  description: 'One license, every feature. Pay ₹250 once for every companion, focus mode, Compboard, coding agent alerts and lifetime updates.',
   alternates: { canonical: '/pricing' },
 };
 

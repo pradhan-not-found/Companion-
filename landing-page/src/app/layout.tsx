@@ -119,11 +119,10 @@ export default function RootLayout({
               url: BASE_URL,
               image: `${BASE_URL}/opengraph-image.png`,
               softwareVersion: "1.1.0",
-              downloadUrl: "https://github.com/pradhan-not-found/Companion-/releases/latest",
+              downloadUrl: `${BASE_URL}/pricing`,
               author: { "@type": "Person", name: "Souradeep Pradhan" },
               offers: [
-                { "@type": "Offer", name: "Download", price: "0", priceCurrency: "INR" },
-                { "@type": "Offer", name: "Companion Pro", price: "250", priceCurrency: "INR", url: `${BASE_URL}/pricing` },
+                { "@type": "Offer", name: "Companion license", price: "250", priceCurrency: "INR", url: `${BASE_URL}/pricing` },
               ],
             }),
           }}

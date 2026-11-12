@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/changelog' }
 };
 
-const DOWNLOAD = 'https://github.com/pradhan-not-found/Companion-/releases/latest';
+const DOWNLOAD = '/checkout';
 
 type Release = {
   version: string;

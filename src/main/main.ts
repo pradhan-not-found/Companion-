@@ -197,6 +197,9 @@ function registerWindowsNotificationIdentity(): void {
 }
 
 // Only one companion at a time: a second launch just surfaces the running one.
+/** True when Windows/macOS started Companion at sign-in (see applyLaunchAtLogin). */
+const LAUNCHED_AT_LOGIN = process.argv.includes("--autostart") || app.getLoginItemSettings().wasOpenedAtLogin;
+
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) {
   app.exit(0);
@@ -1244,7 +1247,7 @@ function togglePouchWindow(): void {
   else present();
 }
 
-function createSettingsWindow(): void {
+function createSettingsWindow(options: { background?: boolean } = {}): void {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.focus();
     return;
@@ -1274,7 +1277,9 @@ function createSettingsWindow(): void {
 
   loadRenderer(settingsWindow, "settings");
   settingsWindow.once("ready-to-show", () => {
-    settingsWindow?.show();
+    // When Windows starts Companion at sign-in, open without stealing focus.
+    if (options.background) settingsWindow?.showInactive();
+    else settingsWindow?.show();
     publishSnapshot();
   });
   settingsWindow.on("closed", () => {
@@ -1329,7 +1334,7 @@ function actionMenuItems(): Electron.MenuItemConstructorOptions[] {
           { label: labels.demoHappyReaction, click: () => triggerDemo("happy") }
         ]),
     { type: "separator" },
-    { label: labels.settings, click: createSettingsWindow },
+    { label: labels.settings, click: () => createSettingsWindow() },
     ...(app.isPackaged
       ? [{ label: labels.checkForUpdates, click: () => void checkForUpdates(true) }]
       : [])
@@ -1390,7 +1395,7 @@ function showPetContextMenu(): void {
   const labels = text().menu;
   const petName = getSettings().petNickname.trim();
   const template: Electron.MenuItemConstructorOptions[] = [
-    { label: "Open Companion", click: createSettingsWindow },
+    { label: "Open Companion", click: () => createSettingsWindow() },
     { type: "separator" },
     {
       label: "Log a glass of water",
@@ -5112,7 +5117,8 @@ function startSession(): void {
   lastPetInteractionAt = Date.now();
   scheduleCheckIn();
   updateTrayMenu();
-  if (IS_DEV || !getSettings().onboardingDismissed) createSettingsWindow();
+  // Open the Companion window on every launch, including when Windows starts it at sign-in.
+  createSettingsWindow({ background: LAUNCHED_AT_LOGIN });
   setTimeout(() => greetOnStartup(), 1500);
   setTimeout(announceNewPets, 9000);
   publishSnapshot();
