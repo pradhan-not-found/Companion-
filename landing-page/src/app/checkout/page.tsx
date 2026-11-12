@@ -8,13 +8,11 @@ import CheckoutSteps from '@/components/CheckoutSteps';
 import StateSelect from '@/components/StateSelect';
 import { UPI_APPS } from '@/lib/upiApps';
 import { UPI_ID, newOrderId, qrSvg, upiLink } from '@/lib/upiQr';
+import { sendToSheet } from '@/lib/sheets';
 
 const PRICE = 250;
 const PRODUCT = 'Companion license';
 const QR_MINUTES = 10;
-// Same Apps Script as the waitlist; it receives { type: "order", ... }.
-const ORDER_ENDPOINT =
-  'https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec';
 
 const INDIAN_STATES = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh',
@@ -136,19 +134,14 @@ export default function CheckoutPage() {
     if (sending) return;
     setSending(true);
     try {
-      await fetch(ORDER_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          type: 'order',
-          orderId,
-          product: PRODUCT,
-          amount: PRICE,
-          email: email.trim(),
-          name: name.trim(),
-          address: { line1: line1.trim(), city: city.trim(), state: region, pin, country: 'India' }
-        })
+      await sendToSheet({
+        type: 'order',
+        orderId,
+        product: PRODUCT,
+        amount: PRICE,
+        email: email.trim(),
+        name: name.trim(),
+        address: { line1: line1.trim(), city: city.trim(), state: region, pin, country: 'India' }
       });
     } catch {
       // Still show confirmation; the buyer has their order reference.

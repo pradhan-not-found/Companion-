@@ -1,14 +1,20 @@
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
-import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { bytecodePlugin, defineConfig, externalizeDepsPlugin } from "electron-vite";
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    // Main-process code ships as V8 bytecode, not readable JavaScript.
+    plugins: [externalizeDepsPlugin({ exclude: ["electron-store"] }), bytecodePlugin({ transformArrowFunctions: false })],
     build: {
       rollupOptions: {
         input: {
           main: resolve(__dirname, "src/main/main.ts")
+        },
+        // CommonJS output is required for bytecode compilation.
+        output: {
+          format: "cjs",
+          entryFileNames: "[name].cjs"
         }
       }
     }

@@ -28,7 +28,8 @@ var TABS = {
     fields: [
       ['submittedAt', 'Submitted at'], ['reference', 'Order ID'], ['product', 'Product'], ['amount', 'Amount (INR)'],
       ['email', 'Email'], ['name', 'Name'], ['utr', 'UTR'], ['line1', 'Address'], ['city', 'City'], ['state', 'State'],
-      ['pin', 'PIN'], ['country', 'Country'], ['status', 'Status'], ['licenseKey', 'License key'], ['verifiedAt', 'Verified at']
+      ['pin', 'PIN'], ['country', 'Country'], ['status', 'Status'], ['licenseKey', 'License key'], ['verifiedAt', 'Verified at'],
+      ['licensedTo', 'Licensed to'], ['devices', 'Devices']
     ]
   },
   sponsor: {
@@ -48,6 +49,9 @@ var TABS = {
     fields: [['submittedAt', 'Submitted at'], ['email', 'Email'], ['page', 'Page']]
   }
 };
+
+// How many computers one license can run on (for the one account it belongs to).
+var MAX_DEVICES = 2;
 
 var PENDING = 'Pending verification';
 var VERIFIED = 'Verified';
@@ -128,6 +132,8 @@ function handleAdmin(data) {
     });
   }
 
+  if (data.action === 'activate') return activate(data);
+
   var type = data.type === 'sponsor' ? 'sponsor' : 'order';
   var table = open(type);
   var found = findBy(table, 'reference', clean(data.reference));
@@ -155,12 +161,43 @@ function handleAdmin(data) {
     return json({ ok: true, record: merge(record, { status: REJECTED }) });
   }
 
+  if (data.action === 'reset' && type === 'order') {
+    write(table, found.row, { licensedTo: '', devices: '' });
+    return json({ ok: true, record: merge(record, { licensedTo: '', devices: '' }) });
+  }
+
   if (data.action === 'resend' && type === 'order' && record.status === VERIFIED) {
     sendLicense(record);
     return json({ ok: true, record: record });
   }
 
   return json({ ok: false, error: 'unknown action' });
+}
+
+// ── License activation (called by the website server with ADMIN_KEY) ──
+
+// One license belongs to one account: the first email that activates it. It runs on up to MAX_DEVICES computers.
+function activate(data) {
+  var table = open('order');
+  var found = findBy(table, 'licenseKey', clean(data.licenseKey));
+  if (!found) return json({ ok: false, error: 'not found' });
+  var record = found.record;
+  if (record.status !== VERIFIED) return json({ ok: false, error: 'not verified' });
+
+  var email = clean(data.email).toLowerCase();
+  var device = clean(data.device).toLowerCase();
+  if (!email || !device) return json({ ok: false, error: 'bad request' });
+
+  var owner = String(record.licensedTo || '').toLowerCase();
+  if (owner && owner !== email) return json({ ok: false, error: 'other account' });
+
+  var devices = String(record.devices || '').split(',').map(function (d) { return d.trim(); }).filter(String);
+  if (devices.indexOf(device) === -1) {
+    if (devices.length >= MAX_DEVICES) return json({ ok: false, error: 'device limit' });
+    devices.push(device);
+  }
+  write(table, found.row, { licensedTo: email, devices: devices.join(',') });
+  return json({ ok: true, status: 'activated', email: email, devices: devices });
 }
 
 // ── Emails ───────────────────────────────────────────────────

@@ -1,8 +1,8 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Folder of the built main bundle (works for both the ES module and CommonJS builds).
+const mainDir = dirname(fileURLToPath(import.meta.url));
 
 export const APP_NAME = "Companion";
 export const STORE_NAME = "companion";
@@ -23,8 +23,8 @@ export const SETTINGS_WINDOW = {
   height: 740
 } as const;
 
-export const PRELOAD_PATH = join(__dirname, "../preload/index.cjs");
-export const RENDERER_HTML_PATH = join(__dirname, "../renderer/index.html");
+export const PRELOAD_PATH = join(mainDir, "../preload/index.cjs");
+export const RENDERER_HTML_PATH = join(mainDir, "../renderer/index.html");
 export const IS_DEV = Boolean(process.env.ELECTRON_RENDERER_URL);
 
 export const DISTRACTION_CHECK_INTERVAL_MS = 3000;

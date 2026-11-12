@@ -265,6 +265,7 @@ export type AppSnapshot = {
   update: UpdateStatus;
   agentActivity: AgentActivity | null;
   account: AccountProfile | null;
+  license: { status: "active"; key: string } | { status: "required"; reason?: string };
 };
 
 export type PetImportResult =

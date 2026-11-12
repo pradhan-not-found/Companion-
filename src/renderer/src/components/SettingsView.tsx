@@ -28,6 +28,7 @@ import {
   TodayOverview
 } from "./CompanionPanels";
 import { AuthView } from "./AuthView";
+import { LicenseView } from "./LicenseView";
 import { isAvatarArt } from "./AvatarArt";
 import { ProfilePage, SoftwareUpdate } from "./ProfilePage";
 import type { NavItem } from "./CompanionPanels";
@@ -949,6 +950,10 @@ export function SettingsView(): JSX.Element {
 
   if (!snapshot.account) {
     return <AuthView heroPet={selectedPet} />;
+  }
+
+  if (snapshot.license.status !== "active") {
+    return <LicenseView heroPet={selectedPet} email={snapshot.account.email} reason={snapshot.license.reason} />;
   }
 
   if (!draft.onboardingDismissed) {

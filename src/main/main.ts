@@ -77,6 +77,7 @@ import {
   userPetsRoot
 } from "./petPackages";
 import { createTrayImage } from "./trayIcon";
+import { activateLicense, licenseState, refreshLicense, type LicenseState } from "./license";
 
 const {
   app,
@@ -93,6 +94,14 @@ const {
   shell,
   Tray
 } = electron;
+
+// Installed builds refuse to start with debugging switches, so the app can't be inspected or patched live.
+if (app.isPackaged && process.argv.some(arg => /^--(inspect|inspect-brk|remote-debugging-port|remote-debugging-pipe|js-flags)/i.test(arg))) {
+  app.exit(0);
+}
+
+/** Licenses are enforced in installed builds (set COMPANION_REQUIRE_LICENSE=1 to test in development). */
+const LICENSE_REQUIRED = app.isPackaged || process.env.COMPANION_REQUIRE_LICENSE === "1";
 const { autoUpdater } = updater;
 
 type PetPosition = {
@@ -783,7 +792,8 @@ function snapshot(): AppSnapshot {
     screenBlockEndsAt,
     update: updateStatus,
     agentActivity,
-    account: currentAccount()
+    account: currentAccount(),
+    license: licenseSnapshot()
   };
 }
 
@@ -1070,7 +1080,8 @@ function createPetWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      webSecurity: !IS_DEV
+      webSecurity: !IS_DEV,
+      devTools: !app.isPackaged
     }
   });
 
@@ -1193,7 +1204,8 @@ function ensurePouchWindow(): Electron.BrowserWindow {
       nodeIntegration: false,
       sandbox: true,
       backgroundThrottling: false,
-      webSecurity: !IS_DEV
+      webSecurity: !IS_DEV,
+      devTools: !app.isPackaged
     }
   });
   win.setAlwaysOnTop(true, process.platform === "darwin" ? "floating" : "pop-up-menu");
@@ -1271,7 +1283,8 @@ function createSettingsWindow(options: { background?: boolean } = {}): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      webSecurity: !IS_DEV
+      webSecurity: !IS_DEV,
+      devTools: !app.isPackaged
     }
   });
 
@@ -4855,7 +4868,7 @@ function registerIpc(): void {
     store = storeForSession();
     // A new account always starts with onboarding (pick and name a companion).
     setSettings({ ...getSettings(), userName: result.account.name, onboardingDismissed: false });
-    startSession();
+    startSessionIfLicensed();
     publishSnapshot();
     return result;
   });
@@ -4868,8 +4881,7 @@ function registerIpc(): void {
     if (!result.ok) return result;
     store = storeForSession();
     if (!getSettings().userName) setSettings({ ...getSettings(), userName: result.account.name });
-    startSession();
-    publishSnapshot();
+    startSessionIfLicensed();
     return result;
   });
   ipcMain.handle("auth:sign-in", (_event, input: { email: string; password: string }) => {
@@ -4880,8 +4892,18 @@ function registerIpc(): void {
     if (!result.ok) return result;
     store = storeForSession();
     if (!getSettings().userName) setSettings({ ...getSettings(), userName: result.account.name });
-    startSession();
-    publishSnapshot();
+    startSessionIfLicensed();
+    return result;
+  });
+  ipcMain.handle("license:activate", async (_event, key: unknown) => {
+    const account = currentAccount();
+    if (!account) return { ok: false, error: "Sign in first." };
+    if (typeof key !== "string" || key.length > 64) return { ok: false, error: "Enter your license key." };
+    const result = await activateLicense(account.id, account.email, key);
+    if (result.ok) {
+      startSession();
+      publishSnapshot();
+    }
     return result;
   });
   ipcMain.handle("auth:sign-out", () => {
@@ -4986,7 +5008,7 @@ app.whenReady().then(() => {
   scheduleUpdateChecks();
   applyLaunchAtLogin();
   if (currentAccount()) {
-    startSession();
+    startSessionIfLicensed();
   } else {
     // Signed out: only the welcome / sign-in window.
     createSettingsWindow();
@@ -5100,9 +5122,54 @@ function runCheckIn(): void {
 }
 
 /** Starts the pet, reminders and monitors for the signed-in account. */
+function currentLicense(): LicenseState {
+  const account = currentAccount();
+  if (!account) return { status: "required" };
+  if (!LICENSE_REQUIRED) return { status: "active", key: "", email: account.email, expiresAt: 0 };
+  return licenseState(account.id, account.email);
+}
+
+function licenseSnapshot(): AppSnapshot["license"] {
+  const license = currentLicense();
+  if (license.status !== "active") return { status: "required", reason: license.reason };
+  const key = license.key ? `CMPN-••••-••••-${license.key.slice(-4)}` : "";
+  return { status: "active", key };
+}
+
+/** Starts the companion only for a licensed account; otherwise the window asks for a license key. */
+function startSessionIfLicensed(): void {
+  if (currentLicense().status === "active") {
+    startSession();
+  } else {
+    createSettingsWindow();
+  }
+  publishSnapshot();
+}
+
+let licenseTimer: NodeJS.Timeout | null = null;
+
+/** Keeps the approval fresh; if it can no longer be confirmed, the companion stops and asks for a key. */
+function scheduleLicenseRefresh(): void {
+  if (licenseTimer) clearInterval(licenseTimer);
+  if (!LICENSE_REQUIRED) return;
+  const check = async (): Promise<void> => {
+    const account = currentAccount();
+    if (!account) return;
+    const state = await refreshLicense(account.id, account.email);
+    if (state.status !== "active" && sessionActive) {
+      endSession();
+      createSettingsWindow();
+    }
+    publishSnapshot();
+  };
+  void check();
+  licenseTimer = setInterval(() => void check(), 12 * 60 * 60 * 1000);
+}
+
 function startSession(): void {
   if (sessionActive) return;
   sessionActive = true;
+  scheduleLicenseRefresh();
   getStats();
   restoreFocusSession();
   createPetWindow();

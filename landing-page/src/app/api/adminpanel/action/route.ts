@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isAdmin, sameOrigin } from '@/lib/admin/session';
 import { adminCall } from '@/lib/admin/sheets';
+import { supabaseUpdate } from '@/lib/supabase';
 
-const ACTIONS = new Set(['verify', 'reject', 'resend']);
+const ACTIONS = new Set(['verify', 'reject', 'resend', 'reset']);
 const TYPES = new Set(['order', 'sponsor']);
 
 export async function POST(request: Request) {
@@ -20,7 +21,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Bad request' }, { status: 400 });
   }
 
-  const result = await adminCall(action as 'verify' | 'reject' | 'resend', { type, reference: reference.slice(0, 40) });
-  if (!result.ok) return NextResponse.json({ ok: false, error: result.error ?? 'Action failed' }, { status: 502 });
-  return NextResponse.json({ ok: true, record: result.record });
+  const result = await adminCall(action as 'verify' | 'reject' | 'resend' | 'reset', { type, reference: reference.slice(0, 40) });
+  if (!result.ok || !result.record) return NextResponse.json({ ok: false, error: result.error ?? 'Action failed' }, { status: 502 });
+
+  // Mirror the change into Supabase.
+  const record = result.record;
+  if (type === 'order') {
+    await supabaseUpdate('orders', { reference }, {
+      status: record.status,
+      license_key: record.licenseKey || null,
+      verified_at: record.verifiedAt || null,
+      ...(action === 'reset' ? { licensed_to: null, devices: [] } : {})
+    });
+  } else {
+    await supabaseUpdate('sponsors', { reference }, { status: record.status, verified_at: record.verifiedAt || null });
+  }
+  return NextResponse.json({ ok: true, record });
 }

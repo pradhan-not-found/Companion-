@@ -59,6 +59,7 @@ const api = {
     ipcRenderer.invoke("auth:create", input),
   signIn: (input: { email: string; password: string }): Promise<AccountResult> => ipcRenderer.invoke("auth:sign-in", input),
   signOut: (): Promise<{ ok: boolean }> => ipcRenderer.invoke("auth:sign-out"),
+  activateLicense: (key: string): Promise<{ ok: true } | { ok: false; error: string }> => ipcRenderer.invoke("license:activate", key),
   signInDemo: (): Promise<AccountResult> => ipcRenderer.invoke("auth:demo"),
   updateProfile: (changes: { name?: string }): Promise<AccountResult> =>
     ipcRenderer.invoke("auth:update-profile", changes),

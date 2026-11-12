@@ -6,12 +6,12 @@
 export const SHEETS_ENDPOINT =
   'https://script.google.com/macros/s/AKfycby_GJ4ySv8fRd1odv_mo4eLrle9Kbx-UDa8lKg68koy1CpgBS7Jul9bNUFrmpEQimafrQ/exec';
 
-/** Posts one row. Apps Script web apps do not send CORS headers, so the response is opaque. */
+/** Saves a submission through the site's server, which stores it in Supabase and the Google Sheet. */
 export async function sendToSheet(payload: Record<string, unknown>): Promise<void> {
-  await fetch(SHEETS_ENDPOINT, {
+  const response = await fetch('/api/submit', {
     method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ ...payload, submittedAt: new Date().toISOString(), page: window.location.pathname })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, page: window.location.pathname })
   });
+  if (!response.ok) throw new Error('Could not save');
 }

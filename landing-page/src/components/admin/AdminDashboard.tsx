@@ -100,7 +100,7 @@ export default function AdminDashboard() {
     return () => window.clearTimeout(id);
   }, [confirming]);
 
-  async function act(action: 'verify' | 'reject' | 'resend', type: 'order' | 'sponsor', reference: string) {
+  async function act(action: 'verify' | 'reject' | 'resend' | 'reset', type: 'order' | 'sponsor', reference: string) {
     const key = `${action}:${reference}`;
     if (action !== 'resend' && confirming !== key) {
       setConfirming(key);
@@ -129,7 +129,9 @@ export default function AdminDashboard() {
             : `Verified ${reference}. Sponsor is live.`
           : action === 'reject'
             ? `Rejected ${reference}. Buyer notified.`
-            : `License email resent for ${reference}.`
+            : action === 'reset'
+              ? `Activations cleared for ${reference}.`
+              : `License email resent for ${reference}.`
       );
     } catch (cause) {
       setToast(cause instanceof Error ? cause.message : 'Action failed');
@@ -315,6 +317,14 @@ export default function AdminDashboard() {
                     ) : status === 'verified' && type === 'order' ? (
                       <>
                         {row.licenseKey ? <CopyButton value={row.licenseKey} /> : null}
+                        <span className="text-[12px] text-[#71717A] whitespace-nowrap" title={row.licensedTo ? `Activated by ${row.licensedTo}` : 'Not activated yet'}>
+                          {row.licensedTo ? `${row.devices ? row.devices.split(',').filter(Boolean).length : 0} PC` : 'Not activated'}
+                        </span>
+                        {row.licensedTo ? (
+                          <button type="button" disabled={busy !== null} onClick={() => void act('reset', type, row.reference)} className={`ad-btn${confirming === `reset:${row.reference}` ? ' is-danger' : ''}`}>
+                            {busy === `reset:${row.reference}` ? 'Resetting…' : confirming === `reset:${row.reference}` ? 'Confirm reset' : 'Reset'}
+                          </button>
+                        ) : null}
                         <button type="button" disabled={busy !== null} onClick={() => void act('resend', type, row.reference)} className="ad-btn">
                           {busy === `resend:${row.reference}` ? 'Sending…' : 'Resend email'}
                         </button>

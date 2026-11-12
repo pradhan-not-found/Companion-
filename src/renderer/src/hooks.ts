@@ -40,7 +40,8 @@ export function useSnapshot(): AppSnapshot {
     screenBlockEndsAt: null,
     update: { state: "idle", currentVersion: "", canInstall: true },
     agentActivity: null,
-    account: null
+    account: null,
+    license: { status: "required" }
   });
 
   useEffect(() => {

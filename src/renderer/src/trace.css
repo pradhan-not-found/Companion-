@@ -4775,3 +4775,41 @@ button:active:not(:disabled),
     transform: none;
   }
 }
+
+/* ── License activation ───────────────────────────────────── */
+.license__input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.license__note {
+  color: var(--text-muted, #8a8a8a);
+  font-size: 12.5px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.license__links {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.license__link {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+  padding: 0;
+  transition: opacity 150ms ease;
+}
+
+.license__link:hover {
+  opacity: 1;
+}
