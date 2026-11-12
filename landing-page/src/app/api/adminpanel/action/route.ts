@@ -3,7 +3,7 @@ import { isAdmin, sameOrigin } from '@/lib/admin/session';
 import { adminCall } from '@/lib/admin/sheets';
 import { supabaseUpdate } from '@/lib/supabase';
 
-const ACTIONS = new Set(['verify', 'reject', 'resend', 'reset']);
+const ACTIONS = new Set(['verify', 'reject', 'resend', 'reset', 'revoke', 'restore']);
 const TYPES = new Set(['order', 'sponsor']);
 
 export async function POST(request: Request) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Bad request' }, { status: 400 });
   }
 
-  const result = await adminCall(action as 'verify' | 'reject' | 'resend' | 'reset', { type, reference: reference.slice(0, 40) });
+  const result = await adminCall(action as 'verify' | 'reject' | 'resend' | 'reset' | 'revoke' | 'restore', { type, reference: reference.slice(0, 40) });
   if (!result.ok || !result.record) return NextResponse.json({ ok: false, error: result.error ?? 'Action failed' }, { status: 502 });
 
   // Mirror the change into Supabase.

@@ -15,7 +15,8 @@ import { supabaseUpdate } from '@/lib/supabase';
 const KEY_PATTERN = /^CMPN-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
 const EMAIL_PATTERN = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,}$/;
 const DEVICE_PATTERN = /^[a-f0-9]{32}$/;
-const VALID_DAYS = 30;
+// Short approvals so a revoked license stops working quickly, even on a computer that stays offline.
+const VALID_DAYS = 7;
 
 const attempts = new Map<string, { count: number; reset: number }>();
 
@@ -65,13 +66,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Licensing is being updated. Try again shortly.' }, { status: 503 });
   }
   if (!result.ok) {
-    const known: Record<string, string> = {
-      'not found': 'That license key wasn’t found. Check it against your email.',
-      'not verified': 'This license isn’t active yet. It activates once your payment is verified.',
-      'other account': 'This license belongs to another Companion account.',
-      'device limit': 'This license is already active on the maximum number of computers.'
+    const known: Record<string, [string, string]> = {
+      'not found': ['not-found', 'That license key wasn’t found. Check it against your email.'],
+      'not verified': ['not-verified', 'This license isn’t active yet. It activates once your payment is verified.'],
+      'other account': ['other-account', 'This license belongs to a different email. Sign in to Companion with the email you used at checkout.'],
+      'device limit': ['device-limit', 'This license is already active on the maximum number of computers.'],
+      revoked: ['revoked', 'This license has been revoked. Get a new license to keep using Companion.']
     };
-    return NextResponse.json({ ok: false, error: known[result.error ?? ''] ?? 'Couldn’t check the license. Try again shortly.' }, { status: 403 });
+    const [code, message] = known[result.error ?? ''] ?? ['unavailable', 'Couldn’t check the license. Try again shortly.'];
+    return NextResponse.json({ ok: false, code, error: message }, { status: code === 'unavailable' ? 503 : 403 });
   }
 
   await supabaseUpdate('orders', { license_key: licenseKey }, { licensed_to: email, devices: result.devices ?? [device] });

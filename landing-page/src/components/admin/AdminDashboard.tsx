@@ -13,7 +13,7 @@ type Data = { orders: Row[]; sponsors: Row[]; waitlist: Row[] };
 
 const VERIFIED = 'Verified';
 const REJECTED = 'Rejected';
-const MAX_DEVICES = 2;
+const REVOKED = 'Revoked';
 
 const inr = (value: string | number) => `₹${(Number(value) || 0).toLocaleString('en-IN')}`;
 
@@ -23,7 +23,8 @@ function when(iso: string) {
   return date.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
-function statusOf(row: Row): 'pending' | 'verified' | 'rejected' {
+function statusOf(row: Row): 'pending' | 'verified' | 'rejected' | 'revoked' {
+  if (row.status === REVOKED) return 'revoked';
   if (row.status === VERIFIED) return 'verified';
   if (row.status === REJECTED) return 'rejected';
   return 'pending';
@@ -54,7 +55,8 @@ function CopyButton({ value }: { value: string }) {
 
 function StatusPill({ row }: { row: Row }) {
   const status = statusOf(row);
-  return <span className={`ad-pill is-${status}`}>{status === 'pending' ? 'Pending' : status === 'verified' ? 'Verified' : 'Rejected'}</span>;
+  const label = { pending: 'Pending', verified: 'Verified', rejected: 'Rejected', revoked: 'Revoked' }[status];
+  return <span className={`ad-pill is-${status === 'revoked' ? 'rejected' : status}`}>{label}</span>;
 }
 
 function Icon({ children }: { children: ReactNode }) {
@@ -177,9 +179,9 @@ export default function AdminDashboard() {
     return () => window.clearTimeout(id);
   }, [confirming]);
 
-  async function act(action: 'verify' | 'reject' | 'resend' | 'reset', type: 'order' | 'sponsor', reference: string) {
+  async function act(action: 'verify' | 'reject' | 'resend' | 'reset' | 'revoke' | 'restore', type: 'order' | 'sponsor', reference: string) {
     const key = `${action}:${reference}`;
-    if (action !== 'resend' && confirming !== key) {
+    if (action !== 'resend' && action !== 'restore' && confirming !== key) {
       setConfirming(key);
       return;
     }
@@ -206,6 +208,10 @@ export default function AdminDashboard() {
             : `Verified ${reference}. Sponsor is live.`
           : action === 'reject'
             ? `Rejected ${reference}. Buyer notified.`
+            : action === 'revoke'
+              ? `Revoked ${reference}. It stops working within an hour.`
+              : action === 'restore'
+                ? `Restored ${reference}.`
             : action === 'reset'
               ? `Activations cleared for ${reference}.`
               : `License email resent for ${reference}.`
@@ -239,7 +245,7 @@ export default function AdminDashboard() {
   const rows = useMemo(() => {
     if (!data) return [];
     if (page === 'waitlist') return data.waitlist;
-    if (page === 'licenses') return data.orders.filter(row => row.status === VERIFIED && row.licenseKey);
+    if (page === 'licenses') return data.orders.filter(row => (row.status === VERIFIED || row.status === REVOKED) && row.licenseKey);
     const list = page === 'orders' ? data.orders : page === 'sponsors' ? data.sponsors : [];
     return filter === 'all' ? list : list.filter(row => statusOf(row) === filter);
   }, [data, page, filter]);
@@ -385,11 +391,13 @@ export default function AdminDashboard() {
               <span>Bought by</span>
               <span>Activated by</span>
               <span>PCs</span>
+              <span>Status</span>
               <span />
             </div>
             {rows.map(row => {
               const devices = row.devices ? row.devices.split(',').filter(Boolean).length : 0;
-              const resetKey = `reset:${row.reference}`;
+              const revokeKey = `revoke:${row.reference}`;
+              const revoked = row.status === REVOKED;
               return (
                 <article key={row.licenseKey} className="ad-lrow">
                   <span>
@@ -400,15 +408,20 @@ export default function AdminDashboard() {
                     <span className="block text-[12.5px] text-[#71717A] truncate">{row.email}</span>
                   </span>
                   <span className="min-w-0 truncate">{row.licensedTo || <span className="text-[#A1A1AA]">Not activated</span>}</span>
-                  <span className="tabular-nums">
-                    {devices}/{MAX_DEVICES}
+                  <span className="tabular-nums">{devices}</span>
+                  <span>
+                    <StatusPill row={row} />
                   </span>
                   <span className="text-right">
-                    {row.licensedTo ? (
-                      <button type="button" disabled={busy !== null} onClick={() => void act('reset', 'order', row.reference)} className={`ad-btn${confirming === resetKey ? ' is-danger' : ''}`}>
-                        {busy === resetKey ? 'Resetting…' : confirming === resetKey ? 'Confirm' : 'Reset'}
+                    {revoked ? (
+                      <button type="button" disabled={busy !== null} onClick={() => void act('restore', 'order', row.reference)} className="ad-btn">
+                        {busy === `restore:${row.reference}` ? 'Restoring…' : 'Restore'}
                       </button>
-                    ) : null}
+                    ) : (
+                      <button type="button" disabled={busy !== null} onClick={() => void act('revoke', 'order', row.reference)} className={`ad-btn${confirming === revokeKey ? ' is-danger' : ''}`}>
+                        {busy === revokeKey ? 'Revoking…' : confirming === revokeKey ? 'Confirm revoke' : 'Revoke'}
+                      </button>
+                    )}
                   </span>
                 </article>
               );

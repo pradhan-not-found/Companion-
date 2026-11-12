@@ -98,6 +98,7 @@ const FAQ: { q: string; a: string }[] = [
   { q: 'Do future updates cost extra?', a: 'No. Every update, new feature and new companion is included with your license.' },
   { q: 'How do I pay?', a: 'Scan the UPI QR at checkout with any UPI app and confirm the payment. That is all, there is nothing else to fill in.' },
   { q: 'When do I get my license?', a: 'Usually within 10 minutes. Your download link and license key are emailed to you as soon as the payment is verified.' },
+  { q: 'Can I use it on more than one computer?', a: 'Yes. Your license belongs to the email you buy with. Sign in to Companion with that email on any of your computers and enter your key.' },
   { q: 'Is there a Mac version?', a: 'Companion for Mac is on the way. Join the waitlist from the home page and we will email you the day it launches.' }
 ];
 

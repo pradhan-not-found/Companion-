@@ -23,8 +23,7 @@ const ACTIVATE_URL =
   !electron.app.isPackaged && process.env.COMPANION_LICENSE_URL
     ? process.env.COMPANION_LICENSE_URL
     : "https://trycompanion.vercel.app/api/license/activate";
-const GRACE_MS = 14 * 24 * 60 * 60 * 1000;
-const REFRESH_BEFORE_MS = 7 * 24 * 60 * 60 * 1000;
+const GRACE_MS = 7 * 24 * 60 * 60 * 1000;
 const KEY_PATTERN = /^CMPN-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
 
 type Approval = { payload: string; signature: string };
@@ -110,7 +109,11 @@ export function normalizeKey(input: string): string {
 }
 
 /** Asks the server to activate a key for this account and computer, and stores the signed approval. */
-export async function activateLicense(accountId: string, email: string, input: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function activateLicense(
+  accountId: string,
+  email: string,
+  input: string
+): Promise<{ ok: true } | { ok: false; error: string; code?: string }> {
   const key = normalizeKey(input);
   if (!KEY_PATTERN.test(key)) return { ok: false, error: "Enter the license key from your email, like CMPN-XXXX-XXXX-XXXX." };
   let response: Response;
@@ -123,13 +126,13 @@ export async function activateLicense(accountId: string, email: string, input: s
   } catch {
     return { ok: false, error: "Couldn't reach Companion. Check your internet connection and try again." };
   }
-  let data: { ok?: boolean; error?: string; payload?: string; signature?: string } = {};
+  let data: { ok?: boolean; error?: string; code?: string; payload?: string; signature?: string } = {};
   try {
     data = (await response.json()) as typeof data;
   } catch {
     return { ok: false, error: "Couldn't check the license. Try again shortly." };
   }
-  if (!data.ok || !data.payload || !data.signature) return { ok: false, error: data.error ?? "That license couldn't be activated." };
+  if (!data.ok || !data.payload || !data.signature) return { ok: false, error: data.error ?? "That license couldn't be activated.", code: data.code };
   const approval = { payload: data.payload, signature: data.signature };
   const body = readApproval(approval, email);
   if (!body || body.key !== key) return { ok: false, error: "The license response couldn't be verified." };
@@ -137,19 +140,19 @@ export async function activateLicense(accountId: string, email: string, input: s
   return { ok: true };
 }
 
-/** Refreshes a stored approval in the background when it is close to expiring. */
+// Answers that mean the license is no longer valid (as opposed to "offline, try later").
+const FINAL_CODES = new Set(["revoked", "other-account", "not-found", "not-verified"]);
+
+/**
+ * Re-checks the license with the server (the app calls this at launch and every hour).
+ * A revoked or invalid license is removed right away; when offline, the stored approval
+ * keeps working until it expires plus the grace period.
+ */
 export async function refreshLicense(accountId: string, email: string): Promise<LicenseState> {
-  const current = licenseState(accountId, email);
-  if (current.status !== "active") {
-    const stored = readApproval(storeFor().get(accountId), email);
-    if (stored) await activateLicense(accountId, email, stored.key);
-    return licenseState(accountId, email);
-  }
-  if (current.expiresAt - Date.now() < REFRESH_BEFORE_MS) {
-    const result = await activateLicense(accountId, email, current.key);
-    // A definite rejection (for example the license was reset or revoked) removes the approval.
-    if (!result.ok && /belongs to another|wasn.t found|maximum number/i.test(result.error)) storeFor().delete(accountId);
-  }
+  const stored = readApproval(storeFor().get(accountId), email);
+  if (!stored) return licenseState(accountId, email);
+  const result = await activateLicense(accountId, email, stored.key);
+  if (!result.ok && result.code && FINAL_CODES.has(result.code)) storeFor().delete(accountId);
   return licenseState(accountId, email);
 }
 

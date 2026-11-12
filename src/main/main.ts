@@ -1117,8 +1117,11 @@ function ensurePetWindowVisible(): void {
 
 let pouchWindow: Electron.BrowserWindow | null = null;
 let pouchOpen = false;
+// Set when you drag the Compboard yourself; it then stays put instead of following the pet.
+let pouchDetached = false;
 let pouchHideTimer: NodeJS.Timeout | null = null;
-const POUCH_SIZE = { width: 360, height: 560 };
+// Includes transparent room around the rounded panel for its shadow.
+const POUCH_SIZE = { width: 380, height: 500 };
 
 function sendPouch(): void {
   if (pouchWindow && !pouchWindow.isDestroyed()) pouchWindow.webContents.send("pouch:updated", listPouch());
@@ -1172,7 +1175,7 @@ function pouchPosition(): { x: number; y: number } {
 
 /** Keeps an open Compboard attached to the pet as it moves. */
 function followPetWithPouch(): void {
-  if (!isPouchOpen() || !pouchWindow) return;
+  if (!isPouchOpen() || !pouchWindow || pouchDetached) return;
   const { x, y } = pouchPosition();
   const [cx, cy] = pouchWindow.getPosition();
   if (cx !== x || cy !== y) pouchWindow.setBounds({ x, y, ...POUCH_SIZE }, false);
@@ -1189,7 +1192,7 @@ function ensurePouchWindow(): Electron.BrowserWindow {
     frame: false,
     transparent: true,
     resizable: false,
-    movable: false,
+    movable: true,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -1218,6 +1221,9 @@ function ensurePouchWindow(): Electron.BrowserWindow {
       closePouchWindow();
     }, 0);
   });
+  win.on("will-move", () => {
+    if (pouchOpen) pouchDetached = true;
+  });
   win.on("closed", () => {
     if (pouchWindow === win) {
       pouchWindow = null;
@@ -1240,6 +1246,7 @@ function togglePouchWindow(): void {
 
   const win = ensurePouchWindow();
   pouchOpen = true;
+  pouchDetached = false;
   if (pouchHideTimer) {
     clearTimeout(pouchHideTimer);
     pouchHideTimer = null;
@@ -5163,7 +5170,7 @@ function scheduleLicenseRefresh(): void {
     publishSnapshot();
   };
   void check();
-  licenseTimer = setInterval(() => void check(), 12 * 60 * 60 * 1000);
+  licenseTimer = setInterval(() => void check(), 60 * 60 * 1000);
 }
 
 function startSession(): void {
@@ -5252,12 +5259,18 @@ function clearSessionTimers(): void {
 }
 
 app.on("before-quit", () => {
+  if (licenseTimer) clearInterval(licenseTimer);
   stopPouch();
   clearPouch();
   shutdownWindowsFocusHelper();
   clearSessionTimers();
   if (updateCheckTimer) clearTimeout(updateCheckTimer);
   if (updateCheckInterval) clearInterval(updateCheckInterval);
+});
+
+// Safety net: if anything keeps the process alive after Quit, exit anyway.
+app.on("will-quit", () => {
+  setTimeout(() => app.exit(0), 3000).unref();
 });
 
 app.on("window-all-closed", () => {

@@ -13,8 +13,8 @@ const { clipboard, nativeImage } = electron;
 
 type StoredItem = PouchItem & { png?: Buffer; signature: string };
 
-const MAX_ITEMS = 20;
-const MAX_IMAGES = 8;
+const MAX_ITEMS = 12;
+const MAX_IMAGES = 4;
 const MAX_TEXT = 20_000;
 const PRIVATE_FORMATS = [
   "ExcludeClipboardContentFromMonitorProcessing",

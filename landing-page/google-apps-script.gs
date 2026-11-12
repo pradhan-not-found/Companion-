@@ -50,12 +50,14 @@ var TABS = {
   }
 };
 
-// How many computers one license can run on (for the one account it belongs to).
-var MAX_DEVICES = 2;
+// How many computers one license can run on. 0 means no limit: the owner can use their
+// license on all their own computers, as long as they sign in with the purchase email.
+var MAX_DEVICES = 0;
 
 var PENDING = 'Pending verification';
 var VERIFIED = 'Verified';
 var REJECTED = 'Rejected';
+var REVOKED = 'Revoked';
 
 // ── Entry points ─────────────────────────────────────────────
 
@@ -162,6 +164,17 @@ function handleAdmin(data) {
     return json({ ok: true, record: merge(record, { status: REJECTED }) });
   }
 
+  // Revoke stops the license everywhere; the app re-checks within about an hour.
+  if (data.action === 'revoke' && type === 'order' && record.status === VERIFIED) {
+    write(table, found.row, { status: REVOKED });
+    return json({ ok: true, record: merge(record, { status: REVOKED }) });
+  }
+
+  if (data.action === 'restore' && type === 'order' && record.status === REVOKED) {
+    write(table, found.row, { status: VERIFIED });
+    return json({ ok: true, record: merge(record, { status: VERIFIED }) });
+  }
+
   if (data.action === 'reset' && type === 'order') {
     write(table, found.row, { licensedTo: '', devices: '' });
     return json({ ok: true, record: merge(record, { licensedTo: '', devices: '' }) });
@@ -177,24 +190,25 @@ function handleAdmin(data) {
 
 // ── License activation (called by the website server with ADMIN_KEY) ──
 
-// One license belongs to one account: the first email that activates it. It runs on up to MAX_DEVICES computers.
+// One license belongs to one email: the one used at checkout. It works on any computer signed in with that email.
 function activate(data) {
   var table = open('order');
   var found = findBy(table, 'licenseKey', clean(data.licenseKey));
   if (!found) return json({ ok: false, error: 'not found' });
   var record = found.record;
+  if (record.status === REVOKED) return json({ ok: false, error: 'revoked' });
   if (record.status !== VERIFIED) return json({ ok: false, error: 'not verified' });
 
   var email = clean(data.email).toLowerCase();
   var device = clean(data.device).toLowerCase();
   if (!email || !device) return json({ ok: false, error: 'bad request' });
 
-  var owner = String(record.licensedTo || '').toLowerCase();
-  if (owner && owner !== email) return json({ ok: false, error: 'other account' });
+  var owner = String(record.email || '').toLowerCase();
+  if (!owner || owner !== email) return json({ ok: false, error: 'other account' });
 
   var devices = String(record.devices || '').split(',').map(function (d) { return d.trim(); }).filter(String);
   if (devices.indexOf(device) === -1) {
-    if (devices.length >= MAX_DEVICES) return json({ ok: false, error: 'device limit' });
+    if (MAX_DEVICES && devices.length >= MAX_DEVICES) return json({ ok: false, error: 'device limit' });
     devices.push(device);
   }
   write(table, found.row, { licensedTo: email, devices: devices.join(',') });

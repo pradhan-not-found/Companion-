@@ -3254,19 +3254,20 @@ textarea,
   background: var(--t-card);
   border: 1px solid var(--t-edge);
   border-radius: 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 16px 36px -12px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 0, 0, 0.08);
+  /* The shadow must fit inside the transparent window, or Windows clips it into a visible rectangle. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 22px -12px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.07);
   color: var(--t-ink);
   display: flex;
   flex-direction: column;
   font-family: var(--font);
-  height: calc(100vh - 16px);
-  margin: 8px;
+  height: calc(100vh - 40px);
+  margin: 14px 18px 26px;
   overflow: hidden;
 }
 
 @media (prefers-color-scheme: dark) {
   .pouch {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -12px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 22px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -4812,4 +4813,80 @@ button:active:not(:disabled),
 
 .license__link:hover {
   opacity: 1;
+}
+
+
+/* ── Compboard: drag it by its header ─────────────────────── */
+.pouch .hb__head {
+  -webkit-app-region: drag;
+  cursor: grab;
+}
+
+.pouch .hb__head button,
+.pouch .hb__head a,
+.pouch .hb__head input {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+/* ── Compboard: compact empty state, quiet scrollbar ─────── */
+.pouch .pouch__empty {
+  align-items: center;
+  background: var(--t-row);
+  border: 1px dashed var(--t-row-edge);
+  border-radius: 12px;
+  flex-direction: row;
+  gap: 12px;
+  margin: 4px 2px 0;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.pouch .pouch__empty-icon {
+  border-radius: 10px;
+  flex: none;
+  height: 36px;
+  margin: 0;
+  width: 36px;
+}
+
+.pouch .pouch__empty-icon svg {
+  height: 17px;
+  width: 17px;
+}
+
+.pouch__empty-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pouch .pouch__empty-title {
+  font-size: 13px;
+  margin: 0;
+}
+
+.pouch .pouch__empty-text {
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.pouch .pouch__empty-text kbd {
+  font-size: 10.5px;
+  margin-left: 2px;
+  padding: 0 5px;
+}
+
+.pouch .pouch__body::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+.pouch .pouch__body:hover::-webkit-scrollbar-thumb {
+  background-color: var(--sb-thumb);
+}
+
+.pouch .pouch__foot {
+  padding: 8px 16px 10px;
 }

@@ -94,3 +94,24 @@ export async function supabaseSelect(table: string, order = 'submitted_at.desc',
     return null;
   }
 }
+
+/** Rows matching simple equality filters, e.g. { email: 'a@b.co', status: 'Verified' }. */
+export async function supabaseFind(table: string, match: Record<string, string>, limit = 5): Promise<Row[] | null> {
+  const cfg = config();
+  if (!cfg) return null;
+  const filter = Object.entries(match)
+    .map(([column, value]) => `${encodeURIComponent(column)}=eq.${encodeURIComponent(value)}`)
+    .join('&');
+  try {
+    const response = await fetch(`${cfg.url}/rest/v1/${table}?select=*&${filter}&limit=${limit}`, { headers: headers(cfg.key), cache: 'no-store' });
+    return response.ok ? ((await response.json()) as Row[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True when this email already owns a verified Companion license. */
+export async function emailHasLicense(email: string): Promise<boolean> {
+  const rows = await supabaseFind('orders', { email: email.toLowerCase(), status: 'Verified' }, 1);
+  return Boolean(rows && rows.length);
+}

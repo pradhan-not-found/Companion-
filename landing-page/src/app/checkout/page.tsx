@@ -116,7 +116,7 @@ export default function CheckoutPage() {
     error: '#DC2626'
   };
 
-  function continueToPay(event: FormEvent) {
+  async function continueToPay(event: FormEvent) {
     event.preventDefault();
     const next: Partial<Record<Field, string>> = {};
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) next.email = 'Invalid email';
@@ -127,6 +127,21 @@ export default function CheckoutPage() {
     if (!/^[1-9]\d{5}$/.test(pin)) next.pin = 'Invalid';
     setErrors(next);
     if (Object.keys(next).length) return;
+    // One license per email: stop before payment if this email already owns one.
+    try {
+      const response = await fetch('/api/license/owned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() })
+      });
+      const body = (await response.json()) as { owned?: boolean };
+      if (body.owned) {
+        setErrors({ email: 'Already licensed' });
+        return;
+      }
+    } catch {
+      // If the check can't run, the server still refuses duplicates.
+    }
     setStep('pay');
   }
 
@@ -264,7 +279,7 @@ export default function CheckoutPage() {
 
             <div className="mt-9">
             {step === 'details' || step === 'pay' ? (
-              <form key="details" className="ck-step flex flex-col" onSubmit={continueToPay} noValidate>
+              <form key="details" className="ck-step flex flex-col" onSubmit={event => void continueToPay(event)} noValidate>
                 {section(
                   'Contact',
                   <div className="grid grid-cols-1 gap-3">

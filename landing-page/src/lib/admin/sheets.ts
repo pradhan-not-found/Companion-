@@ -16,7 +16,7 @@ export type AdminList = {
 type AdminResponse = { ok: boolean; error?: string; status?: string; email?: string; devices?: string[]; sent?: number; remaining?: number } & Partial<AdminList> & { record?: AdminRecord };
 
 export async function adminCall(
-  action: 'list' | 'verify' | 'reject' | 'resend' | 'reset' | 'activate' | 'mail',
+  action: 'list' | 'verify' | 'reject' | 'resend' | 'reset' | 'revoke' | 'restore' | 'activate' | 'mail',
   extra: Record<string, string> = {}
 ): Promise<AdminResponse> {
   const key = process.env.SHEETS_ADMIN_KEY;

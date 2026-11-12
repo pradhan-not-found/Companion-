@@ -93,8 +93,9 @@ export function PouchView(): JSX.Element {
       ),
     [items, filter]
   );
-  const images = shown.filter((item) => item.kind === "image");
-  const texts = shown.filter((item) => item.kind !== "image");
+  // Keep the board short: the latest few images and clips.
+  const images = shown.filter((item) => item.kind === "image").slice(0, 4);
+  const texts = shown.filter((item) => item.kind !== "image").slice(0, 6);
 
   async function copy(item: PouchItem): Promise<void> {
     const ok = await window.companion.copyPouchItem(item.id);
@@ -231,10 +232,12 @@ export function PouchView(): JSX.Element {
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
               </svg>
             </span>
-            <p className="pouch__empty-title">Nothing copied yet</p>
-            <p className="pouch__empty-text">
-              Copies and screenshots (<kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>) appear here.
-            </p>
+            <span className="pouch__empty-copy">
+              <span className="pouch__empty-title">Nothing copied yet</span>
+              <span className="pouch__empty-text">
+                Copy text or press <kbd>Win</kbd> <kbd>Shift</kbd> <kbd>S</kbd>
+              </span>
+            </span>
           </div>
         ) : null}
 

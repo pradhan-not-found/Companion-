@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SHEETS_ENDPOINT } from '@/lib/sheets';
-import { supabaseInsert, uploadSponsorLogo } from '@/lib/supabase';
+import { emailHasLicense, supabaseInsert, uploadSponsorLogo } from '@/lib/supabase';
 
 /**
  * Public submissions (orders, sponsors, waitlist). Each one is saved to Supabase and to the
@@ -23,6 +23,10 @@ export async function POST(request: Request) {
   const type = typeof data.type === 'string' && TYPES.has(data.type) ? data.type : null;
   const email = text(data.email, 254).toLowerCase();
   if (!type || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return NextResponse.json({ ok: false, error: 'Bad request' }, { status: 400 });
+
+  if (type === 'order' && (await emailHasLicense(email))) {
+    return NextResponse.json({ ok: false, error: 'This email already has a Companion license.' }, { status: 409 });
+  }
 
   const submittedAt = new Date().toISOString();
   const payload = { ...data, type, email, submittedAt };
