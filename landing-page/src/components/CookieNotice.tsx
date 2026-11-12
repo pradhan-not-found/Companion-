@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { readConsent, writeConsent } from '@/lib/consent';
 
 /** A small card asking once whether Companion may use cookies on this device. */
@@ -25,7 +26,8 @@ export default function CookieNotice() {
     <div className={`cookie-card${leaving ? ' is-leaving' : ''}`} role="dialog" aria-live="polite" aria-label="Cookies">
       <p className="cookie-card__title">Cookies</p>
       <p className="cookie-card__text">
-        We use a cookie to remember your order on this device, so you can see its status when you come back. Nothing is used for ads or tracking.
+        We use a cookie to remember your order on this device, so you can see its status when you come back. Nothing is used for ads or tracking.{' '}
+        <Link href="/privacy">Privacy Policy</Link>
       </p>
       <div className="cookie-card__actions">
         <button type="button" onClick={() => choose('no')} className="gel gel--white gel--sm">

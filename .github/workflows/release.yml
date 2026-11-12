@@ -25,6 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Electron 43 downloads its binary on first use; the bytecode build needs it up front.
+      - name: Download Electron
+        run: node node_modules/electron/install.js
+
       - name: Test
         run: npm test
 

@@ -9,6 +9,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
     { path: "/changelog", priority: 0.8, changeFrequency: "weekly" },
     { path: "/creator", priority: 0.5, changeFrequency: "monthly" },
+    { path: "/privacy", priority: 0.3, changeFrequency: "monthly" },
+    { path: "/terms", priority: 0.3, changeFrequency: "monthly" },
   ];
   return pages.map(page => ({
     url: `${BASE_URL}${page.path}`,

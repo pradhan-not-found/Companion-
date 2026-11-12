@@ -190,6 +190,14 @@ export default function CheckoutPage() {
     return 'new';
   }
 
+  // Recognise an existing order as soon as a full email is typed or autofilled (autofill never fires blur).
+  const typedEmail = email.trim().toLowerCase();
+  useEffect(() => {
+    if (step !== 'details' || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(typedEmail)) return;
+    const timer = window.setTimeout(() => void checkEmail(typedEmail), 650);
+    return () => window.clearTimeout(timer);
+  }, [typedEmail, step]);
+
   async function submitOrder() {
     if (sending) return;
     setSending(true);
@@ -340,7 +348,7 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-1 gap-3">
                     <label className="flex flex-col gap-1.5">
                       {labelText('Email', errors.email)}
-                      <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} onBlur={e => void checkEmail(e.target.value)} className={inputClass(errors.email)} aria-invalid={Boolean(errors.email)} />
+                      <input type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass(errors.email)} aria-invalid={Boolean(errors.email)} />
                     </label>
                     <label className="flex flex-col gap-1.5">
                       {labelText('Full name', errors.name)}
@@ -405,6 +413,17 @@ export default function CheckoutPage() {
                   <span className="gel__shine" aria-hidden="true" />
                   <span className="relative z-10">Pay ₹{PRICE}.00</span>
                 </button>
+                <p className="mt-3 text-center text-[11.5px] leading-relaxed text-[#9A9A9A]">
+                  By paying you agree to our{' '}
+                  <Link href="/terms" className="text-[#52525B] underline underline-offset-2">
+                    Terms
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" className="text-[#52525B] underline underline-offset-2">
+                    Privacy Policy
+                  </Link>
+                  .
+                </p>
               </form>
             ) : null}
 

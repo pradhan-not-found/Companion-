@@ -13,10 +13,10 @@ export default function LandingPage() {
 
 
   return (
-    <div className="min-h-dvh lg:h-dvh lg:overflow-hidden bg-white text-[#111] flex flex-col">
+    <div className="min-h-dvh lg:h-dvh lg:overflow-hidden overflow-x-clip bg-white text-[#111] flex flex-col">
       <NavBar />
 
-      <div className="flex-1 grid grid-rows-[240px_auto] sm:grid-rows-[300px_auto] lg:grid-rows-1 lg:grid-cols-2 lg:min-h-0">
+      <div className="flex-1 grid grid-cols-[minmax(0,1fr)] grid-rows-[240px_auto] sm:grid-rows-[300px_auto] lg:grid-rows-1 lg:grid-cols-2 lg:min-h-0">
       <PetStrip />
 
       <section className="min-h-0 flex flex-col justify-between px-5 sm:px-12 lg:px-16 py-7 sm:py-9">
@@ -42,7 +42,7 @@ export default function LandingPage() {
           </p>
 
         <div className="mt-8">
-          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-start gap-x-4 gap-y-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start gap-x-4 gap-y-3">
             <div className="flex flex-col items-center gap-1.5">
               <MacWaitlist />
               <span className="text-[11.5px] leading-none text-center text-[#111]">coming soon · mac</span>
@@ -68,7 +68,17 @@ export default function LandingPage() {
 
         <div>
           <footer className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[12px] text-[#8a8a8a]">
-            <span>© 2026 Companion. All rights reserved.</span>
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span>© 2026 Companion. All rights reserved.</span>
+              <span className="flex items-center gap-3">
+                <Link href="/privacy" className="no-underline text-[#8a8a8a] hover:text-[#111]">
+                  Privacy
+                </Link>
+                <Link href="/terms" className="no-underline text-[#8a8a8a] hover:text-[#111]">
+                  Terms
+                </Link>
+              </span>
+            </span>
             <AskAI />
           </footer>
         </div>

@@ -2522,3 +2522,98 @@ html {
     animation: none;
   }
 }
+
+/* ── Legal pages ──────────────────────────────────────────── */
+.legal-toc {
+  align-self: start;
+  position: sticky;
+  top: 24px;
+}
+
+.legal-body section + section {
+  border-top: 1px solid #f0f0f0;
+  margin-top: 32px;
+  padding-top: 32px;
+}
+
+.legal-body h2 {
+  align-items: baseline;
+  display: flex;
+  font-size: 18px;
+  font-weight: 600;
+  gap: 12px;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.legal-body__num {
+  color: #b4b4b4;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.legal-body p,
+.legal-body li {
+  color: #52525b;
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+.legal-body p + p {
+  margin-top: 10px;
+}
+
+.legal-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: disc;
+  margin-top: 6px;
+  padding-left: 20px;
+}
+
+.legal-body b {
+  color: #18181b;
+  font-weight: 600;
+}
+
+.legal-body a,
+.cookie-card__text a {
+  color: #18181b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Phone navigation ─────────────────────────────────────── */
+.nav-menu {
+  animation: navMenuIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 18px 30px -22px rgba(0, 0, 0, 0.35);
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 56px;
+  z-index: 40;
+}
+
+.nav-menu a {
+  border-bottom: 1px solid #f2f2f2;
+  color: #111111;
+  display: flex;
+  font-size: 15px;
+  padding: 14px 20px;
+  text-decoration: none;
+}
+
+.nav-menu a[aria-current='page'] {
+  font-weight: 600;
+}
+
+@keyframes navMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}

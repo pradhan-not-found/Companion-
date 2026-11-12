@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 interface NavBarProps {
@@ -19,6 +20,16 @@ const NAV_LINKS = [
 
 export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the phone menu when the page changes or the screen grows.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    const wide = window.matchMedia('(min-width: 640px)');
+    wide.addEventListener('change', close);
+    return () => wide.removeEventListener('change', close);
+  }, [menuOpen]);
   const text = isDark ? '#F5F5F5' : '#111111';
   const quiet = isDark ? '#9A9A9A' : '#737373';
   const bg = isDark ? '#0E0E0E' : '#FFFFFF';
@@ -26,7 +37,7 @@ export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
 
   return (
     <header
-      className="shrink-0 h-14 px-4 sm:px-7 flex items-center gap-5 sm:gap-7 border-b"
+      className="relative shrink-0 h-14 px-4 sm:px-7 flex items-center gap-5 sm:gap-7 border-b"
       style={{ background: bg, borderColor: line }}
     >
       <Link href="/" className="flex items-center gap-2 h-full no-underline shrink-0" style={{ color: text }}>
@@ -34,7 +45,7 @@ export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
         <span className="text-[16px] font-semibold tracking-[-0.04em] leading-none">Companion</span>
       </Link>
 
-      <nav className="flex items-center h-full gap-4 sm:gap-5 min-w-0 overflow-x-auto [scrollbar-width:none]" aria-label="Primary">
+      <nav className="hidden sm:flex items-center h-full gap-5 min-w-0" aria-label="Primary">
         {NAV_LINKS.map(link => {
           const active = pathname === link.href;
           return (
@@ -82,7 +93,29 @@ export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
         >
           Get license
         </Link>
+        <button
+          type="button"
+          onClick={() => setMenuOpen(open => !open)}
+          className="sm:hidden w-9 h-9 -mr-1.5 inline-flex items-center justify-center cursor-pointer"
+          style={{ color: text }}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            {menuOpen ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 8h16M4 16h16" />}
+          </svg>
+        </button>
       </div>
+
+      {menuOpen ? (
+        <nav className="nav-menu sm:hidden" aria-label="Menu">
+          {NAV_LINKS.map(link => (
+            <Link key={link.href} href={link.href} aria-current={pathname === link.href ? 'page' : undefined} onClick={() => setMenuOpen(false)}>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
     </header>
   );
 }
