@@ -250,7 +250,7 @@ export default function CheckoutPage() {
           <header className="relative z-10 flex items-center gap-2.5">
             <Link href="/" className="flex items-center gap-2.5 no-underline text-white">
               <span className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0 ring-1 ring-white/15">
-                <Image src="/applogo.png" alt="" width={32} height={32} className="object-cover w-full h-full" priority />
+                <Image src="/icon-192.png" alt="" width={32} height={32} className="object-cover w-full h-full" priority />
               </span>
               <span className="font-semibold text-[17px] tracking-tight">Companion</span>
             </Link>
@@ -478,7 +478,7 @@ export default function CheckoutPage() {
               >
                 <div className="w-full h-full [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: qr }} />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[11px] bg-white p-[4px]" style={{ width: 46, height: 46 }}>
-                  <Image src="/applogo.png" alt="Companion" width={38} height={38} className="rounded-[8px] w-full h-full" />
+                  <Image src="/icon-192.png" alt="Companion" width={38} height={38} className="rounded-[8px] w-full h-full" />
                 </span>
               </div>
               {!revealed ? (

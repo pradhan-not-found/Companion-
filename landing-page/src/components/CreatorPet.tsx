@@ -122,8 +122,8 @@ export default function CreatorPet() {
         style={{
           width: '100%',
           height: '100%',
-          backgroundImage: 'url(/pets/pupu/spritesheet.webp)',
-          backgroundSize: '768px 936px', // Scaled 1536x1872 by 0.5
+          backgroundImage: 'url(/sprites/pupu-walk.webp)',
+          backgroundSize: '576px 208px', // 6 frames x 2 rows (idle, walk), shown at half size
           backgroundPosition: `${-(frame % 6) * 96}px ${-rowIndex * 104}px`,
           filter: 'drop-shadow(0px 10px 10px rgba(0,0,0,0.1))',
           imageRendering: 'pixelated'

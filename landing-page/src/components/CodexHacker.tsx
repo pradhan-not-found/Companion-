@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { preload } from 'react-dom';
 
 const WORKERS = {
-  // Savage Codex Hacker: row 0 is the typing loop.
-  hacker: { sheet: '/pets/savage-codex-hacker/spritesheet.webp', rows: 9, row: 0, frames: 6 },
-  // JokeBear: row 1 is the calm laptop-typing loop.
-  jokebear: { sheet: '/pets/jokebear-codexpet/spritesheet.webp', rows: 11, row: 1, frames: 8 }
+  // Savage Codex Hacker typing loop.
+  hacker: { sheet: '/sprites/savage-codex-hacker.webp', frames: 6 },
+  // JokeBear's calm laptop-typing loop.
+  jokebear: { sheet: '/sprites/jokebear-codexpet-typing.webp', frames: 8 }
 } as const;
 
 const FRAME_W = 192;
 const FRAME_H = 208;
-const COLS = 8;
 
 /** A pet typing on its laptop. Sized in em so it tracks the text beside it. */
 export default function CodexHacker({
@@ -24,6 +24,7 @@ export default function CodexHacker({
   className?: string;
 }) {
   const worker = WORKERS[pet];
+  preload(worker.sheet, { as: 'image', fetchPriority: 'high' });
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
@@ -41,8 +42,8 @@ export default function CodexHacker({
         width: `${width}em`,
         height: `${height}em`,
         backgroundImage: `url('${worker.sheet}')`,
-        backgroundPosition: `${-frame * width}em ${-worker.row * height}em`,
-        backgroundSize: `${width * COLS}em ${height * worker.rows}em`,
+        backgroundPosition: `${-frame * width}em 0em`,
+        backgroundSize: `${width * worker.frames}em ${height}em`,
         backgroundRepeat: 'no-repeat',
         imageRendering: 'pixelated'
       }}

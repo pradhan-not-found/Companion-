@@ -30,7 +30,7 @@ export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
       style={{ background: bg, borderColor: line }}
     >
       <Link href="/" className="flex items-center gap-2 h-full no-underline shrink-0" style={{ color: text }}>
-        <Image src="/applogo.png" alt="" width={24} height={24} className="block rounded-[6px]" priority />
+        <Image src="/icon-192.png" alt="" width={24} height={24} className="block rounded-[6px]" priority />
         <span className="text-[16px] font-semibold tracking-[-0.04em] leading-none">Companion</span>
       </Link>
 

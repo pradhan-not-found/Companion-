@@ -22,7 +22,7 @@ export default function LandingPage() {
       <section className="min-h-0 flex flex-col justify-between px-5 sm:px-12 lg:px-16 py-7 sm:py-9">
         <div className="flex flex-col justify-center lg:flex-1">
           <div className="flex items-center gap-2.5 mb-6">
-            <Image src="/applogo.png" alt="" width={36} height={36} className="rounded-[9px]" priority />
+            <Image src="/icon-192.png" alt="" width={36} height={36} className="rounded-[9px]" priority />
             <span className="text-[18px] font-semibold tracking-[-0.04em] leading-none">Companion</span>
           </div>
           <h1 className="font-semibold tracking-[-0.05em] leading-[0.92] text-[clamp(38px,9.4vw,78px)] lg:text-[clamp(52px,6.1vw,78px)]">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { preload } from 'react-dom';
 
 interface PetConfig {
   id: string;
@@ -16,14 +17,14 @@ interface PetConfig {
 }
 
 export const PETS: PetConfig[] = [
-  { id: 'angry-cat', name: 'Angry Cat', src: '/pets/angry-cat/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'capy-puff', name: 'Capy Puff', src: '/pets/capy-puff/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'jokebear-codexpet', name: 'JokeBear', src: '/pets/jokebear-codexpet/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
-  { id: 'pupu', name: 'Pupu', src: '/pets/pupu/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'droid', name: 'Droid', src: '/pets/droid/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'boba', name: 'Boba', src: '/pets/boba/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 11, framesPerRow: 6 },
-  { id: 'wangcai', name: 'Wangcai', src: '/pets/wangcai/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
-  { id: 'whaledou', name: 'Whaledou', src: '/pets/whaledou/spritesheet.webp', frameW: 192, frameH: 208, gridCols: 8, gridRows: 9, framesPerRow: 6 },
+  { id: 'angry-cat', name: 'Angry Cat', src: '/sprites/angry-cat.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'capy-puff', name: 'Capy Puff', src: '/sprites/capy-puff.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'jokebear-codexpet', name: 'JokeBear', src: '/sprites/jokebear-codexpet.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'pupu', name: 'Pupu', src: '/sprites/pupu.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'droid', name: 'Droid', src: '/sprites/droid.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'boba', name: 'Boba', src: '/sprites/boba.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'wangcai', name: 'Wangcai', src: '/sprites/wangcai.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
+  { id: 'whaledou', name: 'Whaledou', src: '/sprites/whaledou.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
 ];
 
 const TILES: { pet: number; color: string; column: string; row: string }[] = [
@@ -61,6 +62,8 @@ export function Sprite({ pet, frame, scale }: { pet: PetConfig; frame: number; s
 const LIGHT = new Set(['#FFE14A', '#C6F24E']);
 
 export default function PetStrip() {
+  // Start downloading every sprite strip with the page, before hydration.
+  PETS.forEach(pet => preload(pet.src, { as: 'image', fetchPriority: 'high' }));
   const [frame, setFrame] = useState(0);
   const [phone, setPhone] = useState(false);
   const [height, setHeight] = useState(0);

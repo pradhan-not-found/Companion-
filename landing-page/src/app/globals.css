@@ -372,9 +372,7 @@ body {
 
 .ck-grid {
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M0 -6V6M-6 0H6M96 90V102M90 96H102M0 90V102M-6 96H6M96 -6V6M90 0H102' stroke='white' stroke-opacity='0.55' stroke-width='1.2'/%3E%3C/svg%3E"),
-    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath d='M0 -6V6M-6 0H6M96 90V102M90 96H102M0 90V102M-6 96H6M96 -6V6M90 0H102' stroke='white' stroke-opacity='0.45' stroke-width='1.2'/%3E%3C/svg%3E");
   background-position: -1px -1px;
   background-size: 96px 96px;
   inset: 0;
