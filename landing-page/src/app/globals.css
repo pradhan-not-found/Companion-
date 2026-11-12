@@ -980,6 +980,16 @@ body {
   top: 36px;
 }
 
+.sp-side--left-top {
+  right: calc(100% + 36px);
+  top: 36px;
+}
+
+.sp-side--right-bottom {
+  bottom: 28px;
+  left: calc(100% + 36px);
+}
+
 .sp-tile--lg {
   border-radius: 30px;
   cursor: default;
@@ -1391,25 +1401,4 @@ html {
 
 .hero-pill:hover svg {
   transform: translateX(2px);
-}
-
-/* ── Wandering pets ───────────────────────────────────────── */
-.wanderers {
-  display: none;
-  inset: 56px 0 0;
-  overflow: hidden;
-  pointer-events: none;
-  position: absolute;
-  z-index: 0;
-}
-
-@media (min-width: 1180px) {
-  .wanderers {
-    display: block;
-  }
-}
-
-.wander {
-  position: absolute;
-  transform: translateX(-50%);
 }

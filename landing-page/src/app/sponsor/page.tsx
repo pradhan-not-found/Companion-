@@ -6,7 +6,6 @@ import Link from 'next/link';
 import NavBar from '@/components/NavBar';
 import UpiPayDialog from '@/components/UpiPayDialog';
 import CodexHacker from '@/components/CodexHacker';
-import Wanderers from '@/components/Wanderers';
 import { PETS, Sprite } from '@/components/PetStrip';
 import { SPONSORS } from '@/lib/sponsors';
 import { sendToSheet } from '@/lib/sheets';
@@ -41,6 +40,18 @@ function domainOf(url: string) {
   } catch {
     return '';
   }
+}
+
+/** A pet playing its idle loop, sized to match the typing pets beside it. */
+function IdlePet({ id }: { id: string }) {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const timer = window.setInterval(() => setFrame(value => value + 1), 180);
+    return () => window.clearInterval(timer);
+  }, []);
+  const pet = PETS.find(item => item.id === id);
+  return pet ? <Sprite pet={pet} frame={frame} scale={0.5} /> : null;
 }
 
 function Mascot() {
@@ -191,13 +202,6 @@ export default function SponsorPage() {
 
   return (
     <div className="relative min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-white text-[#18181B]">
-      <Wanderers
-        lanes={[
-          { pet: 'capy-puff', top: 'calc(100% - 96px)', from: 4, to: 34 },
-          { pet: 'droid', top: 'calc(100% - 96px)', from: 62, to: 90, delay: 2500 },
-          { pet: 'boba', top: '84px', from: 68, to: 92, scale: 0.32, delay: 5000 }
-        ]}
-      />
       <NavBar />
 
       <main className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-5 py-8">
@@ -207,6 +211,12 @@ export default function SponsorPage() {
           </span>
           <span className="sp-side sp-side--right" aria-hidden="true">
             <CodexHacker pet="jokebear" width={1.5} />
+          </span>
+          <span className="sp-side sp-side--left-top" aria-hidden="true">
+            <IdlePet id="capy-puff" />
+          </span>
+          <span className="sp-side sp-side--right-bottom" aria-hidden="true">
+            <IdlePet id="droid" />
           </span>
           <h1 id="sp-title" className="flex items-center gap-1.5 text-[28px] font-semibold tracking-[-0.035em]">
             Sponsors.
