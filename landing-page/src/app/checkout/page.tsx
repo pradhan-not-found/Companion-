@@ -271,14 +271,6 @@ export default function CheckoutPage() {
               ))}
             </ul>
           </section>
-
-          <footer className="relative z-10 hidden lg:flex items-center justify-between text-[12px] text-white/70">
-            <span>© 2026 Companion</span>
-            <span className="flex items-center gap-2">
-              Pay with any UPI app
-              <AppMarks size={12} />
-            </span>
-          </footer>
         </aside>
 
         {/* Checkout */}
