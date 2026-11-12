@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRightIcon, XIcon } from "./Icons";
+import { ChevronRightIcon, MinusIcon, PlusIcon, XIcon } from "./Icons";
 import type { CSSProperties, JSX, ReactNode } from "react";
 import { i18n, LANGUAGE_OPTIONS, resolveLanguage } from "../../../shared/i18n";
 import { allPets } from "../../../shared/bundledPets";
@@ -156,7 +156,7 @@ function NumberControl({
       <button
         type="button"
         className="pref-stepper__btn"
-        aria-label="−"
+        aria-label="Decrease"
         disabled={value <= min}
         onClick={() => {
           const next = clamp(value - step);
@@ -164,7 +164,7 @@ function NumberControl({
           onChange(next);
         }}
       >
-        −
+        <MinusIcon size={14} />
       </button>
       <input
         type="text"
@@ -190,7 +190,7 @@ function NumberControl({
       <button
         type="button"
         className="pref-stepper__btn"
-        aria-label="+"
+        aria-label="Increase"
         disabled={value >= max}
         onClick={() => {
           const next = clamp(value + step);
@@ -198,7 +198,7 @@ function NumberControl({
           onChange(next);
         }}
       >
-        +
+        <PlusIcon size={14} />
       </button>
     </div>
   );
@@ -929,7 +929,6 @@ export function SettingsView(): JSX.Element {
       badge: newPets.length ? "New" : undefined
     },
     { id: "reminders", label: labels.reminderPageTitle, icon: NavIcons.reminders },
-    { id: "profile", label: english ? "Profile" : "Profile", icon: NavIcons.profile },
     { id: "updates", label: "Updates", icon: NavIcons.updates, dot: updateReady },
     { id: "settings", label: labels.title, icon: NavIcons.settings }
   ];

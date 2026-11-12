@@ -30,6 +30,12 @@ export const ArrowLeftIcon = (props: IconProps): JSX.Element => (
   </Svg>
 );
 
+export const MinusIcon = (props: IconProps): JSX.Element => (
+  <Svg {...props}>
+    <path d="M5 12h14" />
+  </Svg>
+);
+
 export const PlusIcon = (props: IconProps): JSX.Element => (
   <Svg {...props}>
     <path d="M5 12h14" />

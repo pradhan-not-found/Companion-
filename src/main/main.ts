@@ -586,7 +586,19 @@ function text(): ReturnType<typeof i18n> {
   return i18n(getSettings().language);
 }
 
+/** Settings that decide when break, water and custom reminders fire. */
+function reminderScheduleKey(settings: Settings): string {
+  return JSON.stringify([
+    settings.breakReminderEnabled,
+    settings.breakIntervalMinutes,
+    settings.hydrationReminderEnabled,
+    settings.hydrationIntervalMinutes,
+    settings.customReminders
+  ]);
+}
+
 function setSettings(next: Settings): void {
+  const previous = getSettings();
   const installedPets = installedPetsFromDisk();
   const selectedPetId = allPets(installedPets).some((pet) => pet.slug === next.selectedPetId)
     ? next.selectedPetId
@@ -606,6 +618,14 @@ function setSettings(next: Settings): void {
     lyricsModeEnabled: Boolean(next.lyricsModeEnabled),
     screenBlockDurationSeconds: normalizeNumber(next.screenBlockDurationSeconds, 120, 15, 600),
     screenBlockCoverageRatio: normalizeNumber(next.screenBlockCoverageRatio, 0.4, 0.35, 1),
+    breakReminderEnabled: Boolean(next.breakReminderEnabled),
+    breakIntervalMinutes: Math.round(normalizeNumber(next.breakIntervalMinutes, DEFAULT_SETTINGS.breakIntervalMinutes, 1, 180)),
+    screenBlockReminderEnabled: Boolean(next.screenBlockReminderEnabled),
+    hydrationReminderEnabled: Boolean(next.hydrationReminderEnabled),
+    hydrationIntervalMinutes: Math.round(normalizeNumber(next.hydrationIntervalMinutes, DEFAULT_SETTINGS.hydrationIntervalMinutes, 1, 240)),
+    focusDurationMinutes: Math.round(normalizeNumber(next.focusDurationMinutes, DEFAULT_SETTINGS.focusDurationMinutes, 1, 120)),
+    petCheckInMinutes: Math.round(normalizeNumber(next.petCheckInMinutes, DEFAULT_SETTINGS.petCheckInMinutes, 2, 60)),
+    distractionGraceSeconds: Math.round(normalizeNumber(next.distractionGraceSeconds, DEFAULT_SETTINGS.distractionGraceSeconds, 0, 120)),
     customReminders: normalizeCustomReminders(next.customReminders),
     agentActivityEnabled: Boolean(next.agentActivityEnabled),
     agentCompletionSoundEnabled: Boolean(next.agentCompletionSoundEnabled),
@@ -618,7 +638,10 @@ function setSettings(next: Settings): void {
   resizePetWindowForScale(currentPetDisplayScale(normalized), Boolean(currentBubble));
   sendToAll("settings:updated", normalized);
   settingsWindow?.setTitle(APP_NAME);
-  scheduleReminderTimers();
+  // Only restart reminder countdowns when their own settings change; editing
+  // your name or pet should not push the next break further away.
+  if (reminderScheduleKey(previous) !== reminderScheduleKey(normalized)) scheduleReminderTimers();
+  else publishSnapshot();
   scheduleDistractionDetection();
   scheduleAgentActivityMonitor();
   stopAmbientRoam(false);
