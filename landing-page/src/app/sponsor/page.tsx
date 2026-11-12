@@ -318,9 +318,10 @@ export default function SponsorPage() {
                               setCustom('');
                               setErrors(current => ({ ...current, amount: undefined }));
                             }}
-                            className={on ? 'is-on' : ''}
+                            className={`gel gel--sm ${on ? 'gel--black' : 'gel--white'}`}
                           >
-                            {inr(value)}
+                            <span className="gel__shine" aria-hidden="true" />
+                            <span className="relative z-10">{inr(value)}</span>
                           </button>
                         );
                       })}

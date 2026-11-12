@@ -73,6 +73,17 @@ body {
   transition-duration: 90ms;
 }
 
+.gel--black {
+  background: linear-gradient(180deg, #5a5a5f 0%, #2a2a2e 45%, #111113 55%, #1c1c1f 85%, #3a3a3f 100%);
+  border: 1px solid #000000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -2px 5px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+}
+
+.gel--black .gel__shine {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
 .gel--blue {
   background: linear-gradient(180deg, #d3e4ff 0%, #a9cbff 40%, #6fa8ff 52%, #5b9cff 72%, #8cc2ff 100%);
   border: 1px solid #1f46c4;
@@ -1074,42 +1085,25 @@ body {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.sp-amounts > button,
-.sp-amounts__custom {
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  border-radius: 10px;
-  font-size: 13.5px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  height: 40px;
-  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, transform 150ms ease;
-}
-
 .sp-amounts > button {
-  cursor: pointer;
-}
-
-.sp-amounts > button:hover {
-  border-color: #d4d4d8;
-}
-
-.sp-amounts > button:active {
-  transform: scale(0.97);
-}
-
-.sp-amounts > button.is-on {
-  background: #18181b;
-  border-color: #18181b;
-  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
 }
 
 .sp-amounts__custom {
   align-items: center;
+  background: #ffffff;
+  border: 1px solid #c4c4c8;
+  border-radius: 9999px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   display: flex;
+  font-size: 13.5px;
+  font-weight: 600;
   gap: 4px;
   grid-column: 1 / -1;
-  padding: 0 12px;
+  height: 36px;
+  padding: 0 16px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .sp-amounts__custom > span {
