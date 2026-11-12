@@ -21,7 +21,7 @@ const INCLUDES = [
 
 const STEPS: { title: string; detail: string }[] = [
   { title: 'Pay once with UPI', detail: 'Check out with Google Pay, PhonePe, Paytm or any UPI app. There is no subscription and no card needed.' },
-  { title: 'Get your license key', detail: 'Once your payment is verified, your download link and license key arrive by email.' },
+  { title: 'Get your license key', detail: 'We verify your payment, usually within 10 minutes, and email your download link and license key.' },
   { title: 'Install and unlock', detail: 'Install Companion on Windows 10 or 11 and enter your key to unlock every feature.' },
   { title: 'Keep every update', detail: 'New companions and features install from inside the app at no extra cost, for as long as Companion exists.' }
 ];
@@ -96,8 +96,8 @@ const FEATURES: { title: string; tint: string; detail: string; icon: ReactNode }
 const FAQ: { q: string; a: string }[] = [
   { q: 'Is this a subscription?', a: 'No. The license is a single payment of ₹250. You will never be charged again.' },
   { q: 'Do future updates cost extra?', a: 'No. Every update, new feature and new companion is included with your license.' },
-  { q: 'How do I pay?', a: 'Scan the UPI QR at checkout with any UPI app, then enter the 12-digit UPI reference from your receipt so we can match your payment.' },
-  { q: 'When do I get my license?', a: 'Your download link and license key are emailed to you as soon as the payment is verified.' },
+  { q: 'How do I pay?', a: 'Scan the UPI QR at checkout with any UPI app and confirm the payment. That is all, there is nothing else to fill in.' },
+  { q: 'When do I get my license?', a: 'Usually within 10 minutes. Your download link and license key are emailed to you as soon as the payment is verified.' },
   { q: 'Is there a Mac version?', a: 'Companion for Mac is on the way. Join the waitlist from the home page and we will email you the day it launches.' }
 ];
 

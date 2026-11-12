@@ -24,8 +24,8 @@ const INDIAN_STATES = [
   'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
 ];
 
-type Step = 'details' | 'pay' | 'confirm' | 'done';
-type Field = 'email' | 'name' | 'line1' | 'city' | 'state' | 'pin' | 'utr';
+type Step = 'details' | 'pay' | 'done';
+type Field = 'email' | 'name' | 'line1' | 'city' | 'state' | 'pin';
 
 function AppMarks({ size = 18 }: { size?: number }) {
   return (
@@ -63,7 +63,6 @@ export default function CheckoutPage() {
   const [city, setCity] = useState('');
   const [region, setRegion] = useState('');
   const [pin, setPin] = useState('');
-  const [utr, setUtr] = useState('');
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [orderId, setOrderId] = useState('');
   const [deadline, setDeadline] = useState(0);
@@ -72,6 +71,7 @@ export default function CheckoutPage() {
   const [sending, setSending] = useState(false);
   const [touch, setTouch] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(false);
 
   useEffect(() => {
     // Browser-only values, applied after the first paint to keep hydration stable.
@@ -132,14 +132,8 @@ export default function CheckoutPage() {
     setStep('pay');
   }
 
-  async function submitUtr(event: FormEvent) {
-    event.preventDefault();
-    const clean = utr.replace(/\s+/g, '');
-    if (!/^\d{12}$/.test(clean)) {
-      setErrors({ utr: 'The UPI reference (UTR) is the 12-digit number in your payment receipt.' });
-      return;
-    }
-    setErrors({});
+  async function submitOrder() {
+    if (sending) return;
     setSending(true);
     try {
       await fetch(ORDER_ENDPOINT, {
@@ -153,14 +147,14 @@ export default function CheckoutPage() {
           amount: PRICE,
           email: email.trim(),
           name: name.trim(),
-          address: { line1: line1.trim(), city: city.trim(), state: region, pin, country: 'India' },
-          utr: clean
+          address: { line1: line1.trim(), city: city.trim(), state: region, pin, country: 'India' }
         })
       });
     } catch {
-      // Still show confirmation; the buyer has their order ID and UTR.
+      // Still show confirmation; the buyer has their order reference.
     }
     setSending(false);
+    setNoticeOpen(true);
     setStep('done');
   }
 
@@ -189,9 +183,9 @@ export default function CheckoutPage() {
   const steps: { id: Step; label: string }[] = [
     { id: 'details', label: 'Details' },
     { id: 'pay', label: 'Payment' },
-    { id: 'confirm', label: 'Confirm' }
+    { id: 'done', label: 'Verification' }
   ];
-  const stepIndex = step === 'done' ? 3 : steps.findIndex(item => item.id === step);
+  const stepIndex = steps.findIndex(item => item.id === step);
 
   const inputClass = (error?: string) => `ck-input${error ? ' is-invalid' : ''}`;
   const primary =
@@ -342,50 +336,15 @@ export default function CheckoutPage() {
               </form>
             ) : null}
 
-            {step === 'confirm' ? (
-              <form key="confirm" className="ck-step flex flex-col" onSubmit={submitUtr} noValidate>
-                <button type="button" onClick={() => setStep('pay')} className="self-start inline-flex items-center gap-1.5 text-[12.5px] font-medium cursor-pointer" style={{ color: c.muted }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="m12 19-7-7 7-7" />
-                    <path d="M19 12H5" />
-                  </svg>
-                  Back to QR
-                </button>
-                <h2 className="text-[17px] font-semibold tracking-[-0.02em] mt-4">Confirm your payment</h2>
-                <p className="text-[13px] mt-1.5 leading-relaxed" style={{ color: c.muted }}>
-                  Enter the 12-digit UPI reference number (UTR) from your receipt so we can match it to order{' '}
-                  <span style={{ color: c.text }}>{orderId}</span>.
-                </p>
-                <label className="flex flex-col gap-1.5 mt-5">
-                  {labelText('UPI reference (UTR)')}
-                  <input
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={utr}
-                    onChange={e => setUtr(e.target.value.replace(/[^\d\s]/g, '').slice(0, 14))}
-                    className={`${inputClass(errors.utr)} tracking-[0.06em] tabular-nums`}
-                    aria-invalid={Boolean(errors.utr)}
-                    autoFocus
-                  />
-                  <span className="text-[12px]" style={{ color: errors.utr ? c.error : c.subtle }}>
-                    {errors.utr ?? 'Listed as "UPI transaction ID" or "UTR" in your UPI app.'}
-                  </span>
-                </label>
-                <button type="submit" disabled={sending} className={`${primary} mt-5`} style={{ background: c.ink, color: c.inkText }}>
-                  {sending ? 'Submitting…' : 'Submit for verification'}
-                </button>
-              </form>
-            ) : null}
-
             {step === 'done' ? (
               <div key="done" className="ck-step flex flex-col items-center text-center py-6" role="status">
                 <span className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: c.ink, color: c.inkText }}>
                   <Check size={22} weight={2.6} />
                 </span>
-                <h2 className="text-[19px] font-semibold tracking-[-0.025em] mt-4">Payment submitted</h2>
-                <p className="text-[13.5px] mt-2 leading-relaxed max-w-[320px]" style={{ color: c.muted }}>
-                  We&apos;re verifying order <span style={{ color: c.text }}>{orderId}</span>. Your download link and license key will be emailed to{' '}
-                  <span style={{ color: c.text }}>{email.trim()}</span> once it&apos;s confirmed.
+                <h2 className="text-[19px] font-semibold tracking-[-0.025em] mt-4">Payment under verification</h2>
+                <p className="text-[13.5px] mt-2 leading-relaxed max-w-[340px]" style={{ color: c.muted }}>
+                  We&apos;re confirming order <span style={{ color: c.text }}>{orderId}</span>. This usually takes about 10 minutes. Your license key and
+                  download link will be emailed to <span style={{ color: c.text }}>{email.trim()}</span>.
                 </p>
                 <Link href="/" className="mt-6 h-[44px] px-6 rounded-[10px] inline-flex items-center justify-center text-[14px] font-semibold no-underline" style={{ border: `1px solid ${c.border}`, color: c.text }}>
                   Back to Companion
@@ -397,6 +356,36 @@ export default function CheckoutPage() {
           </div>
         </main>
       </div>
+
+
+      {/* Verification popup */}
+      {step === 'done' && noticeOpen ? (
+        <div className="pay-backdrop" onClick={() => setNoticeOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="verify-title" className="pay-dialog" onClick={event => event.stopPropagation()}>
+            <span className="verify-ring" aria-hidden="true">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="25" fill="none" stroke="#E4E4E7" strokeWidth="3" />
+                <circle className="verify-ring__arc" cx="28" cy="28" r="25" fill="none" stroke="#18181B" strokeWidth="3" strokeLinecap="round" pathLength="100" />
+              </svg>
+              <svg className="verify-ring__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18181B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </span>
+            <h2 id="verify-title" className="mt-5 text-[20px] font-semibold tracking-[-0.02em]">
+              Payment received
+            </h2>
+            <p className="mt-2 text-[14px] leading-relaxed max-w-[330px] text-[#6B6B6B]">
+              Your payment is being verified. This usually takes about 10 minutes, and your license key arrives by email at{' '}
+              <span className="text-[#18181B]">{email.trim()}</span>.
+            </p>
+            <p className="mt-4 text-[12px] text-[#9A9A9A]">Order {orderId}</p>
+            <button type="button" onClick={() => setNoticeOpen(false)} className="pay-primary mt-6">
+              Got it
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Payment dialog */}
       {step === 'pay' ? (
@@ -476,8 +465,8 @@ export default function CheckoutPage() {
               </a>
             ) : null}
 
-            <button type="button" disabled={!revealed || expired} onClick={() => setStep('confirm')} className={`${primary} mt-2.5`} style={{ background: c.ink, color: c.inkText }}>
-              I&apos;ve completed the payment
+            <button type="button" disabled={!revealed || expired || sending} onClick={() => void submitOrder()} className={`${primary} mt-2.5`} style={{ background: c.ink, color: c.inkText }}>
+              {sending ? 'Submitting…' : 'I’ve completed the payment'}
             </button>
 
             <p className="text-[11.5px] mt-4" style={{ color: c.subtle }}>

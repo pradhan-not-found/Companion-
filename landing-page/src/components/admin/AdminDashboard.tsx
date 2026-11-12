@@ -296,9 +296,9 @@ export default function AdminDashboard() {
                     </p>
                   </div>
 
-                  <div className="ad-row__utr">
-                    <span className="text-[11.5px] text-[#A1A1AA]">UTR</span>
-                    <CopyButton value={row.utr} />
+                  <div className="ad-row__utr" title="Find this in the payment note in your UPI app">
+                    <span className="text-[11.5px] text-[#A1A1AA]">{row.utr ? 'UTR' : 'Note'}</span>
+                    <CopyButton value={row.utr || row.reference} />
                   </div>
 
                   <div className="ad-row__actions">

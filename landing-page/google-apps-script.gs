@@ -86,7 +86,7 @@ function handleSubmission(data) {
     var address = data.address || {};
     var order = {
       submittedAt: at, reference: clean(data.orderId), product: clean(data.product), amount: Number(data.amount) || '',
-      email: clean(data.email).toLowerCase(), name: clean(data.name), utr: "'" + clean(data.utr),
+      email: clean(data.email).toLowerCase(), name: clean(data.name), utr: data.utr ? "'" + clean(data.utr) : '',
       line1: clean(address.line1), city: clean(address.city), state: clean(address.state), pin: "'" + clean(address.pin),
       country: clean(address.country), status: PENDING
     };
@@ -100,7 +100,7 @@ function handleSubmission(data) {
       submittedAt: at, reference: clean(data.orderId), amount: Number(data.amount) || '', name: clean(data.name),
       email: clean(data.email).toLowerCase(), company: clean(data.company), website: clean(data.website),
       feature: data.feature ? 'Yes' : 'No', logo: saveLogo(data), message: clean(data.message),
-      utr: "'" + clean(data.utr), status: PENDING
+      utr: data.utr ? "'" + clean(data.utr) : '', status: PENDING
     };
     append(table, sponsor);
     notifyOwner('New sponsor ' + (sponsor.company || sponsor.name) + ' · ₹' + sponsor.amount, sponsor);
@@ -202,7 +202,7 @@ function sendRejection(record, type) {
     subject: 'About your Companion ' + (type === 'order' ? 'order' : 'sponsorship') + ' ' + record.reference,
     htmlBody: layout(
       'Hi ' + firstName(record.name) + ',',
-      '<p>We couldn\'t match a payment to <b>' + esc(record.reference) + '</b> with the UPI reference you entered.</p>' +
+      '<p>We couldn\'t find a payment for <b>' + esc(record.reference) + '</b>.</p>' +
         '<p style="color:#6B6B6B">If you did pay, reply to this email with a screenshot of the payment and we\'ll sort it out.</p>'
     )
   });
@@ -218,7 +218,7 @@ function notifyOwner(subject, record) {
     to: owner,
     name: 'Companion',
     subject: subject,
-    htmlBody: layout(subject, '<p>Check the payment in your UPI app, then verify it in your admin panel.</p><table style="font-size:14px">' + lines.join('') + '</table>')
+    htmlBody: layout(subject, '<p>In your UPI app, look for a payment of <b>₹' + esc(record.amount) + '</b> with <b>' + esc(record.reference) + '</b> in the note, then verify it in your admin panel.</p><table style="font-size:14px">' + lines.join('') + '</table>')
   });
 }
 

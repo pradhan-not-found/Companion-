@@ -28,9 +28,9 @@ const MASCOT = {
   framesPerRow: 4
 };
 
-type Step = 'closed' | 'details' | 'pay' | 'confirm' | 'done';
+type Step = 'closed' | 'details' | 'pay' | 'done';
 type Mode = 'sponsor' | 'tip';
-type Field = 'amount' | 'name' | 'email' | 'company' | 'website' | 'logo' | 'utr';
+type Field = 'amount' | 'name' | 'email' | 'company' | 'website' | 'logo';
 
 const inr = (value: number) => `₹${value.toLocaleString('en-IN')}`;
 
@@ -83,7 +83,6 @@ export default function SponsorPage() {
   const [message, setMessage] = useState('');
   const [logo, setLogo] = useState<{ dataUrl: string; name: string } | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [utr, setUtr] = useState('');
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [reference, setReference] = useState('');
   const [sending, setSending] = useState(false);
@@ -107,7 +106,7 @@ export default function SponsorPage() {
 
   const total = custom ? Number(custom) : amount;
   const sponsor = mode === 'sponsor';
-  const sheetOpen = step === 'details' || step === 'confirm' || step === 'done';
+  const sheetOpen = step === 'details' || step === 'done';
 
   useEffect(() => {
     if (!sheetOpen) return;
@@ -127,7 +126,6 @@ export default function SponsorPage() {
     setMode(nextMode);
     setSlot(index);
     setErrors({});
-    setUtr('');
     if (nextMode === 'tip') {
       setAmount(100);
       setCustom('');
@@ -174,14 +172,8 @@ export default function SponsorPage() {
     setStep('pay');
   }
 
-  async function submitUtr(event: FormEvent) {
-    event.preventDefault();
-    const clean = utr.replace(/\s+/g, '');
-    if (!/^\d{12}$/.test(clean)) {
-      setErrors({ utr: 'Enter the 12-digit UTR from your receipt' });
-      return;
-    }
-    setErrors({});
+  async function submitSponsor() {
+    if (sending) return;
     setSending(true);
     try {
       await sendToSheet({
@@ -195,15 +187,15 @@ export default function SponsorPage() {
         feature: sponsor,
         message: message.trim(),
         logoName: sponsor ? (logo?.name ?? '') : '',
-        logo: sponsor ? (logo?.dataUrl ?? '') : '',
-        utr: clean
+        logo: sponsor ? (logo?.dataUrl ?? '') : ''
       });
     } catch {
-      // Opaque request; the sponsor still has their reference and UTR.
+      // Opaque request; the sponsor still has their reference.
     }
     setSending(false);
     setStep('done');
   }
+
 
   const label = (text: string, error?: string, hint?: string) => (
     <span className="flex items-center justify-between text-[12.5px] font-medium text-[#6B6B6B]">
@@ -466,37 +458,6 @@ export default function SponsorPage() {
               </form>
             ) : null}
 
-            {step === 'confirm' ? (
-              <form onSubmit={submitUtr} noValidate className="flex flex-col sp-step">
-                <h2 id="sp-sheet-title" className="text-[22px] font-semibold tracking-[-0.025em]">
-                  Confirm your payment
-                </h2>
-                <p className="text-[13.5px] mt-1.5 leading-relaxed text-[#71717A]">
-                  Enter the 12-digit UPI reference (UTR) from your receipt so we can match your {inr(total)} payment to {reference}.
-                </p>
-                <label className="flex flex-col gap-1.5 mt-5">
-                  {label('UPI reference (UTR)', errors.utr)}
-                  <input
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={utr}
-                    onChange={event => setUtr(event.target.value.replace(/[^\d\s]/g, '').slice(0, 14))}
-                    className={`${input(errors.utr)} tracking-[0.06em] tabular-nums`}
-                    aria-invalid={Boolean(errors.utr)}
-                    autoFocus
-                  />
-                </label>
-                <div className="mt-5 grid grid-cols-[auto_1fr] gap-2.5">
-                  <button type="button" onClick={() => setStep('pay')} className="h-[46px] px-4 rounded-[10px] border border-[#E4E4E7] text-[14px] font-semibold cursor-pointer hover:bg-[#FAFAFA]">
-                    Back to QR
-                  </button>
-                  <button type="submit" disabled={sending} className="pay-primary">
-                    {sending ? 'Submitting…' : 'Submit'}
-                  </button>
-                </div>
-              </form>
-            ) : null}
-
             {step === 'done' ? (
               <div className="flex flex-col items-center text-center py-6 sp-step" role="status">
                 <span className="w-12 h-12 rounded-full flex items-center justify-center bg-[#18181B] text-white">
@@ -508,8 +469,9 @@ export default function SponsorPage() {
                   Thank you{name.trim() ? `, ${name.trim().split(' ')[0]}` : ''}
                 </h2>
                 <p className="text-[14px] mt-2 leading-relaxed max-w-[340px] text-[#71717A]">
-                  We&apos;re verifying {reference}.
-                  {sponsor ? ` Once it's confirmed, ${company.trim() || 'your company'} takes its slot and we'll email you.` : ' We really appreciate it.'}
+                  Your payment is being verified. This usually takes about 10 minutes.
+                  {sponsor ? ` Then ${company.trim() || 'your company'} takes its slot and we'll email you.` : ' We really appreciate it.'}
+                  <span className="block mt-3 text-[12px] text-[#A1A1AA]">Reference {reference}</span>
                 </p>
                 <Link href="/" className="gel gel--white mt-7 no-underline">
                   <span className="gel__shine" aria-hidden="true" />
@@ -527,7 +489,8 @@ export default function SponsorPage() {
           note={`Companion ${sponsor ? 'sponsor' : 'tip'} ${reference}`}
           reference={reference}
           onClose={() => setStep('details')}
-          onPaid={() => setStep('confirm')}
+          onPaid={() => void submitSponsor()}
+          busy={sending}
         />
       ) : null}
     </div>

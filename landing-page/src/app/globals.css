@@ -1692,3 +1692,37 @@ html {
   background-size: 100% 1.5px;
 }
 
+
+/* ── Verification popup ───────────────────────────────────── */
+.verify-ring {
+  display: inline-flex;
+  height: 56px;
+  position: relative;
+  width: 56px;
+}
+
+.verify-ring > svg:first-child {
+  animation: verifySpin 1.6s linear infinite;
+}
+
+.verify-ring__arc {
+  stroke-dasharray: 28 100;
+}
+
+.verify-ring__icon {
+  left: 17px;
+  position: absolute;
+  top: 17px;
+}
+
+@keyframes verifySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verify-ring > svg:first-child {
+    animation: none;
+  }
+}

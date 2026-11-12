@@ -30,13 +30,15 @@ export default function UpiPayDialog({
   note,
   reference,
   onClose,
-  onPaid
+  onPaid,
+  busy = false
 }: {
   amount: number;
   note: string;
   reference: string;
   onClose: () => void;
   onPaid: () => void;
+  busy?: boolean;
 }) {
   const [revealed, setRevealed] = useState(false);
   const [deadline, setDeadline] = useState(0);
@@ -156,8 +158,8 @@ export default function UpiPayDialog({
           </a>
         ) : null}
 
-        <button type="button" disabled={!revealed || expired} onClick={onPaid} className="pay-primary mt-2.5">
-          I&apos;ve completed the payment
+        <button type="button" disabled={!revealed || expired || busy} onClick={onPaid} className="pay-primary mt-2.5">
+          {busy ? 'Submitting…' : 'I’ve completed the payment'}
         </button>
 
         <p className="text-[11.5px] mt-4 text-[#9A9A9A]">Reference {reference}</p>
