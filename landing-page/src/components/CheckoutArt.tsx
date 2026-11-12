@@ -1,6 +1,6 @@
 /**
  * Abstract pixel-block art for the checkout brand panel: studded tiles forming
- * tumbling shapes over a periwinkle-to-navy gradient with a grid and film grain.
+ * tumbling shapes over a soft periwinkle gradient with film grain.
  */
 
 type Shape = { rows: string[]; x: number; y: number; rotate: number; tile: number; fill: string; hole: string; opacity?: number };
@@ -54,7 +54,6 @@ function ShapeTiles({ shape }: { shape: Shape }) {
 export default function CheckoutArt() {
   return (
     <div className="ck-art__bg" aria-hidden="true">
-      <div className="ck-grid" />
       <svg className="ck-blocks" viewBox="0 0 640 960" preserveAspectRatio="xMaxYMax slice">
         {SHAPES.map((shape, index) => (
           <ShapeTiles key={index} shape={shape} />
