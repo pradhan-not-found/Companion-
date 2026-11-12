@@ -8,6 +8,8 @@
  *      (Editing the existing deployment keeps the same /exec URL the website already uses.)
  *
  * Each submission type gets its own tab with a frozen, bold header row.
+ * Sponsor logos are saved to a Drive folder named "Companion sponsor logos"
+ * (Google asks you to allow Drive access the first time you deploy this version).
  */
 
 var TABS = {
@@ -18,6 +20,10 @@ var TABS = {
   order: {
     name: 'Orders',
     columns: ['Submitted at', 'Order ID', 'Product', 'Amount (INR)', 'Email', 'Name', 'UTR', 'Address', 'City', 'State', 'PIN', 'Country', 'Status']
+  },
+  sponsor: {
+    name: 'Sponsors',
+    columns: ['Submitted at', 'Reference', 'Amount (INR)', 'Name', 'Email', 'Company', 'Website', 'Feature logo', 'Logo', 'Message', 'UTR', 'Status']
   },
   waitlist: {
     name: 'Waitlist',
@@ -45,6 +51,12 @@ function doPost(e) {
         clean(data.name), "'" + clean(data.utr), clean(address.line1), clean(address.city), clean(address.state),
         "'" + clean(address.pin), clean(address.country), 'Pending verification'
       ]);
+    } else if (type === 'sponsor') {
+      sheet.appendRow([
+        at, clean(data.orderId), Number(data.amount) || '', clean(data.name), clean(data.email).toLowerCase(),
+        clean(data.company), clean(data.website), data.feature ? 'Yes' : 'No', saveLogo(data), clean(data.message),
+        "'" + clean(data.utr), 'Pending verification'
+      ]);
     } else {
       var listEmail = clean(data.email).toLowerCase();
       if (!listEmail || alreadyListed(sheet, listEmail)) return ok('duplicate');
@@ -69,6 +81,19 @@ function tabFor(type) {
     sheet.getRange('A:A').setNumberFormat('yyyy-mm-dd hh:mm');
   }
   return sheet;
+}
+
+// Saves an uploaded sponsor logo (a data: URL under 500 KB) to a Drive folder and returns its link.
+function saveLogo(data) {
+  var match = /^data:(image\/(png|jpeg|svg\+xml|webp));base64,(.+)$/.exec(String(data.logo || ''));
+  if (!match) return '';
+  var bytes = Utilities.base64Decode(match[3]);
+  if (bytes.length > 600 * 1024) return 'Logo too large';
+  var folders = DriveApp.getFoldersByName('Companion sponsor logos');
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder('Companion sponsor logos');
+  var extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/svg+xml': 'svg', 'image/webp': 'webp' }[match[1]];
+  var name = clean(data.orderId || 'sponsor') + ' ' + clean(data.company || '').slice(0, 60) + '.' + extension;
+  return folder.createFile(Utilities.newBlob(bytes, match[1], name)).getUrl();
 }
 
 function alreadyListed(sheet, email) {

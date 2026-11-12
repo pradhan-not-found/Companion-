@@ -119,10 +119,10 @@ export default function RootLayout({
               url: BASE_URL,
               image: `${BASE_URL}/opengraph-image.png`,
               softwareVersion: "1.1.0",
-              downloadUrl: `${BASE_URL}/pricing`,
+              downloadUrl: `${BASE_URL}/checkout`,
               author: { "@type": "Person", name: "Souradeep Pradhan" },
               offers: [
-                { "@type": "Offer", name: "Companion license", price: "250", priceCurrency: "INR", url: `${BASE_URL}/pricing` },
+                { "@type": "Offer", name: "Companion license", price: "250", priceCurrency: "INR", url: `${BASE_URL}/checkout` },
               ],
             }),
           }}

@@ -12,9 +12,8 @@ interface NavBarProps {
 
 const NAV_LINKS = [
   { href: '/creator', label: 'Creator' },
-  { href: '/pricing', label: 'Pricing' },
   { href: '/changelog', label: 'Changelog' },
-  { href: '/get-beta', label: 'Beta' },
+  { href: '/sponsor', label: 'Sponsor' },
 ];
 
 export default function NavBar({ isDark = false, onToggleDark }: NavBarProps) {
