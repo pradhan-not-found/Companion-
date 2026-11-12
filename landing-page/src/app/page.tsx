@@ -16,7 +16,7 @@ export default function LandingPage() {
     <div className="min-h-dvh lg:h-dvh lg:overflow-hidden overflow-x-clip bg-white text-[#111] flex flex-col">
       <NavBar />
 
-      <div className="flex-1 grid grid-cols-[minmax(0,1fr)] grid-rows-[240px_auto] sm:grid-rows-[300px_auto] lg:grid-rows-1 lg:grid-cols-2 lg:min-h-0">
+      <div className="flex-1 grid grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto] lg:grid-rows-1 lg:grid-cols-2 lg:min-h-0">
       <PetStrip />
 
       <section className="min-h-0 flex flex-col justify-between px-5 sm:px-12 lg:px-16 py-7 sm:py-9">

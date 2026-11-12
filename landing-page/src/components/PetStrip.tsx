@@ -27,16 +27,32 @@ export const PETS: PetConfig[] = [
   { id: 'whaledou', name: 'Whaledou', src: '/sprites/whaledou.webp', frameW: 192, frameH: 208, gridCols: 6, gridRows: 1, framesPerRow: 6 },
 ];
 
-const TILES: { pet: number; color: string; column: string; row: string }[] = [
-  { pet: 0, color: '#FF2D20', column: '1 / 3', row: '1 / 2' },
-  { pet: 1, color: '#FFE14A', column: '3 / 4', row: '1 / 2' },
-  { pet: 2, color: '#2F6BFF', column: '4 / 5', row: '1 / 2' },
-  { pet: 3, color: '#7C5CFF', column: '1 / 2', row: '2 / 3' },
-  { pet: 4, color: '#3DDC6A', column: '2 / 4', row: '2 / 3' },
-  { pet: 5, color: '#FF8A00', column: '4 / 5', row: '2 / 3' },
-  { pet: 6, color: '#111111', column: '1 / 3', row: '3 / 4' },
-  { pet: 7, color: '#C6F24E', column: '3 / 5', row: '3 / 4' },
+const TILES: { pet: number; color: string }[] = [
+  { pet: 0, color: '#FF2D20' },
+  { pet: 1, color: '#FFE14A' },
+  { pet: 2, color: '#2F6BFF' },
+  { pet: 3, color: '#7C5CFF' },
+  { pet: 4, color: '#3DDC6A' },
+  { pet: 5, color: '#FF8A00' },
+  { pet: 6, color: '#111111' },
+  { pet: 7, color: '#C6F24E' },
 ];
+
+/*
+ * Mosaic layouts, one string per row. A digit is that pet on its own colour,
+ * a letter is a plain square in the colour of pet a-h (a = pet 0's colour),
+ * and "." is an empty white square.
+ */
+const LAYOUTS = {
+  // Desktop: 5 equal columns; as many rows as the height needs.
+  wide: ['.01.f', 'h2.3.', '..4.b', '5.c.6', '.7.a.', 'd.e.c', '.g.f.', 'b.a.h'],
+  // Tablet: 6 columns, 3 rows.
+  medium: ['0.1.2.', '.3.4.5', '6.a.7c'],
+  // Phone: 4 columns, 3 rows.
+  narrow: ['0.12', '.34.', '56.7'],
+};
+
+type Layout = keyof typeof LAYOUTS;
 
 export function Sprite({ pet, frame, scale }: { pet: PetConfig; frame: number; scale: number }) {
   const displayW = Math.round(pet.frameW * scale);
@@ -65,8 +81,8 @@ export default function PetStrip() {
   // Start downloading every sprite strip with the page, before hydration.
   PETS.forEach(pet => preload(pet.src, { as: 'image', fetchPriority: 'high' }));
   const [frame, setFrame] = useState(0);
-  const [phone, setPhone] = useState(false);
-  const [height, setHeight] = useState(0);
+  const [layout, setLayout] = useState<Layout>('wide');
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const [active, setActive] = useState<number | null>(null);
   const [last, setLast] = useState<number | null>(null);
   const [origin, setOrigin] = useState({ x: 50, y: 50 });
@@ -82,17 +98,22 @@ export default function PetStrip() {
     const node = box.current;
     if (!node) return;
     const observer = new ResizeObserver(([entry]) => {
-      setPhone(window.innerWidth < 1024);
-      setHeight(entry.contentRect.height);
+      const viewport = window.innerWidth;
+      setLayout(viewport < 640 ? 'narrow' : viewport < 1024 ? 'medium' : 'wide');
+      setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
     });
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
 
-  const rowHeight = phone ? height / 2 : height / 3;
-  // One shared scale: each pet fills ~58% of its row, clamped for very small/large screens.
-  const scale = rowHeight ? Math.min(0.72, Math.max(0.26, (rowHeight * 0.58) / 208)) : 0.44;
-  const bigScale = height ? Math.min(1.5, Math.max(0.5, (height * 0.42) / 208)) : 1;
+  const rows = LAYOUTS[layout];
+  const columns = rows[0].length;
+  const cell = size.width ? size.width / columns : 0;
+  // Fill the height with whole squares (the last row may be cut off, like a crop of a larger pattern).
+  const rowCount = layout === 'wide' && cell ? Math.min(rows.length, Math.ceil(size.height / cell)) : rows.length;
+  // Each pet fills ~62% of its square.
+  const scale = cell ? Math.min(0.8, Math.max(0.2, (cell * 0.62) / 208)) : 0.44;
+  const bigScale = size.height ? Math.min(1.5, Math.max(0.5, (size.height * 0.42) / 208)) : 1;
 
   function focus(index: number, target: HTMLElement) {
     const outer = box.current?.getBoundingClientRect();
@@ -123,31 +144,40 @@ export default function PetStrip() {
       onMouseLeave={close}
     >
       <div
-        className={`h-full w-full grid ${phone ? 'grid-cols-4 grid-rows-2' : ''}`}
-        style={phone ? undefined : { gridTemplateColumns: '1.15fr 0.85fr 1.05fr 0.95fr', gridTemplateRows: '1fr 1fr 1fr' }}
+        className="w-full grid"
+        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
       >
-        {TILES.map((tile, index) => {
-          const pet = PETS[tile.pet];
-          return (
-            <div
-              key={pet.id}
-              style={{ background: tile.color, ...(phone ? {} : { gridColumn: tile.column, gridRow: tile.row }) }}
-              role="button"
-              tabIndex={0}
-              aria-label={`Show ${pet.name}`}
-              className="flex items-center justify-center overflow-hidden cursor-pointer outline-none"
-              onClick={event => focus(index, event.currentTarget)}
-              onKeyDown={event => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  focus(index, event.currentTarget);
-                }
-              }}
-            >
-              <Sprite pet={pet} frame={frame + index * 2} scale={scale} />
-            </div>
-          );
-        })}
+        {rows.slice(0, rowCount).flatMap((row, r) =>
+          row.split('').map((mark, c) => {
+            const key = `${r}-${c}`;
+            if (mark === '.') return <div key={key} className="aspect-square" aria-hidden="true" />;
+            if (!/[0-9]/.test(mark)) {
+              return <div key={key} className="aspect-square" aria-hidden="true" style={{ background: TILES[mark.charCodeAt(0) - 97].color }} />;
+            }
+            const index = Number(mark);
+            const tile = TILES[index];
+            const pet = PETS[tile.pet];
+            return (
+              <div
+                key={key}
+                style={{ background: tile.color }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Show ${pet.name}`}
+                className="aspect-square flex items-center justify-center overflow-hidden cursor-pointer outline-none"
+                onClick={event => focus(index, event.currentTarget)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    focus(index, event.currentTarget);
+                  }
+                }}
+              >
+                <Sprite pet={pet} frame={frame + index * 2} scale={scale} />
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Full-strip colour flood with the focused pet and its name. */}
