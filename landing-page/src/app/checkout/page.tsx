@@ -232,18 +232,9 @@ export default function CheckoutPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:min-h-dvh">
         {/* Order summary */}
         <aside className="ck-panel relative lg:sticky lg:top-0 lg:h-dvh flex flex-col px-6 sm:px-10 lg:px-14 pt-6 pb-8 lg:py-10">
-          <header className="flex items-center gap-2.5">
-            <Link href="/" className="flex items-center gap-2.5 no-underline text-[#18181B]">
-              <span className="w-8 h-8 rounded-[8px] overflow-hidden flex shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
-                <Image src="/icon-192.png" alt="" width={32} height={32} className="object-cover w-full h-full" priority />
-              </span>
-              <span className="font-semibold text-[17px] tracking-tight">Companion</span>
-            </Link>
-          </header>
-
-          <section aria-label="Order summary" className="w-full max-w-[400px] mt-10 lg:my-auto lg:mx-auto">
-            <p className="text-[14px] font-medium text-[#71717A]">Get your {PRODUCT}</p>
-            <p className="mt-1.5 text-[40px] sm:text-[44px] font-semibold tracking-[-0.035em] leading-none tabular-nums text-[#18181B]">₹{PRICE}.00</p>
+          <section aria-label="Order summary" className="w-full max-w-[400px] lg:my-auto lg:mx-auto">
+            <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-[#18181B]">Companion license</h2>
+            <p className="mt-2 text-[40px] sm:text-[44px] font-semibold tracking-[-0.035em] leading-none tabular-nums text-[#18181B]">₹{PRICE}.00</p>
 
             <div className="mt-8 flex items-center gap-3.5">
               <span className="w-11 h-11 rounded-[10px] overflow-hidden shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.12)]">

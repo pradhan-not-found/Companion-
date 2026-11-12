@@ -12,6 +12,7 @@ interface NavBarProps {
 
 const NAV_LINKS = [
   { href: '/creator', label: 'Creator' },
+  { href: '/pricing', label: 'Pricing' },
   { href: '/changelog', label: 'Changelog' },
   { href: '/sponsor', label: 'Sponsor' },
 ];

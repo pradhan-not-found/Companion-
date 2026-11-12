@@ -11,7 +11,7 @@ import { SPONSORS } from '@/lib/sponsors';
 import { sendToSheet } from '@/lib/sheets';
 import { newOrderId } from '@/lib/upiQr';
 
-const MIN = 100;
+const MIN = 1;
 const MAX = 100000;
 const PRESETS = [100, 500, 1000, 2500];
 const LOGO_MAX_BYTES = 500 * 1024;
@@ -134,7 +134,8 @@ export default function SponsorPage() {
   function continueToPay(event: FormEvent) {
     event.preventDefault();
     const next: Partial<Record<Field, string>> = {};
-    if (!Number.isInteger(total) || total < MIN || total > MAX) next.amount = `${inr(MIN)} to ${inr(MAX)}`;
+    if (!Number.isInteger(total) || total < MIN) next.amount = 'Enter an amount';
+    else if (total > MAX) next.amount = `UPI allows up to ${inr(MAX)} at once`;
     if (!name.trim()) next.name = 'Required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) next.email = 'Invalid email';
     if (sponsor && !company.trim()) next.company = 'Required';
@@ -205,7 +206,7 @@ export default function SponsorPage() {
               <Mascot />
             </span>
           </h1>
-          <p className="sp-lead mt-5 text-[19px] sm:text-[22px] leading-[1.5] max-w-[600px]">
+          <p className="mt-3 text-[16px] leading-[1.6] font-medium text-[#3F3F46] max-w-[480px]">
             You just found the most important part of the website. Companion is made by one developer and sponsored by:
           </p>
 
@@ -244,7 +245,7 @@ export default function SponsorPage() {
           </ul>
 
           <div className="mt-9 flex items-end justify-between gap-6">
-            <p className="sp-lead text-[19px] sm:text-[21px] leading-[1.45]">
+            <p className="text-[16px] leading-[1.6] font-medium text-[#3F3F46]">
               Thank you all.
               <br />
               Souradeep.
@@ -255,7 +256,7 @@ export default function SponsorPage() {
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.332-5.467-5.93 0-1.31.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
               </a>
-              <button type="button" onClick={() => open('tip', null)} className="sp-mini sp-mini--warm" aria-label="Send a tip with UPI" title="Send a tip">
+              <button type="button" onClick={() => open('tip', null)} className="sp-mini" aria-label="Send a tip with UPI" title="Send a tip">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
                   <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
@@ -328,7 +329,8 @@ export default function SponsorPage() {
                         <input
                           inputMode="numeric"
                           value={custom}
-                          aria-label="Custom amount"
+                          aria-label="Your own amount"
+                          placeholder="Your own amount"
                           onChange={event => {
                             setCustom(event.target.value.replace(/[^\d]/g, '').slice(0, 6));
                             setErrors(current => ({ ...current, amount: undefined }));
@@ -336,9 +338,6 @@ export default function SponsorPage() {
                         />
                       </span>
                     </div>
-                    <span className="text-[11.5px] text-[#A1A1AA]">
-                      {inr(MIN)} minimum · {inr(MAX)} maximum
-                    </span>
                   </div>
                 </div>
 
@@ -419,8 +418,11 @@ export default function SponsorPage() {
                     </label>
                   )}
 
-                  <button type="submit" className="pay-primary mt-5">
-                    {sponsor ? 'Sponsor' : 'Send'} {Number.isFinite(total) && total > 0 ? inr(total) : ''}
+                  <button type="submit" className="gel gel--blue pr-cta mt-5">
+                    <span className="gel__shine" aria-hidden="true" />
+                    <span className="relative z-10">
+                      {sponsor ? 'sponsor' : 'send'} {Number.isFinite(total) && total > 0 ? inr(total) : ''}
+                    </span>
                   </button>
                   <p className="mt-2.5 text-[11.5px] text-center text-[#A1A1AA]">
                     Pay with any UPI app.{sponsor ? ' Logos are reviewed before they go live.' : ''}
